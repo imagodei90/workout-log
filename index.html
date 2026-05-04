@@ -1,0 +1,81 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>Workout Dashboard Mockups</title><style>
+    :root {
+      --bg: #0a0e1a; --card: #141b2d; --card2: #1c2540;
+      --text: #e8eaf0; --muted: #7a8499;
+      --run: #3b82f6; --run-dim: #1e3a8a;
+      --lift: #f59e0b; --lift-dim: #78350f;
+      --accent: #a3e635; --border: #222b44;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: -apple-system, "SF Pro Display", "Pretendard", sans-serif;
+      padding: 32px; max-width: 1200px; margin: 0 auto;
+    }
+    h1 { font-size: 28px; font-weight: 700; margin-bottom: 4px; letter-spacing: -0.02em; }
+    h2 { font-size: 20px; font-weight: 600; margin: 24px 0 12px; letter-spacing: -0.01em; }
+    h3 { font-size: 14px; font-weight: 500; color: var(--muted);
+          text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+    .subtitle { color: var(--muted); margin-bottom: 24px; font-size: 14px; }
+    .nav { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
+    .nav a {
+      color: var(--muted); text-decoration: none; padding: 8px 14px;
+      background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+      font-size: 13px; transition: all 0.15s;
+    }
+    .nav a:hover { color: var(--text); border-color: var(--accent); }
+    .nav a.active { color: var(--accent); border-color: var(--accent); }
+    .card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 20px; margin-bottom: 16px;
+    }
+    .grid { display: grid; gap: 16px; }
+    .grid-3 { grid-template-columns: repeat(3, 1fr); }
+    .grid-2 { grid-template-columns: repeat(2, 1fr); }
+    .stat-big { font-size: 36px; font-weight: 700; letter-spacing: -0.03em; }
+    .stat-label { color: var(--muted); font-size: 13px; margin-top: 4px; }
+    .pill-run { background: var(--run-dim); color: var(--run);
+                  padding: 2px 10px; border-radius: 10px; font-size: 12px; }
+    .pill-lift { background: var(--lift-dim); color: var(--lift);
+                  padding: 2px 10px; border-radius: 10px; font-size: 12px; }
+    .footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--border);
+                color: var(--muted); font-size: 12px; text-align: center; }
+    </style></head><body>
+    <h1>운동 대시보드 — 디자인 옵션</h1>
+    <p class="subtitle">아래 4가지 디자인 중에서 마음에 드는 걸 골라주세요. 각 옵션은 러닝(파랑)과 웨이트리프팅(주황)을 분리해서 보여줍니다.</p>
+
+    <div class="card">
+      <h3>현재 데이터 요약</h3>
+      <div class="grid grid-2">
+        <div>
+          <div class="pill-run">RUNNING</div>
+          <div class="stat-big" style="margin-top:8px;">741 km</div>
+          <div class="stat-label">159 runs · 104.9 hrs</div>
+        </div>
+        <div>
+          <div class="pill-lift">LIFTING</div>
+          <div class="stat-big" style="margin-top:8px;">9,278 kg</div>
+          <div class="stat-label">3 sessions · 39 sets</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-2">
+      <a href="option_a_heatmap.html" class="card" style="text-decoration:none; color:inherit;">
+        <h2>A. Heatmap Style</h2>
+        <p style="color:var(--muted); font-size:13px;">GitHub-style 1년 격자. 일관성/누적이 한눈에. 데이터 밀도 ★★★★★</p>
+      </a>
+      <a href="option_b_strava.html" class="card" style="text-decoration:none; color:inherit;">
+        <h2>B. Strava Style</h2>
+        <p style="color:var(--muted); font-size:13px;">카드 + 차트. 모던, 인스타스러운 디자인. 시각 만족도 ★★★★★</p>
+      </a>
+      <a href="option_c_hevy.html" class="card" style="text-decoration:none; color:inherit;">
+        <h2>C. Hevy Style</h2>
+        <p style="color:var(--muted); font-size:13px;">PR 추적 + 종목별 progression. 리프팅 깊은 분석 ★★★★</p>
+      </a>
+      <a href="option_d_habit.html" class="card" style="text-decoration:none; color:inherit;">
+        <h2>D. Habit Tracker Style</h2>
+        <p style="color:var(--muted); font-size:13px;">미니멀 격자 + streak. 동기부여 중심 ★★★★</p>
+      </a>
+    </div>
+    <div class="footer">Mockups · 2026-05-04</div></body></html>
