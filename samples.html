@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard Design Samples</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: var(--font-body);
+  padding: 32px; max-width: 1200px; margin: 0 auto;
+  min-height: 100vh;
+  transition: background 0.3s, color 0.3s;
+}
+h1 {
+  font-family: var(--font-heading);
+  font-size: var(--h1-size, 28px);
+  font-weight: var(--h1-weight, 700);
+  letter-spacing: var(--h1-spacing, -0.02em);
+  margin-bottom: 6px;
+}
+h2 {
+  font-family: var(--font-heading);
+  font-size: var(--h2-size, 20px);
+  font-weight: var(--h2-weight, 600);
+  letter-spacing: var(--h2-spacing, -0.01em);
+  margin: 24px 0 14px;
+}
+h3 {
+  font-family: var(--font-h3, var(--font-body));
+  font-size: var(--h3-size, 13px);
+  font-weight: var(--h3-weight, 500);
+  color: var(--muted);
+  text-transform: var(--h3-transform, uppercase);
+  letter-spacing: var(--h3-spacing, 0.08em);
+  margin-bottom: 8px;
+}
+.subtitle { color: var(--muted); margin-bottom: 20px; font-size: 13px; }
+
+.theme-bar {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  margin-bottom: 24px; padding: 12px;
+  background: rgba(255,255,255,0.04);
+  border-radius: var(--radius, 12px);
+}
+.theme-btn {
+  background: transparent; border: 1px solid var(--border);
+  color: var(--muted); padding: 8px 14px;
+  border-radius: var(--radius-sm, 8px);
+  font-size: 13px; cursor: pointer; font-family: var(--font-body);
+  transition: all 0.15s;
+}
+.theme-btn:hover { color: var(--text); border-color: var(--accent); }
+.theme-btn.active {
+  background: var(--accent);
+  color: var(--bg);
+  border-color: var(--accent);
+  font-weight: 600;
+}
+.theme-desc { color: var(--muted); font-size: 12px; margin-bottom: 16px; padding-left: 4px; }
+
+.controls {
+  display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+  background: var(--card); backdrop-filter: var(--card-blur);
+  -webkit-backdrop-filter: var(--card-blur);
+  border: 1px solid var(--border);
+  padding: 14px 16px; border-radius: var(--radius, 12px);
+  margin-bottom: 20px;
+  box-shadow: var(--card-shadow, none);
+}
+.controls label {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; color: var(--muted);
+  font-family: var(--font-body);
+}
+.controls select, .controls input[type="date"] {
+  background: var(--input-bg, var(--card));
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 6px);
+  padding: 6px 10px; font-size: 13px;
+  font-family: inherit;
+}
+.controls select:focus, .controls input:focus { outline: none; border-color: var(--accent); }
+.controls input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.7); }
+
+.card {
+  background: var(--card); backdrop-filter: var(--card-blur);
+  -webkit-backdrop-filter: var(--card-blur);
+  border: 1px solid var(--border);
+  border-radius: var(--radius, 12px);
+  padding: var(--card-padding, 20px);
+  margin-bottom: 14px;
+  box-shadow: var(--card-shadow, none);
+}
+.grid { display: grid; gap: 14px; }
+.grid-3 { grid-template-columns: repeat(3, 1fr); }
+.grid-2 { grid-template-columns: repeat(2, 1fr); }
+.stat-big {
+  font-family: var(--font-stat, var(--font-heading));
+  font-size: var(--stat-size, 32px);
+  font-weight: var(--stat-weight, 700);
+  letter-spacing: var(--stat-spacing, -0.03em);
+  font-feature-settings: "tnum";
+}
+.stat-label { color: var(--muted); font-size: 13px; margin-top: 4px; }
+.pill-run {
+  background: var(--run-dim); color: var(--run);
+  padding: 2px 10px; border-radius: 10px; font-size: 12px;
+  font-family: var(--font-body); letter-spacing: 0.05em;
+}
+.pill-lift {
+  background: var(--lift-dim); color: var(--lift);
+  padding: 2px 10px; border-radius: 10px; font-size: 12px;
+  font-family: var(--font-body); letter-spacing: 0.05em;
+}
+.hcell { cursor: pointer; transition: stroke 0.1s; }
+.hcell:hover { stroke: var(--text); stroke-width: 1.5; }
+.hbar { cursor: pointer; transition: opacity 0.1s, stroke-width 0.1s; }
+.hbar:hover { opacity: 1; stroke: var(--text); stroke-width: 1.5; }
+.hdot {
+  cursor: pointer; transition: transform 0.1s, box-shadow 0.1s;
+  display: inline-block;
+}
+.hdot:hover {
+  transform: scale(1.5);
+  box-shadow: 0 0 0 2px var(--text);
+  z-index: 5; position: relative;
+}
+
+#hovertip {
+  position: fixed; pointer-events: none; opacity: 0;
+  background: var(--card-solid, var(--bg));
+  border: 1px solid var(--border); border-radius: 8px;
+  padding: 10px 14px; font-size: 13px; color: var(--text); z-index: 1000;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5); transition: opacity 0.1s;
+  font-family: var(--font-body); line-height: 1.4;
+  backdrop-filter: blur(20px);
+}
+
+#customRange { display: flex; gap: 10px; }
+#customRange.disabled { opacity: 0.5; pointer-events: none; }
+
+.footer {
+  margin-top: 36px; padding-top: 14px; border-top: 1px solid var(--border);
+  color: var(--muted); font-size: 11px; text-align: center;
+}
+
+        body.theme-apple {
+          --bg: #000;
+          --card: rgba(28, 28, 30, 0.72);
+          --card-solid: #1c1c1e;
+          --card-blur: blur(40px) saturate(180%);
+          --text: #fafafa;
+          --muted: #8e8e93;
+          --run: #0a84ff;
+          --run-dim: rgba(10, 132, 255, 0.18);
+          --lift: #ff9500;
+          --lift-dim: rgba(255, 149, 0, 0.18);
+          --accent: #30d158;
+          --border: rgba(255, 255, 255, 0.08);
+          --input-bg: rgba(255, 255, 255, 0.05);
+          --radius: 16px;
+          --radius-sm: 10px;
+          --font-body: -apple-system, "SF Pro Display", "Pretendard", sans-serif;
+          --font-heading: -apple-system, "SF Pro Display", sans-serif;
+          --h1-spacing: -0.04em;
+          --stat-spacing: -0.04em;
+          --card-shadow: 0 1px 0 rgba(255,255,255,0.04) inset;
+          background:
+            radial-gradient(circle at 20% 0%, #1c1c1e 0%, transparent 50%),
+            radial-gradient(circle at 80% 100%, #2c2c2e 0%, transparent 50%),
+            #000;
+        }
+        body.theme-apple .controls,
+        body.theme-apple .card { background: var(--card); }
+        
+
+        body.theme-linear {
+          --bg: #0a0a0a;
+          --card: #111114;
+          --card-solid: #111114;
+          --card-blur: none;
+          --text: #fafafa;
+          --muted: #71717a;
+          --run: #fafafa;
+          --run-dim: #18181b;
+          --lift: #c084fc;
+          --lift-dim: #2e1065;
+          --accent: #c084fc;
+          --border: #1f1f23;
+          --input-bg: #18181b;
+          --radius: 8px;
+          --radius-sm: 6px;
+          --font-body: "Inter", -apple-system, sans-serif;
+          --font-heading: "Inter", sans-serif;
+          --font-stat: "JetBrains Mono", "SF Mono", monospace;
+          --h1-spacing: -0.03em;
+          --h1-weight: 600;
+          --h2-weight: 500;
+          --stat-weight: 500;
+          --stat-spacing: -0.04em;
+          --card-padding: 18px;
+        }
+        body.theme-linear h1, body.theme-linear h2 { font-feature-settings: "cv02", "cv03"; }
+        body.theme-linear .pill-run, body.theme-linear .pill-lift {
+          font-family: "JetBrains Mono", monospace; font-size: 10px;
+          text-transform: uppercase; letter-spacing: 0.1em;
+        }
+        
+
+        body.theme-editorial {
+          --bg: #14110f;
+          --card: #1c1815;
+          --card-solid: #1c1815;
+          --card-blur: none;
+          --text: #f0e3d0;
+          --muted: #8a7a68;
+          --run: #d4a574;
+          --run-dim: rgba(212, 165, 116, 0.18);
+          --lift: #c8956d;
+          --lift-dim: rgba(200, 149, 109, 0.18);
+          --accent: #d4a574;
+          --border: #2d2722;
+          --input-bg: #1c1815;
+          --radius: 4px;
+          --radius-sm: 3px;
+          --font-body: "Inter", "Pretendard", sans-serif;
+          --font-heading: "Playfair Display", "Cormorant Garamond", serif;
+          --font-stat: "Playfair Display", serif;
+          --font-h3: "Inter", sans-serif;
+          --h1-size: 36px;
+          --h1-weight: 400;
+          --h1-spacing: -0.01em;
+          --h2-size: 24px;
+          --h2-weight: 500;
+          --h2-spacing: 0;
+          --h3-size: 11px;
+          --h3-spacing: 0.18em;
+          --stat-size: 36px;
+          --stat-weight: 400;
+          --stat-spacing: -0.02em;
+          --card-padding: 28px;
+          line-height: 1.7;
+        }
+        body.theme-editorial h1, body.theme-editorial h2 {
+          font-style: normal;
+        }
+        body.theme-editorial .stat-big { font-style: italic; }
+        body.theme-editorial .pill-run, body.theme-editorial .pill-lift {
+          letter-spacing: 0.15em; text-transform: uppercase; font-size: 10px;
+        }
+        
+
+        body.theme-glass {
+          --bg: #1c1c1f;
+          --card: rgba(255, 255, 255, 0.04);
+          --card-solid: #25252a;
+          --card-blur: blur(20px) saturate(150%);
+          --text: #ebe9e6;
+          --muted: #8b8680;
+          --run: #93b8e3;
+          --run-dim: rgba(147, 184, 227, 0.15);
+          --lift: #d4ad7a;
+          --lift-dim: rgba(212, 173, 122, 0.15);
+          --accent: #b4a7d6;
+          --border: rgba(255, 255, 255, 0.08);
+          --input-bg: rgba(255, 255, 255, 0.04);
+          --radius: 14px;
+          --radius-sm: 10px;
+          --font-body: "Inter", "Pretendard", sans-serif;
+          --font-heading: "Inter", sans-serif;
+          --h1-weight: 600;
+          --h2-weight: 500;
+          --stat-weight: 600;
+          --card-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+          background:
+            radial-gradient(at 20% 10%, #2a2530 0%, transparent 50%),
+            radial-gradient(at 80% 90%, #2a2c30 0%, transparent 50%),
+            #1c1c1f;
+        }
+        body.theme-glass .controls, body.theme-glass .card {
+          background: var(--card);
+        }
+        </style>
+</head>
+<body>
+<h1>운동 대시보드 — 디자인 샘플</h1>
+<p class="subtitle">163 runs · 39 lift sets · 2026-05-05</p>
+
+<div class="theme-bar">
+  <button class="theme-btn" data-theme="apple">Apple Fitness Pro</button>
+<button class="theme-btn" data-theme="linear">Linear / Vercel</button>
+<button class="theme-btn" data-theme="editorial">Editorial Chic</button>
+<button class="theme-btn" data-theme="glass">Notion Glass</button>
+</div>
+<p class="theme-desc" id="themeDesc">디자인 선택해주세요</p>
+
+<div class="controls">
+  <label>보기
+    <select id="viewSelect">
+      <option value="heatmap">Heatmap</option>
+      <option value="strava">Strava</option>
+      <option value="hevy">Hevy</option>
+    </select>
+  </label>
+  <label>기간
+    <select id="rangeSelect">
+      <option value="all">전체</option>
+      <option value="1y">지난 1년</option>
+      <option value="3m">지난 3개월</option>
+      <option value="1m">지난 1개월</option>
+      <option value="1w">지난 1주</option>
+      <option value="custom">Custom</option>
+    </select>
+  </label>
+  <span id="customRange">
+    <label>From <input type="date" id="customFrom"></label>
+    <label>To <input type="date" id="customTo"></label>
+  </span>
+</div>
+
+<div id="content"></div>
+<div id="hovertip"></div>
+<div class="footer">Design samples · pick the one you like, I'll apply it to the main dashboard</div>
+
+<script>
+const DATA = {"runs": [{"date": "2025-04-16T14:32:00.000+09:00", "distance": 1.249, "duration": 7.85, "pace": 6.285028022418, "hr": null, "calories": 87.5, "source": "Nike Run Club"}, {"date": "2025-04-05T07:19:00.000+09:00", "distance": 1.251, "duration": 7.42, "pace": 5.931254996003, "hr": null, "calories": 78.3, "source": "Nike Run Club"}, {"date": "2025-07-05T06:41:00.000+09:00", "distance": 5.725, "duration": 48.85, "pace": 8.532751091703, "hr": 136.8, "calories": 394.8, "source": "Apple Watch"}, {"date": "2025-08-20T20:12:00.000+09:00", "distance": 5.996, "duration": 46.59, "pace": 7.77018012008, "hr": null, "calories": 407.2, "source": "Nike Run Club"}, {"date": "2025-08-08T18:17:00.000+09:00", "distance": 1.273, "duration": 9.56, "pace": 7.50981932443, "hr": 135.6, "calories": 83.5, "source": "Apple Watch"}, {"date": "2025-09-06T14:45:00.000+09:00", "distance": 4.861, "duration": 34.06, "pace": 7.006788726599, "hr": null, "calories": 333, "source": "Nike Run Club"}, {"date": "2025-10-16T20:33:00.000+09:00", "distance": 4.413, "duration": 33.97, "pace": 7.697711307501, "hr": null, "calories": 292.6, "source": "Nike Run Club"}, {"date": "2025-04-18T17:56:00.000+09:00", "distance": 1.013, "duration": 8.54, "pace": 8.430404738401, "hr": null, "calories": 71.3, "source": "Nike Run Club"}, {"date": "2025-08-19T20:13:00.000+09:00", "distance": 5.19, "duration": 40.72, "pace": 7.845857418112, "hr": null, "calories": 343.2, "source": "Nike Run Club"}, {"date": "2025-12-13T12:47:00.000+09:00", "distance": 5.203, "duration": 39.01, "pace": 7.497597539881, "hr": null, "calories": 345.4, "source": "Nike Run Club"}, {"date": "2025-05-04T11:01:00.000+09:00", "distance": 1.246, "duration": 6.39, "pace": 5.128410914928, "hr": null, "calories": 80, "source": "Nike Run Club"}, {"date": "2025-12-20T13:43:00.000+09:00", "distance": 4.898, "duration": 38.54, "pace": 7.868517762352, "hr": null, "calories": 318.3, "source": "Nike Run Club"}, {"date": "2026-04-12T14:17:00.000+09:00", "distance": 2.775, "duration": 26.96, "pace": 9.715315315315, "hr": 122.6, "calories": 184.9, "source": "Apple Watch"}, {"date": "2025-11-22T18:05:00.000+09:00", "distance": 6.35, "duration": 51.91, "pace": 8.174803149606, "hr": null, "calories": 413.5, "source": "Nike Run Club"}, {"date": "2026-04-23T13:42:00.000+09:00", "distance": 3.036, "duration": 28.69, "pace": 9.449934123847, "hr": null, "calories": 191.8, "source": "Nike Run Club"}, {"date": "2025-08-23T13:23:00.000+09:00", "distance": 0.964, "duration": 7.66, "pace": 7.946058091286, "hr": 145, "calories": 64.7, "source": "Apple Watch"}, {"date": "2025-04-09T17:30:00.000+09:00", "distance": 1.247, "duration": 6.73, "pace": 5.396952686447, "hr": null, "calories": 80.3, "source": "Nike Run Club"}, {"date": "2025-06-19T06:48:00.000+09:00", "distance": 4.493, "duration": 39.95, "pace": 8.89160916982, "hr": 133.7, "calories": 307.1, "source": "Apple Watch"}, {"date": "2026-01-28T14:09:00.000+09:00", "distance": 2.05, "duration": 17.09, "pace": 8.336585365854, "hr": null, "calories": 137.1, "source": "Nike Run Club"}, {"date": "2025-12-25T09:21:00.000+09:00", "distance": 5.683, "duration": 39.36, "pace": 6.925919408763, "hr": null, "calories": 393, "source": "Nike Run Club"}, {"date": "2025-05-20T17:55:00.000+09:00", "distance": 5.226, "duration": 44.57, "pace": 8.528511289705, "hr": 139.5, "calories": 374.5, "source": "Apple Watch"}, {"date": "2025-10-07T15:48:00.000+09:00", "distance": 5.792, "duration": 42.12, "pace": 7.272099447514, "hr": null, "calories": 388.1, "source": "Nike Run Club"}, {"date": "2025-04-30T18:28:00.000+09:00", "distance": 1.217, "duration": 6.29, "pace": 5.168447000822, "hr": null, "calories": 79.5, "source": "Nike Run Club"}, {"date": "2025-08-17T18:30:00.000+09:00", "distance": 3.723, "duration": 27.81, "pace": 7.469782433521, "hr": 138.8, "calories": 254, "source": "Apple Watch"}, {"date": "2025-06-20T08:57:00.000+09:00", "distance": 7.664, "duration": 100.17, "pace": 13.070198329854, "hr": 121.6, "calories": 499.9, "source": "Apple Watch"}, {"date": "2025-10-09T18:45:00.000+09:00", "distance": 4.295, "duration": 36.9, "pace": 8.591385331781, "hr": null, "calories": 274.2, "source": "Nike Run Club"}, {"date": "2025-05-04T11:36:00.000+09:00", "distance": 0.714, "duration": 3.7, "pace": 5.182072829132, "hr": null, "calories": 45.2, "source": "Nike Run Club"}, {"date": "2026-02-08T18:42:00.000+09:00", "distance": 4.856, "duration": 31.05, "pace": 6.394151565074, "hr": 150.8, "calories": 326, "source": "Apple Watch"}, {"date": "2025-09-14T14:29:00.000+09:00", "distance": 7.73, "duration": 73.25, "pace": 9.476067270375, "hr": null, "calories": 492.6, "source": "Nike Run Club"}, {"date": "2025-05-30T16:57:00.000+09:00", "distance": 7.596, "duration": 64.85, "pace": 8.537388098999, "hr": null, "calories": 495.3, "source": "Nike Run Club"}, {"date": "2025-08-28T18:34:00.000+09:00", "distance": 1.906, "duration": 18.16, "pace": 9.527806925498, "hr": null, "calories": 122.1, "source": "Nike Run Club"}, {"date": "2025-04-24T19:04:00.000+09:00", "distance": 1.456, "duration": 8.72, "pace": 5.989010989011, "hr": null, "calories": 97.8, "source": "Nike Run Club"}, {"date": "2025-07-20T13:32:00.000+09:00", "distance": 7.644, "duration": 77.6, "pace": 10.151753008896, "hr": 135.1, "calories": 512.1, "source": "Apple Watch"}, {"date": "2025-06-07T07:02:00.000+09:00", "distance": 6.67, "duration": 62.84, "pace": 9.421289355322, "hr": 125.1, "calories": 458.1, "source": "Apple Watch"}, {"date": "2025-06-09T06:32:00.000+09:00", "distance": 4.105, "duration": 36.44, "pace": 8.876979293544, "hr": 129.4, "calories": 295.1, "source": "Apple Watch"}, {"date": "2025-04-20T17:34:00.000+09:00", "distance": 1.222, "duration": 7.24, "pace": 5.924713584288, "hr": null, "calories": 86.2, "source": "Nike Run Club"}, {"date": "2026-02-01T18:30:00.000+09:00", "distance": 4.836, "duration": 30.66, "pace": 6.339950372208, "hr": 154.9, "calories": 321.2, "source": "Apple Watch"}, {"date": "2025-06-10T06:11:00.000+09:00", "distance": 4.209, "duration": 33.28, "pace": 7.906866239012, "hr": 134.5, "calories": 295, "source": "Apple Watch"}, {"date": "2025-07-29T06:36:00.000+09:00", "distance": 4.977, "duration": 44.24, "pace": 8.888888888889, "hr": 134.4, "calories": 353.6, "source": "Apple Watch"}, {"date": "2025-06-04T06:29:00.000+09:00", "distance": 3.883, "duration": 34.27, "pace": 8.825650270409, "hr": 126.4, "calories": 277.8, "source": "Apple Watch"}, {"date": "2025-08-04T07:02:00.000+09:00", "distance": 4.789, "duration": 38.77, "pace": 8.095635832115, "hr": 139.2, "calories": 372.2, "source": "Apple Watch"}, {"date": "2025-07-24T17:26:00.000+09:00", "distance": 2.495, "duration": 25.89, "pace": 10.376753507014, "hr": 130.7, "calories": 191.1, "source": "Apple Watch"}, {"date": "2025-11-11T22:46:00.000+09:00", "distance": 17.594, "duration": 109.36, "pace": 6.215755371149, "hr": 123.1, "calories": 258.3, "source": "Apple Watch"}, {"date": "2025-07-31T16:32:00.000+09:00", "distance": 8.101, "duration": 75.53, "pace": 9.323540303666, "hr": 139.5, "calories": 554.2, "source": "Apple Watch"}, {"date": "2025-04-22T21:02:00.000+09:00", "distance": 2.696, "duration": 18.22, "pace": 6.758160237389, "hr": null, "calories": 171.6, "source": "Nike Run Club"}, {"date": "2025-07-30T09:36:00.000+09:00", "distance": 5.111, "duration": 52.08, "pace": 10.189786734494, "hr": null, "calories": 481.5, "source": "Strava"}, {"date": "2026-01-11T15:56:00.000+09:00", "distance": 5.41, "duration": 38.96, "pace": 7.201478743068, "hr": 145.3, "calories": 356.8, "source": "Apple Watch"}, {"date": "2025-06-13T07:00:00.000+09:00", "distance": 4.554, "duration": 41.12, "pace": 9.029424681599, "hr": 131.9, "calories": 327.1, "source": "Apple Watch"}, {"date": "2025-09-27T09:49:00.000+09:00", "distance": 6.845, "duration": 59.58, "pace": 8.704163623083, "hr": null, "calories": 452.2, "source": "Nike Run Club"}, {"date": "2025-09-10T21:31:00.000+09:00", "distance": 1.338, "duration": 11.98, "pace": 8.953662182362, "hr": 125, "calories": 92, "source": "Apple Watch"}, {"date": "2025-06-25T06:21:00.000+09:00", "distance": 4.397, "duration": 40.96, "pace": 9.315442347055, "hr": 134.6, "calories": 337.7, "source": "Apple Watch"}, {"date": "2025-08-29T07:21:00.000+09:00", "distance": 2.813, "duration": 33.2, "pace": 11.802346249556, "hr": 119.3, "calories": 212.2, "source": "Apple Watch"}, {"date": "2025-05-28T19:30:00.000+09:00", "distance": 6.931, "duration": 51.98, "pace": 7.499639301688, "hr": null, "calories": 461.8, "source": "Nike Run Club"}, {"date": "2025-08-23T12:02:00.000+09:00", "distance": 4.846, "duration": 38.73, "pace": 7.992158481222, "hr": null, "calories": 325.9, "source": "Nike Run Club"}, {"date": "2025-08-07T19:05:00.000+09:00", "distance": 7.023, "duration": 61.98, "pace": 8.825288338317, "hr": null, "calories": 662, "source": "Strava"}, {"date": "2025-04-11T18:21:00.000+09:00", "distance": 1.237, "duration": 7.09, "pace": 5.7316087308, "hr": null, "calories": 87, "source": "Nike Run Club"}, {"date": "2025-11-08T08:19:00.000+09:00", "distance": 5.065, "duration": 34.4, "pace": 6.791707798618, "hr": null, "calories": 345.3, "source": "Nike Run Club"}, {"date": "2025-04-18T18:17:00.000+09:00", "distance": 1.232, "duration": 6.93, "pace": 5.625, "hr": null, "calories": 81.6, "source": "Nike Run Club"}, {"date": "2026-03-15T18:08:00.000+09:00", "distance": 7.162, "duration": 67.31, "pace": 9.398212789724, "hr": 137.7, "calories": 484.3, "source": "Apple Watch"}, {"date": "2025-08-07T19:16:00.000+09:00", "distance": 6.03, "duration": 51.2, "pace": 8.49087893864, "hr": 140.8, "calories": 423.5, "source": "Apple Watch"}, {"date": "2025-07-12T11:52:00.000+09:00", "distance": 9.034, "duration": 110.8, "pace": 12.264777507195, "hr": 134.4, "calories": 658.4, "source": "Apple Watch"}, {"date": "2026-01-18T17:52:00.000+09:00", "distance": 4.751, "duration": 30.88, "pace": 6.499684276994, "hr": 157.5, "calories": 326, "source": "Apple Watch"}, {"date": "2025-06-23T18:24:00.000+09:00", "distance": 4.051, "duration": 38.57, "pace": 9.521105899778, "hr": 138.4, "calories": 299.1, "source": "Apple Watch"}, {"date": "2025-04-30T18:40:00.000+09:00", "distance": 1.249, "duration": 6.23, "pace": 4.987990392314, "hr": null, "calories": 79.1, "source": "Nike Run Club"}, {"date": "2025-08-07T07:57:00.000+09:00", "distance": 5.153, "duration": 43.65, "pace": 8.470793712401, "hr": 132.7, "calories": 393.8, "source": "Apple Watch"}, {"date": "2025-11-15T10:15:00.000+09:00", "distance": 3.875, "duration": 42.32, "pace": 10.921290322581, "hr": null, "calories": 232.9, "source": "Nike Run Club"}, {"date": "2026-05-01T12:03:00.000+09:00", "distance": 9.034, "duration": 69.28, "pace": 7.668806730131, "hr": null, "calories": 632.2, "source": "Nike Run Club"}, {"date": "2025-10-19T09:36:00.000+09:00", "distance": 3.282, "duration": 28.02, "pace": 8.53747714808, "hr": null, "calories": 210.8, "source": "Nike Run Club"}, {"date": "2025-08-09T10:29:00.000+09:00", "distance": 3.835, "duration": 50.08, "pace": 13.058670143416, "hr": null, "calories": 361.7, "source": "Strava"}, {"date": "2025-08-31T21:00:00.000+09:00", "distance": 3.772, "duration": 27.95, "pace": 7.4098621421, "hr": null, "calories": 252.5, "source": "Nike Run Club"}, {"date": "2025-06-26T06:15:00.000+09:00", "distance": 4.487, "duration": 40.81, "pace": 9.095163806552, "hr": 133.8, "calories": 344.4, "source": "Apple Watch"}, {"date": "2025-06-11T06:13:00.000+09:00", "distance": 4.849, "duration": 42.56, "pace": 8.777067436585, "hr": 124.5, "calories": 325.5, "source": "Apple Watch"}, {"date": "2026-04-19T16:28:00.000+09:00", "distance": 7.207, "duration": 50.22, "pace": 6.968225336478, "hr": null, "calories": 503.8, "source": "Nike Run Club"}, {"date": "2026-04-18T09:46:00.000+09:00", "distance": 4.209, "duration": 29.66, "pace": 7.046804466619, "hr": null, "calories": 286.8, "source": "Nike Run Club"}, {"date": "2025-08-03T06:39:00.000+09:00", "distance": 6.02, "duration": 53.08, "pace": 8.817275747508, "hr": 136.5, "calories": 429.8, "source": "Apple Watch"}, {"date": "2025-04-05T07:07:00.000+09:00", "distance": 1.243, "duration": 6.97, "pace": 5.607401448109, "hr": null, "calories": 80.6, "source": "Nike Run Club"}, {"date": "2025-04-10T07:47:00.000+09:00", "distance": 2.516, "duration": 18.33, "pace": 7.285373608903, "hr": null, "calories": 167.1, "source": "Nike Run Club"}, {"date": "2025-07-13T15:12:00.000+09:00", "distance": 7.926, "duration": 58.9, "pace": 7.431238960384, "hr": 148.2, "calories": 597.9, "source": "Apple Watch"}, {"date": "2025-10-12T12:33:00.000+09:00", "distance": 8.986, "duration": 72.63, "pace": 8.082572891164, "hr": null, "calories": 604.9, "source": "Nike Run Club"}, {"date": "2025-06-27T06:18:00.000+09:00", "distance": 5.42, "duration": 44.18, "pace": 8.151291512915, "hr": 132.3, "calories": 368.5, "source": "Apple Watch"}, {"date": "2026-03-21T16:40:00.000+09:00", "distance": 5.069, "duration": 32.6, "pace": 6.431248767015, "hr": null, "calories": 361.8, "source": "Nike Run Club"}, {"date": "2025-08-03T06:36:00.000+09:00", "distance": 6.045, "duration": 56.4, "pace": 9.330024813896, "hr": null, "calories": 562.2, "source": "Strava"}, {"date": "2026-01-04T07:19:00.000+09:00", "distance": 4.014, "duration": 48.2, "pace": 12.007972097658, "hr": null, "calories": 233.4, "source": "Nike Run Club"}, {"date": "2025-07-19T14:27:00.000+09:00", "distance": 5.023, "duration": 33.47, "pace": 6.663348596456, "hr": null, "calories": 343.2, "source": "Nike Run Club"}, {"date": "2026-03-15T18:14:00.000+09:00", "distance": 5.069, "duration": 32.24, "pace": 6.360228841981, "hr": null, "calories": 356.6, "source": "Nike Run Club"}, {"date": "2025-06-28T06:39:00.000+09:00", "distance": 5.949, "duration": 59.96, "pace": 10.079004874769, "hr": 125.5, "calories": 396, "source": "Apple Watch"}, {"date": "2025-05-31T16:06:00.000+09:00", "distance": 8.522, "duration": 70.4, "pace": 8.26097160291, "hr": null, "calories": 563.3, "source": "Nike Run Club"}, {"date": "2025-08-11T19:23:00.000+09:00", "distance": 4.215, "duration": 30.42, "pace": 7.217081850534, "hr": 141.8, "calories": 284.1, "source": "Apple Watch"}, {"date": "2025-09-09T20:50:00.000+09:00", "distance": 3.019, "duration": 22.58, "pace": 7.479297780722, "hr": null, "calories": 202.5, "source": "Nike Run Club"}, {"date": "2025-04-24T18:25:00.000+09:00", "distance": 1.15, "duration": 9.37, "pace": 8.147826086957, "hr": null, "calories": 71.8, "source": "Nike Run Club"}, {"date": "2025-04-09T17:43:00.000+09:00", "distance": 1.255, "duration": 6.91, "pace": 5.505976095618, "hr": null, "calories": 81.4, "source": "Nike Run Club"}, {"date": "2025-06-21T08:14:00.000+09:00", "distance": 5.408, "duration": 51.51, "pace": 9.524778106509, "hr": 134.4, "calories": 374.8, "source": "Apple Watch"}, {"date": "2026-03-31T20:03:00.000+09:00", "distance": 2.466, "duration": 18.78, "pace": 7.615571776156, "hr": null, "calories": 162.5, "source": "Nike Run Club"}, {"date": "2026-02-21T14:45:00.000+09:00", "distance": 4.992, "duration": 30.01, "pace": 6.011618589744, "hr": 162.6, "calories": 338.9, "source": "Apple Watch"}, {"date": "2025-12-27T14:59:00.000+09:00", "distance": 6.51, "duration": 56.73, "pace": 8.714285714286, "hr": null, "calories": 419.1, "source": "Nike Run Club"}, {"date": "2026-04-25T15:30:00.000+09:00", "distance": 8.123, "duration": 70.77, "pace": 8.712298411917, "hr": null, "calories": 518, "source": "Nike Run Club"}, {"date": "2025-09-20T10:36:00.000+09:00", "distance": 5.662, "duration": 44.35, "pace": 7.832921229248, "hr": null, "calories": 378.4, "source": "Nike Run Club"}, {"date": "2025-08-02T10:41:00.000+09:00", "distance": 5.941, "duration": 74.52, "pace": 12.54334287157, "hr": 118.8, "calories": 394.7, "source": "Apple Watch"}, {"date": "2025-05-29T06:56:00.000+09:00", "distance": 3.008, "duration": 24.29, "pace": 8.075132978723, "hr": 139.7, "calories": 216.4, "source": "Apple Watch"}, {"date": "2025-04-18T18:04:00.000+09:00", "distance": 1.416, "duration": 9.27, "pace": 6.546610169492, "hr": null, "calories": 98.9, "source": "Nike Run Club"}, {"date": "2025-06-17T06:17:00.000+09:00", "distance": 5.591, "duration": 54.34, "pace": 9.719191557861, "hr": 123.6, "calories": 394.1, "source": "Apple Watch"}, {"date": "2025-08-05T20:29:00.000+09:00", "distance": 2.957, "duration": 21.84, "pace": 7.385864051403, "hr": null, "calories": 200.4, "source": "Nike Run Club"}, {"date": "2026-01-03T20:53:00.000+09:00", "distance": 4.089, "duration": 27.43, "pace": 6.708241623869, "hr": null, "calories": 280.2, "source": "Nike Run Club"}, {"date": "2025-08-02T10:35:00.000+09:00", "distance": 6.85, "duration": 70.58, "pace": 10.303649635036, "hr": null, "calories": 640.6, "source": "Strava"}, {"date": "2025-07-27T07:38:00.000+09:00", "distance": 4.552, "duration": 50.86, "pace": 11.173110720562, "hr": null, "calories": 293.2, "source": "Nike Run Club"}, {"date": "2025-09-13T21:06:00.000+09:00", "distance": 6.283, "duration": 47.71, "pace": 7.593506286806, "hr": null, "calories": 418, "source": "Nike Run Club"}, {"date": "2025-06-12T06:23:00.000+09:00", "distance": 4.572, "duration": 38.36, "pace": 8.390201224847, "hr": 134.9, "calories": 337.7, "source": "Apple Watch"}, {"date": "2025-08-30T08:12:00.000+09:00", "distance": 2.02, "duration": 26.95, "pace": 13.341584158416, "hr": 136.5, "calories": 253.5, "source": "Apple Watch"}, {"date": "2025-05-15T17:50:00.000+09:00", "distance": 0.853, "duration": 9.62, "pace": 11.277842907386, "hr": 95.4, "calories": 43.9, "source": "Apple Watch"}, {"date": "2026-01-25T19:45:00.000+09:00", "distance": 1.894, "duration": 15.19, "pace": 8.020063357973, "hr": 134.5, "calories": 136.9, "source": "Apple Watch"}, {"date": "2026-04-12T13:20:00.000+09:00", "distance": 5.124, "duration": 36.21, "pace": 7.066744730679, "hr": null, "calories": 378.1, "source": "Nike Run Club"}, {"date": "2025-05-04T10:50:00.000+09:00", "distance": 0.774, "duration": 7.4, "pace": 9.560723514212, "hr": null, "calories": 45.8, "source": "Nike Run Club"}, {"date": "2025-05-06T13:21:00.000+09:00", "distance": 6.14, "duration": 45.41, "pace": 7.395765472313, "hr": null, "calories": 407.3, "source": "Nike Run Club"}, {"date": "2026-01-10T13:10:00.000+09:00", "distance": 4.451, "duration": 30.46, "pace": 6.843405976185, "hr": 149, "calories": 305.8, "source": "Apple Watch"}, {"date": "2025-04-24T18:35:00.000+09:00", "distance": 1.218, "duration": 6.58, "pace": 5.402298850575, "hr": null, "calories": 80.3, "source": "Nike Run Club"}, {"date": "2025-08-12T22:26:00.000+09:00", "distance": 5.293, "duration": 84.77, "pace": 16.015492159456, "hr": 137.2, "calories": 358.9, "source": "Apple Watch"}, {"date": "2025-08-03T06:24:00.000+09:00", "distance": 0.596, "duration": 9.61, "pace": 16.124161073826, "hr": 88.5, "calories": 35.3, "source": "Apple Watch"}, {"date": "2025-11-29T14:25:00.000+09:00", "distance": 4.524, "duration": 33.56, "pace": 7.418213969938, "hr": null, "calories": 305.7, "source": "Nike Run Club"}, {"date": "2025-06-03T06:19:00.000+09:00", "distance": 4.963, "duration": 43.06, "pace": 8.676203908926, "hr": 133, "calories": 360.9, "source": "Apple Watch"}, {"date": "2026-03-09T21:14:00.000+09:00", "distance": 3.074, "duration": 18.2, "pace": 5.920624593364, "hr": null, "calories": 216.7, "source": "Nike Run Club"}, {"date": "2025-06-05T06:18:00.000+09:00", "distance": 4.789, "duration": 44.46, "pace": 9.283775318438, "hr": 124.1, "calories": 340, "source": "Apple Watch"}, {"date": "2026-04-24T18:33:00.000+09:00", "distance": 5.942, "duration": 43.9, "pace": 7.388084819926, "hr": null, "calories": 401.9, "source": "Nike Run Club"}, {"date": "2026-04-20T18:12:00.000+09:00", "distance": 3.115, "duration": 24.26, "pace": 7.788121990369, "hr": null, "calories": 201.2, "source": "Nike Run Club"}, {"date": "2025-08-10T11:09:00.000+09:00", "distance": 4.191, "duration": 36.97, "pace": 8.821283703173, "hr": null, "calories": 384.3, "source": "Strava"}, {"date": "2026-02-17T16:54:00.000+09:00", "distance": 5.045, "duration": 31.65, "pace": 6.273538156591, "hr": null, "calories": 350.8, "source": "Nike Run Club"}, {"date": "2025-07-30T09:38:00.000+09:00", "distance": 4.041, "duration": 37.05, "pace": 9.16852264291, "hr": 124.5, "calories": 284.3, "source": "Apple Watch"}, {"date": "2025-08-15T18:41:00.000+09:00", "distance": 8.153, "duration": 67.28, "pace": 8.252177112719, "hr": null, "calories": 553.4, "source": "Nike Run Club"}, {"date": "2025-07-28T07:08:00.000+09:00", "distance": 5.384, "duration": 48.89, "pace": 9.080609212481, "hr": 137.8, "calories": 377.9, "source": "Apple Watch"}, {"date": "2025-11-01T16:30:00.000+09:00", "distance": 5.708, "duration": 48.94, "pace": 8.573931324457, "hr": null, "calories": 368.3, "source": "Nike Run Club"}, {"date": "2026-03-26T11:36:00.000+09:00", "distance": 3.824, "duration": 24.38, "pace": 6.375523012552, "hr": null, "calories": 268.7, "source": "Nike Run Club"}, {"date": "2025-06-02T06:26:00.000+09:00", "distance": 4.066, "duration": 34.92, "pace": 8.588293162814, "hr": 131.7, "calories": 290.1, "source": "Apple Watch"}, {"date": "2025-08-05T06:52:00.000+09:00", "distance": 4.116, "duration": 35.74, "pace": 8.683187560739, "hr": 129.6, "calories": 279.3, "source": "Apple Watch"}, {"date": "2025-05-04T11:45:00.000+09:00", "distance": 1.243, "duration": 6.27, "pace": 5.044247787611, "hr": null, "calories": 80.5, "source": "Nike Run Club"}, {"date": "2025-08-06T16:18:00.000+09:00", "distance": 3.344, "duration": 25.49, "pace": 7.622607655502, "hr": 135.1, "calories": 215.9, "source": "Apple Watch"}, {"date": "2026-02-15T16:54:00.000+09:00", "distance": 5.484, "duration": 43.26, "pace": 7.888402625821, "hr": null, "calories": 360.5, "source": "Nike Run Club"}, {"date": "2026-02-28T12:51:00.000+09:00", "distance": 5.68, "duration": 38.37, "pace": 6.755281690141, "hr": null, "calories": 399.4, "source": "Nike Run Club"}, {"date": "2025-08-27T19:08:00.000+09:00", "distance": 6.325, "duration": 53.45, "pace": 8.450592885375, "hr": null, "calories": 410.1, "source": "Nike Run Club"}, {"date": "2025-04-20T17:46:00.000+09:00", "distance": 1.234, "duration": 7.06, "pace": 5.721231766613, "hr": null, "calories": 87.7, "source": "Nike Run Club"}, {"date": "2026-02-21T15:16:00.000+09:00", "distance": 1.523, "duration": 27.76, "pace": 18.22718319107, "hr": 127.2, "calories": 108.8, "source": "Apple Watch"}, {"date": "2026-04-05T15:52:00.000+09:00", "distance": 5.368, "duration": 48.86, "pace": 9.102086438152, "hr": null, "calories": 339.3, "source": "Nike Run Club"}, {"date": "2025-08-08T18:27:00.000+09:00", "distance": 4.76, "duration": 40.49, "pace": 8.506302521008, "hr": 136.3, "calories": 323.3, "source": "Apple Watch"}, {"date": "2025-09-07T19:15:00.000+09:00", "distance": 6.909, "duration": 54.58, "pace": 7.899840787379, "hr": null, "calories": 457.7, "source": "Nike Run Club"}, {"date": "2025-11-16T16:18:00.000+09:00", "distance": 5.026, "duration": 38.63, "pace": 7.686032630322, "hr": null, "calories": 334.7, "source": "Nike Run Club"}, {"date": "2026-04-26T19:23:00.000+09:00", "distance": 3.64, "duration": 24.92, "pace": 6.846153846154, "hr": null, "calories": 246.9, "source": "Nike Run Club"}, {"date": "2026-03-29T19:14:00.000+09:00", "distance": 5.064, "duration": 33.54, "pace": 6.623222748815, "hr": null, "calories": 356.8, "source": "Nike Run Club"}, {"date": "2025-04-16T14:54:00.000+09:00", "distance": 1.247, "duration": 7.7, "pace": 6.174819566961, "hr": null, "calories": 84.5, "source": "Nike Run Club"}, {"date": "2025-06-18T06:10:00.000+09:00", "distance": 5.002, "duration": 43.82, "pace": 8.760495801679, "hr": 128.5, "calories": 346.9, "source": "Apple Watch"}, {"date": "2026-02-21T15:44:00.000+09:00", "distance": 1.732, "duration": 10.63, "pace": 6.137413394919, "hr": 159.4, "calories": 120.1, "source": "Apple Watch"}, {"date": "2025-06-22T09:43:00.000+09:00", "distance": 3.724, "duration": 29.34, "pace": 7.878625134264, "hr": null, "calories": 246.5, "source": "Nike Run Club"}, {"date": "2025-05-04T11:28:00.000+09:00", "distance": 0.611, "duration": 5.26, "pace": 8.60883797054, "hr": null, "calories": 36.7, "source": "Nike Run Club"}, {"date": "2025-12-06T19:10:00.000+09:00", "distance": 3.532, "duration": 27.66, "pace": 7.831257078143, "hr": 141.9, "calories": 258.1, "source": "Apple Watch"}, {"date": "2025-04-30T18:24:00.000+09:00", "distance": 0.511, "duration": 3.35, "pace": 6.555772994129, "hr": null, "calories": 39.7, "source": "Nike Run Club"}, {"date": "2025-04-11T17:39:00.000+09:00", "distance": 1.238, "duration": 6.87, "pace": 5.549273021002, "hr": null, "calories": 115, "source": "Nike Run Club"}, {"date": "2025-06-24T07:21:00.000+09:00", "distance": 3.706, "duration": 38.34, "pace": 10.345385860766, "hr": 127.3, "calories": 266.5, "source": "Apple Watch"}, {"date": "2025-10-25T20:02:00.000+09:00", "distance": 5.391, "duration": 45.97, "pace": 8.527174921165, "hr": 143.3, "calories": 368.3, "source": "Apple Watch"}, {"date": "2026-05-03T16:46:00.000+09:00", "distance": 4.417, "duration": 33.27, "pace": 7.532261716097, "hr": null, "calories": 288.2, "source": "Nike Run Club"}, {"date": "2026-03-01T20:59:00.000+09:00", "distance": 3.149, "duration": 21.32, "pace": 6.770403302636, "hr": null, "calories": 216.5, "source": "Nike Run Club"}, {"date": "2025-06-06T08:20:00.000+09:00", "distance": 5.157, "duration": 40.95, "pace": 7.940663176265, "hr": null, "calories": 341.4, "source": "Nike Run Club"}, {"date": "2025-12-07T15:00:00.000+09:00", "distance": 6.879, "duration": 57.85, "pace": 8.40965256578, "hr": null, "calories": 463, "source": "Nike Run Club"}, {"date": "2025-11-09T14:11:00.000+09:00", "distance": 3.824, "duration": 21.29, "pace": 5.567468619247, "hr": null, "calories": 277, "source": "Nike Run Club"}, {"date": "2025-06-16T06:32:00.000+09:00", "distance": 4.197, "duration": 37.3, "pace": 8.887300452704, "hr": 124.9, "calories": 289.6, "source": "Apple Watch"}, {"date": "2025-08-14T17:42:00.000+09:00", "distance": 5.273, "duration": 36.46, "pace": 6.91446994121, "hr": null, "calories": 364.1, "source": "Nike Run Club"}, {"date": "2026-04-16T19:03:00.000+09:00", "distance": 4.466, "duration": 32.01, "pace": 7.167487684729, "hr": 144.6, "calories": 298.4, "source": "Apple Watch"}], "lifts": [{"date": "2026-05-02", "exercise": "Weighted Pull Up", "weight": 0, "reps": 12, "source": "Fleek"}, {"date": "2026-05-01", "exercise": "Bulgarian Split Squat", "weight": 13.61, "reps": 10, "source": "Fleek"}, {"date": "2026-04-27", "exercise": "Dumbbell Decline Bench Press", "weight": 22.68, "reps": 15, "source": "Fleek"}, {"date": "2026-04-27", "exercise": "Smith Machine Incline Bench Press", "weight": 20, "reps": 12, "source": "Fleek"}, {"date": "2026-05-02", "exercise": "Dumbbell Lateral Raise", "weight": 6.5, "reps": 30, "source": "Fleek"}, {"date": "2026-05-01", "exercise": "Cable Rope Tricep Extension", "weight": 15, "reps": 20, "source": "Fleek"}, {"date": "2026-04-27", "exercise": "Barbell Incline Bench Press", "weight": 49, "reps": 10, "source": "Fleek"}, {"date": "2026-05-01", "exercise": "EZ-bar Lying Tricep Extension", "weight": 27.22, "reps": 15, "source": "Fleek"}, {"date": "2026-04-27", "exercise": "Smith Machine Upright Row", "weight": 20, "reps": 10, "source": "Fleek"}, {"date": "2026-04-27", "exercise": "Smith Machine Incline Bench Press", "weight": 15, "reps": 8, "source": "Fleek"}, {"date": "2026-05-02", "exercise": "Dumbbell Lateral Raise", "weight": 6.5, "reps": 20, "source": "Fleek"}, {"date": "2026-05-02", "exercise": "Push Up", "weight": 0, "reps": 20, "source": "Fleek"}, {"date": "2026-05-01", "exercise": "Cable One Arm Tricep Kick back", "weight": 5, "reps": 15, "source": "Fleek"}, {"date": "2026-05-02", "exercise": "Weighted Pull Up", "weight": 0, "reps": 10, "source": "Fleek"}, {"date": "2026-04-27", "exercise": "Smith Machine Upright Row", "weight": 30, "reps": 20, "source": "Fleek"}, {"date": "2026-04-27", "exercise": "Dumbbell Decline Bench Press", "weight": 24.95, "reps": 6, "source": "Fleek"}, {"date": "2026-05-01", "exercise": "Cable Rope Tricep Extension", "weight": 17.5, "reps": 15, "source": "Fleek"}, {"date": "2026-05-01", "exercise": "EZ-bar Lying Tricep Extension", "weight": 27.22, "reps": 12, "source": "Fleek"}, {"date": "2026-05-01", "exercise": "Cable Rope Tricep Extension", "weight": 17.5, "reps": 15, "source": "Fleek"}, {"date": "2026-04-27", "exercise": "Smith Machine Incline Bench Press", "weight": 25, "reps": 8, "source": "Fleek"}, {"date": "2026-05-01", "exercise": "Smith Machine Lunge", "weight": 30, "reps": 10, "source": "Fleek"}, {"date": "2026-05-02", "exercise": "Dumbbell Lateral Raise", "weight": 6.5, "reps": 10, "source": "Fleek"}, {"date": "2026-04-27", "exercise": "Smith Machine Upright Row", "weight": 20, "reps": 25, "source": "Fleek"}, {"date": "2026-04-27", "exercise": "Barbell Incline Bench Press", "weight": 49, "reps": 10, "source": "Fleek"}, {"date": "2026-05-01", "exercise": "Cable One Arm Tricep Kick back", "weight": 5, "reps": 10, "source": "Fleek"}, {"date": "2026-05-01", "exercise": "Bulgarian Split Squat", "weight": 22.68, "reps": 10, "source": "Fleek"}, {"date": "2026-04-27", "exercise": "Smith Machine Incline Bench Press", "weight": 10, "reps": 10, "source": "Fleek"}, {"date": "2026-05-01", "exercise": "Smith Machine Lunge", "weight": 30, "reps": 8, "source": "Fleek"}, {"date": "2026-05-02", "exercise": "Push Up", "weight": 0, "reps": 30, "source": "Fleek"}, {"date": "2026-04-27", "exercise": "Smith Machine Incline Bench Press", "weight": 15, "reps": 15, "source": "Fleek"}, {"date": "2026-04-27", "exercise": "Dumbbell Decline Bench Press", "weight": 24.95, "reps": 12, "source": "Fleek"}, {"date": "2026-05-01", "exercise": "EZ-bar Lying Tricep Extension", "weight": 27.22, "reps": 10, "source": "Fleek"}, {"date": "2026-05-01", "exercise": "Smith Machine Lunge", "weight": 20, "reps": 10, "source": "Fleek"}, {"date": "2026-05-01", "exercise": "Bulgarian Split Squat", "weight": 22.68, "reps": 10, "source": "Fleek"}, {"date": "2026-04-27", "exercise": "Smith Machine Upright Row", "weight": 10, "reps": 10, "source": "Fleek"}, {"date": "2026-04-27", "exercise": "Barbell Incline Bench Press", "weight": 40, "reps": 15, "source": "Fleek"}, {"date": "2026-04-27", "exercise": "Smith Machine Upright Row", "weight": 30, "reps": 20, "source": "Fleek"}, {"date": "2026-05-01", "exercise": "Cable One Arm Tricep Kick back", "weight": 7.5, "reps": 10, "source": "Fleek"}, {"date": "2026-05-01", "exercise": "EZ-bar Lying Tricep Extension", "weight": 27.22, "reps": 10, "source": "Fleek"}], "today": "2026-05-05"};
+const THEME_DESCS = {"apple": "순수 블랙 + glass-morphism. SF Pro, 미니멀 액센트. 프리미엄 미감.", "linear": "거의 검은 다크 + 라일락 단일 액센트. Inter + Mono 숫자. 개발자스러운 시크.", "editorial": "Playfair Display 세리프 헤드라인 + 샴페인 액센트. 패션 매거진 미감.", "glass": "부드러운 다크 + frosted glass. 라벤더/세이지 파스텔 액센트. 따뜻한 미니멀."};
+
+const COLOR_VARS = ["bg","card","text","muted","run","runDim","lift","liftDim","accent","border"];
+function cssVar(name) {
+  return getComputedStyle(document.body).getPropertyValue("--" + name).trim();
+}
+function getColors() {
+  return {
+    bg: cssVar("bg"), card: cssVar("card"), text: cssVar("text"), muted: cssVar("muted"),
+    run: cssVar("run"), runDim: cssVar("run-dim"),
+    lift: cssVar("lift"), liftDim: cssVar("lift-dim"),
+    accent: cssVar("accent"), border: cssVar("border"),
+  };
+}
+
+const WEEKDAYS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+const MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+function parseDateOnly(s) {
+  if (s.length === 10) return new Date(s + "T00:00:00");
+  return new Date(s);
+}
+function dateOnly(s) { return s.slice(0, 10); }
+function addDays(d, n) { const r = new Date(d); r.setDate(r.getDate() + n); return r; }
+function isoDate(d) {
+  const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,"0"), day = String(d.getDate()).padStart(2,"0");
+  return `${y}-${m}-${day}`;
+}
+function fmtPace(p) {
+  if (!p || p <= 0) return "-";
+  const m = Math.floor(p), s = Math.round((p - m) * 60);
+  return `${m}'${String(s).padStart(2,"0")}"`;
+}
+function num(n, d=0) {
+  if (n == null) return "-";
+  return n.toLocaleString(undefined, {minimumFractionDigits: d, maximumFractionDigits: d});
+}
+
+function computeRange(rangeKey) {
+  const today = new Date(); today.setHours(23,59,59,999);
+  switch(rangeKey) {
+    case "all": {
+      let earliest = today;
+      for (const r of DATA.runs.concat(DATA.lifts)) {
+        const d = parseDateOnly(r.date);
+        if (d < earliest) earliest = d;
+      }
+      return [earliest, today];
+    }
+    case "1y": return [addDays(today, -365), today];
+    case "3m": return [addDays(today, -90), today];
+    case "1m": return [addDays(today, -30), today];
+    case "1w": return [addDays(today, -7), today];
+    case "custom": {
+      const f = document.getElementById("customFrom").value;
+      const t = document.getElementById("customTo").value;
+      const from = f ? new Date(f + "T00:00:00") : addDays(today, -365);
+      const to = t ? new Date(t + "T23:59:59") : today;
+      return [from, to];
+    }
+  }
+  return [addDays(today, -365), today];
+}
+
+function inRange(s, start, end) { const d = parseDateOnly(s); return d >= start && d <= end; }
+
+function aggregate(runs, lifts, start, end) {
+  const fr = runs.filter(r => inRange(r.date, start, end));
+  const fl = lifts.filter(l => inRange(l.date, start, end));
+  const runByDay = {}, liftByDay = {};
+  for (const r of fr) {
+    const d = dateOnly(r.date);
+    if (!runByDay[d]) runByDay[d] = {count:0, distance:0, duration:0};
+    runByDay[d].count++;
+    runByDay[d].distance += r.distance || 0;
+    runByDay[d].duration += r.duration || 0;
+  }
+  for (const l of fl) {
+    const d = dateOnly(l.date);
+    if (!liftByDay[d]) liftByDay[d] = {sets:0, volume:0};
+    liftByDay[d].sets++;
+    liftByDay[d].volume += (l.weight || 0) * (l.reps || 0);
+  }
+  const runByMonth = {}, liftByMonth = {};
+  for (const r of fr) {
+    const ym = r.date.slice(0,7);
+    if (!runByMonth[ym]) runByMonth[ym] = {count:0, distance:0, duration:0};
+    runByMonth[ym].count++; runByMonth[ym].distance += r.distance||0; runByMonth[ym].duration += r.duration||0;
+  }
+  for (const l of fl) {
+    const ym = l.date.slice(0,7);
+    if (!liftByMonth[ym]) liftByMonth[ym] = {sets:0, volume:0, sessions:new Set()};
+    liftByMonth[ym].sets++; liftByMonth[ym].volume += (l.weight||0) * (l.reps||0);
+    liftByMonth[ym].sessions.add(dateOnly(l.date));
+  }
+  for (const v of Object.values(liftByMonth)) v.sessions = v.sessions.size;
+
+  const prByExercise = {};
+  for (const l of fl) {
+    if (!l.exercise) continue;
+    if (!prByExercise[l.exercise]) prByExercise[l.exercise] = {maxWeight:0, maxDate:"", sessions:new Set()};
+    const e = prByExercise[l.exercise];
+    if ((l.weight||0) > e.maxWeight) { e.maxWeight = l.weight||0; e.maxDate = dateOnly(l.date); }
+    e.sessions.add(dateOnly(l.date));
+  }
+  for (const v of Object.values(prByExercise)) v.sessions = v.sessions.size;
+
+  const allDates = Array.from(new Set([...Object.keys(runByDay), ...Object.keys(liftByDay)])).sort();
+  let currentStreak = 0;
+  if (allDates.length) {
+    const today = new Date(); let d = new Date(today); const set = new Set(allDates);
+    while (set.has(isoDate(d))) { currentStreak++; d = addDays(d, -1); }
+    if (currentStreak === 0 && set.has(isoDate(addDays(today, -1)))) {
+      d = addDays(today, -1); while (set.has(isoDate(d))) { currentStreak++; d = addDays(d, -1); }
+    }
+  }
+  let bestStreak = 0, cur = 0, prev = null;
+  for (const ds of allDates) {
+    const d = parseDateOnly(ds);
+    if (prev == null || (d - prev) === 86400000) cur++; else cur = 1;
+    if (cur > bestStreak) bestStreak = cur;
+    prev = d;
+  }
+  let totalDist=0, totalDur=0, totalCal=0;
+  for (const r of fr) { totalDist+=r.distance||0; totalDur+=r.duration||0; totalCal+=r.calories||0; }
+  let totalSets=0, totalVol=0;
+  for (const l of fl) { totalSets++; totalVol += (l.weight||0) * (l.reps||0); }
+  return {
+    runByDay, liftByDay, runByMonth, liftByMonth, prByExercise,
+    currentStreak, bestStreak,
+    totalsRun: {count: fr.length, distance: totalDist, duration: totalDur, calories: totalCal},
+    totalsLift: {sets: totalSets, volume: totalVol, sessions: Object.keys(liftByDay).length},
+    rangeStart: start, rangeEnd: end,
+    runDays: Object.keys(runByDay).length, liftDays: Object.keys(liftByDay).length,
+  };
+}
+
+function renderHeatmap(agg) {
+  const C = getColors();
+  const start = agg.rangeStart, end = agg.rangeEnd;
+  const days = Math.floor((end - start) / 86400000) + 1;
+  const useYearStack = days > 400;
+  const cell = 14, gap = 3;
+
+  function buildOneRange(rs, re, byDay, color, kind, valueKey, maxVal) {
+    let s = new Date(rs);
+    while (s.getDay() !== 1) s = addDays(s, -1);
+    const cols = Math.ceil(((re - s) / 86400000 + 1) / 7);
+    const w = cols * (cell + gap), h = 7 * (cell + gap) + 20;
+    const rects = [], monthLabels = [];
+    let cur = new Date(s); let lastMonth = -1;
+    for (let c = 0; c < cols; c++) {
+      for (let r = 0; r < 7; r++) {
+        if (cur > re || cur < rs) { cur = addDays(cur, 1); continue; }
+        const iso = isoDate(cur);
+        const data = byDay[iso] || {};
+        const val = data[valueKey] || 0;
+        let fill = C.muted, opacity = 0.15;
+        if (val > 0) { fill = color; opacity = 0.3 + 0.7 * Math.min(val/maxVal, 1); }
+        const wd = WEEKDAYS[cur.getDay() === 0 ? 6 : cur.getDay()-1];
+        let primary, secondary;
+        if (kind === "run") {
+          primary = data.distance ? `${data.distance.toFixed(2)} km` : "no run";
+          secondary = val > 0 ? `${data.count} runs · ${Math.round(data.duration)} min` : "";
+        } else {
+          primary = data.sets ? `${data.sets} sets` : "no lift";
+          secondary = val > 0 ? `${num(data.volume, 0)} kg volume` : "";
+        }
+        const payload = JSON.stringify({date: `${iso} (${wd})`, primary, secondary}).replace(/"/g, "&quot;");
+        rects.push(`<rect x="${c*(cell+gap)}" y="${r*(cell+gap)+16}" width="${cell}" height="${cell}" rx="3" fill="${fill}" opacity="${opacity.toFixed(2)}" class="hcell" data-payload="${payload}"></rect>`);
+        cur = addDays(cur, 1);
+      }
+      if (cur <= re && cur.getMonth() !== lastMonth && cur.getDate() <= 7) {
+        monthLabels.push(`<text x="${c*(cell+gap)}" y="12" fill="${C.muted}" font-size="10">${MONTH_NAMES[cur.getMonth()]}</text>`);
+        lastMonth = cur.getMonth();
+      }
+    }
+    return `<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg">${monthLabels.join("")}${rects.join("")}</svg>`;
+  }
+  function buildHeatmap(byDay, color, kind, valueKey) {
+    const vals = Object.values(byDay).map(d => d[valueKey] || 0);
+    const maxVal = Math.max(1, ...vals);
+    if (useYearStack) {
+      const startYear = start.getFullYear(), endYear = end.getFullYear();
+      const out = [];
+      for (let y = endYear; y >= startYear; y--) {
+        const ys = new Date(Math.max(start, new Date(y, 0, 1)));
+        const ye = new Date(Math.min(end, new Date(y, 11, 31, 23, 59, 59)));
+        out.push(`<div style="margin-bottom:6px;"><div style="color:${C.muted}; font-size:11px; margin-bottom:4px;">${y}</div>${buildOneRange(ys, ye, byDay, color, kind, valueKey, maxVal)}</div>`);
+      }
+      return out.join("");
+    }
+    return buildOneRange(start, end, byDay, color, kind, valueKey, maxVal);
+  }
+
+  const tr = agg.totalsRun, tl = agg.totalsLift;
+  const today = new Date(); today.setHours(23,59,59,999);
+  let week_done = 0;
+  for (let i = 0; i < 7; i++) {
+    const d = addDays(today, -i);
+    if (d < start) break;
+    const iso = isoDate(d);
+    if ((agg.runByDay[iso]&&agg.runByDay[iso].count>0) || (agg.liftByDay[iso]&&agg.liftByDay[iso].sets>0)) week_done++;
+  }
+  const cleanDaysDone = new Set([...Object.keys(agg.runByDay), ...Object.keys(agg.liftByDay)]).size;
+  const consistency = ((cleanDaysDone / Math.max(days,1)) * 100).toFixed(0);
+
+  const dotsHtml = [];
+  for (let i = 0; i < days; i++) {
+    const d = addDays(start, i);
+    if (d > end) break;
+    const iso = isoDate(d);
+    const wd = WEEKDAYS[d.getDay() === 0 ? 6 : d.getDay()-1];
+    const r = agg.runByDay[iso], l = agg.liftByDay[iso];
+    const hasR = r&&r.count>0, hasL = l&&l.sets>0;
+    let color, primary, secondary;
+    if (hasR && hasL) { color = C.accent; primary = "Run + Lift"; secondary = `${r.distance.toFixed(1)} km · ${l.sets} sets (${num(l.volume,0)} kg)`; }
+    else if (hasR) { color = C.run; primary = `${r.distance.toFixed(2)} km`; secondary = `${r.count} runs · ${Math.round(r.duration)} min`; }
+    else if (hasL) { color = C.lift; primary = `${l.sets} sets`; secondary = `${num(l.volume,0)} kg volume`; }
+    else { color = "rgba(255,255,255,0.04)"; primary = "Rest day"; secondary = ""; }
+    const payload = JSON.stringify({date: `${iso} (${wd})`, primary, secondary}).replace(/"/g, "&quot;");
+    dotsHtml.push(`<div class="hdot" data-payload="${payload}" style="width:14px; height:14px; border-radius:50%; background:${color};"></div>`);
+  }
+  const cols = Math.min(53, Math.max(7, Math.ceil(Math.sqrt(days * 1.5))));
+
+  return `
+    <div class="grid grid-3">
+      <div class="card"><h3>현재 streak</h3><div class="stat-big" style="color:${C.accent};">${agg.currentStreak}<span style="font-size:14px; color:${C.muted}"> days</span></div><div class="stat-label">연속 운동 일수</div></div>
+      <div class="card"><h3>최고 streak</h3><div class="stat-big">${agg.bestStreak}<span style="font-size:14px; color:${C.muted}"> days</span></div><div class="stat-label">기간 내 최장</div></div>
+      <div class="card"><h3>지난 7일</h3><div class="stat-big">${week_done}<span style="font-size:14px; color:${C.muted}"> / 7</span></div><div class="stat-label">최근 일주일</div></div>
+    </div>
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:12px;">
+        <div><span class="pill-run">RUNNING</span><h2 style="margin-top:4px;">강도 히트맵</h2></div>
+        <div style="text-align:right;">
+          <div class="stat-big" style="font-size:26px; color:${C.run};">${tr.distance.toFixed(0)}<span style="font-size:14px; color:${C.muted}"> km</span></div>
+          <div class="stat-label">${tr.count} runs · ${num(tr.duration,0)} min</div>
+        </div>
+      </div>
+      <div style="overflow-x:auto;">${buildHeatmap(agg.runByDay, C.run, "run", "distance")}</div>
+    </div>
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:12px;">
+        <div><span class="pill-lift">LIFTING</span><h2 style="margin-top:4px;">강도 히트맵</h2></div>
+        <div style="text-align:right;">
+          <div class="stat-big" style="font-size:26px; color:${C.lift};">${tl.sessions}<span style="font-size:14px; color:${C.muted}"> sessions</span></div>
+          <div class="stat-label">${tl.sets} sets · ${num(tl.volume,0)} kg</div>
+        </div>
+      </div>
+      <div style="overflow-x:auto;">${buildHeatmap(agg.liftByDay, C.lift, "lift", "sets")}</div>
+    </div>
+    <div class="card">
+      <h2>활동 종합 (${days}일 · ${isoDate(start)} ~ ${isoDate(end)})</h2>
+      <p style="color:${C.muted}; font-size:13px; margin-bottom:12px;">
+        <span style="display:inline-block;width:10px;height:10px;background:${C.run};border-radius:50%;margin-right:4px;"></span> Running
+        <span style="display:inline-block;width:10px;height:10px;background:${C.lift};border-radius:50%;margin:0 4px 0 8px;"></span> Lifting
+        <span style="display:inline-block;width:10px;height:10px;background:${C.accent};border-radius:50%;margin:0 4px 0 8px;"></span> Both
+      </p>
+      <div style="display:grid; grid-template-columns:repeat(${cols}, 1fr); gap:3px;">${dotsHtml.join("")}</div>
+      <p style="color:${C.muted}; margin-top:14px; font-size:13px;">일관성: <strong style="color:${C.accent}">${consistency}%</strong> (${cleanDaysDone}/${days} 일)</p>
+    </div>`;
+}
+
+function renderStrava(agg) {
+  const C = getColors();
+  const tr = agg.totalsRun, tl = agg.totalsLift;
+  const days = Math.floor((agg.rangeEnd - agg.rangeStart) / 86400000) + 1;
+  const monthsR = Object.keys(agg.runByMonth).sort().slice(-12);
+  const monthsL = Object.keys(agg.liftByMonth).sort().slice(-12);
+  const cw = 800, ch = 180;
+  function bars(months, byMonth, color, kind) {
+    if (!months.length) return `<p style="color:${C.muted}">데이터 없음</p>`;
+    const maxV = Math.max(1, ...months.map(m => kind==="run" ? byMonth[m].distance : byMonth[m].volume));
+    const out = [];
+    months.forEach((m, i) => {
+      const md = byMonth[m];
+      const v = kind==="run" ? md.distance : md.volume;
+      const x = (i + 0.5) * (cw / months.length);
+      const bw = (cw / months.length) * 0.6;
+      const bx = x - bw / 2;
+      const by = ch - 20 - (v / maxV) * (ch - 50);
+      const bh = (v / maxV) * (ch - 50);
+      const primary = kind === "run" ? `${v.toFixed(1)} km` : `${num(v, 0)} kg volume`;
+      const secondary = kind === "run" ? `${md.count} runs · ${Math.round(md.duration)} min` : `${md.sets} sets · ${md.sessions} sessions`;
+      const payload = JSON.stringify({date: m, primary, secondary}).replace(/"/g, "&quot;");
+      out.push(`<rect x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="${bw.toFixed(1)}" height="${bh.toFixed(1)}" fill="${color}" opacity="0.7" rx="2" class="hbar" data-payload="${payload}"></rect>`);
+      out.push(`<text x="${x.toFixed(1)}" y="${ch-4}" fill="${C.muted}" font-size="10" text-anchor="middle">${m.slice(5)}</text>`);
+    });
+    return `<svg width="${cw}" height="${ch}" xmlns="http://www.w3.org/2000/svg">${out.join("")}</svg>`;
+  }
+  return `
+    <h2><span class="pill-run">RUNNING</span> 기간 합계</h2>
+    <div class="grid grid-3">
+      <div class="card"><h3>거리</h3><div class="stat-big">${tr.distance.toFixed(1)}<span style="font-size:14px; color:${C.muted}"> km</span></div><div class="stat-label">${days}일 기간</div></div>
+      <div class="card"><h3>러닝 횟수</h3><div class="stat-big">${tr.count}</div><div class="stat-label">총 ${num(tr.duration, 0)} 분</div></div>
+      <div class="card"><h3>총 칼로리</h3><div class="stat-big">${num(tr.calories, 0)}<span style="font-size:14px; color:${C.muted}"> kcal</span></div></div>
+    </div>
+    <div class="card"><h3>월별 거리</h3>${bars(monthsR, agg.runByMonth, C.run, "run")}</div>
+    <h2><span class="pill-lift">LIFTING</span> 기간 합계</h2>
+    <div class="grid grid-3">
+      <div class="card"><h3>볼륨</h3><div class="stat-big">${num(tl.volume, 0)}<span style="font-size:14px; color:${C.muted}"> kg</span></div></div>
+      <div class="card"><h3>세션</h3><div class="stat-big">${tl.sessions}</div></div>
+      <div class="card"><h3>총 세트</h3><div class="stat-big">${tl.sets}</div></div>
+    </div>
+    <div class="card"><h3>월별 볼륨</h3>${bars(monthsL, agg.liftByMonth, C.lift, "lift")}</div>`;
+}
+
+function renderHevy(agg) {
+  const C = getColors();
+  const prList = Object.entries(agg.prByExercise).filter(([_, info]) => info.maxWeight > 0).sort((a,b) => b[1].maxWeight - a[1].maxWeight);
+  const cards = prList.length === 0
+    ? `<div class="card"><p style="color:${C.muted}">기간 내 PR 데이터 없음</p></div>`
+    : prList.slice(0, 12).map(([name, info]) => `<div class="card" style="margin:0;"><h3>${name}</h3><div class="stat-big">${info.maxWeight.toFixed(1)}<span style="font-size:14px; color:${C.muted}"> kg</span></div><div class="stat-label">PR · ${info.maxDate} · ${info.sessions} sessions</div></div>`).join("");
+  const tr = agg.totalsRun;
+  const days = Math.floor((agg.rangeEnd - agg.rangeStart) / 86400000) + 1;
+  return `
+    <h2><span class="pill-lift">LIFTING</span> Personal Records</h2>
+    <div class="grid grid-3">${cards}</div>
+    <h2><span class="pill-run">RUNNING</span> 통계</h2>
+    <div class="card"><div class="grid grid-3">
+      <div><h3>가장 긴 거리</h3><div class="stat-big" style="font-size:22px; color:${C.run};">${(() => { let mx=0; for (const r of DATA.runs) if (inRange(r.date, agg.rangeStart, agg.rangeEnd) && (r.distance||0)>mx) mx=r.distance; return mx.toFixed(2); })()} km</div></div>
+      <div><h3>가장 빠른 페이스</h3><div class="stat-big" style="font-size:22px; color:${C.run};">${(() => { let mn=99; for (const r of DATA.runs) if (inRange(r.date, agg.rangeStart, agg.rangeEnd) && r.pace && r.distance>=3 && r.pace<mn) mn=r.pace; return mn===99 ? "-" : fmtPace(mn); })()}</div><div class="stat-label">3km+ 기준</div></div>
+      <div><h3>총 누적 거리</h3><div class="stat-big" style="font-size:22px; color:${C.run};">${tr.distance.toFixed(0)} km</div><div class="stat-label">${days}일</div></div>
+    </div></div>`;
+}
+
+const VIEWS = { heatmap: renderHeatmap, strava: renderStrava, hevy: renderHevy };
+
+function bindTooltips() {
+  const tip = document.getElementById("hovertip");
+  document.querySelectorAll("[data-payload]").forEach(el => {
+    el.addEventListener("mouseenter", e => {
+      try {
+        const data = JSON.parse(e.currentTarget.getAttribute("data-payload"));
+        let html = `<div style="font-weight:600; margin-bottom:2px;">${data.date}</div>`;
+        if (data.primary) html += `<div style="color:${cssVar('accent')};">${data.primary}</div>`;
+        if (data.secondary) html += `<div style="color:${cssVar('muted')}; font-size:11px; margin-top:2px;">${data.secondary}</div>`;
+        tip.innerHTML = html; tip.style.opacity = "1";
+      } catch(err) {}
+    });
+    el.addEventListener("mousemove", e => { tip.style.left = (e.clientX+14)+"px"; tip.style.top = (e.clientY-10)+"px"; });
+    el.addEventListener("mouseleave", () => { tip.style.opacity = "0"; });
+  });
+}
+
+function refresh() {
+  const view = document.getElementById("viewSelect").value;
+  const range = document.getElementById("rangeSelect").value;
+  const [start, end] = computeRange(range);
+  document.getElementById("customRange").classList.toggle("disabled", range !== "custom");
+  const agg = aggregate(DATA.runs, DATA.lifts, start, end);
+  document.getElementById("content").innerHTML = VIEWS[view](agg);
+  bindTooltips();
+}
+
+function setTheme(name) {
+  document.body.className = "theme-" + name;
+  document.querySelectorAll(".theme-btn").forEach(b => b.classList.toggle("active", b.dataset.theme === name));
+  document.getElementById("themeDesc").textContent = THEME_DESCS[name];
+  // Re-render so colors propagate (heatmap fill colors need fresh CSS values)
+  refresh();
+  localStorage.setItem("dashboardTheme", name);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const saved = localStorage.getItem("dashboardTheme") || "apple";
+  setTheme(saved);
+  document.getElementById("viewSelect").value = "heatmap";
+  document.getElementById("rangeSelect").value = "all";
+  ["change","input"].forEach(evt => {
+    document.getElementById("viewSelect").addEventListener(evt, refresh);
+    document.getElementById("rangeSelect").addEventListener(evt, refresh);
+    document.getElementById("customFrom").addEventListener(evt, () => { if (document.getElementById("rangeSelect").value === "custom") refresh(); });
+    document.getElementById("customTo").addEventListener(evt, () => { if (document.getElementById("rangeSelect").value === "custom") refresh(); });
+  });
+  document.querySelectorAll(".theme-btn").forEach(b => b.addEventListener("click", () => setTheme(b.dataset.theme)));
+  refresh();
+});
+
+</script>
+</body>
+</html>
