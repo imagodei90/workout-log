@@ -303,19 +303,24 @@ function computeRange(rangeKey) {
   today.setHours(23,59,59,999);
   switch(rangeKey) {
     case "all": {
-      // earliest = min date across all data types (runs, lifts, body)
+      // View-aware "all time": earliest is current view's earliest data,
+      // floored at 2020-03-08 (start of continuous body data tracking).
+      const FLOOR = new Date("2020-03-08T00:00:00");
+      const viewSel = document.getElementById("viewSelect");
+      const v = viewSel ? viewSel.value : "heatmap";
+      const b = DATA.body || {};
+      let dataset;
+      if (v === "hevy") dataset = DATA.lifts;
+      else if (v === "body") dataset = [...(b.weight||[]), ...(b.bodyFat||[]), ...(b.leanMass||[]), ...(b.vo2max||[])];
+      else if (v === "map") dataset = DATA.routes || [];
+      else dataset = [...DATA.runs, ...DATA.lifts];  // heatmap, strava
+
       let earliest = today;
-      const allEntries = [
-        ...DATA.runs, ...DATA.lifts,
-        ...((DATA.body && DATA.body.weight) || []),
-        ...((DATA.body && DATA.body.bodyFat) || []),
-        ...((DATA.body && DATA.body.leanMass) || []),
-        ...((DATA.body && DATA.body.vo2max) || []),
-      ];
-      for (const r of allEntries) {
+      for (const r of dataset) {
         const d = parseDateOnly(r.date);
         if (d < earliest) earliest = d;
       }
+      if (earliest < FLOOR) earliest = FLOOR;
       return [earliest, today];
     }
     case "1y": return [addDays(today, -365), today];
@@ -931,10 +936,19 @@ function renderMap(agg) {
     }
     const mapEl = document.getElementById("map");
     if (!mapEl || routes.length === 0) return;
-    const map = L.map("map", { zoomControl: true, attributionControl: false }).setView([37.5, 127.0], 12);
+    const map = L.map("map", {
+      zoomControl: true,
+      attributionControl: false,
+      worldCopyJump: false,
+      maxBoundsViscosity: 1.0,
+    }).setView([37.5, 127.0], 12);
+    map.setMaxBounds([[-90, -180], [90, 180]]);
     L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
       maxZoom: 19,
+      minZoom: 2,
       subdomains: "abcd",
+      noWrap: true,
+      bounds: [[-90, -180], [90, 180]],
     }).addTo(map);
     L.control.attribution({position: "bottomright"}).addAttribution("© OSM · CARTO").addTo(map);
 
@@ -947,7 +961,7 @@ function renderMap(agg) {
         opacity: 0.55,
         smoothFactor: 1,
       }).addTo(map);
-      polyline.bindTooltip(`<b>${r.date}</b><br>${r.points.length} pts`, {sticky: true, className: "leaflet-tip"});
+      polyline.bindTooltip(`<b>${r.date}</b>`, {sticky: true, className: "leaflet-tip"});
       polyline.on("mouseover", () => polyline.setStyle({weight: 4, opacity: 1, color: COLORS.accent}));
       polyline.on("mouseout", () => polyline.setStyle({weight: 2.5, opacity: 0.55, color: COLORS.lift}));
       allPoints.push(...r.points);
