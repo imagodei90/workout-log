@@ -279,14 +279,29 @@ function aggregate(runs, lifts, start, end) {
   const filteredRuns = runs.filter(r => inRange(r.date, start, end));
   const filteredLifts = lifts.filter(l => inRange(l.date, start, end));
 
-  const runByDay = {}, liftByDay = {};
+  // Group runs by date for session-based counting (gap > 3h = separate session)
+  const SESSION_GAP_MS = 3 * 3600 * 1000;
+  const runsByDate = {};
   for (const r of filteredRuns) {
     const d = dateOnly(r.date);
-    if (!runByDay[d]) runByDay[d] = {count:0, distance:0, duration:0};
-    runByDay[d].count++;
-    runByDay[d].distance += r.distance || 0;
-    runByDay[d].duration += r.duration || 0;
+    if (!runsByDate[d]) runsByDate[d] = [];
+    runsByDate[d].push(r);
   }
+  const runByDay = {};
+  for (const [d, rs] of Object.entries(runsByDate)) {
+    const sorted = rs.slice().sort((a, b) => new Date(a.date) - new Date(b.date));
+    let sessions = 0, lastTime = null, dist = 0, dur = 0;
+    for (const r of sorted) {
+      const t = new Date(r.date);
+      if (lastTime === null || (t - lastTime) > SESSION_GAP_MS) sessions++;
+      lastTime = t;
+      dist += r.distance || 0;
+      dur += r.duration || 0;
+    }
+    runByDay[d] = {count: sessions, distance: dist, duration: dur};
+  }
+
+  const liftByDay = {};
   for (const l of filteredLifts) {
     const d = dateOnly(l.date);
     if (!liftByDay[d]) liftByDay[d] = {sets:0, volume:0, exercises:new Set()};
@@ -296,12 +311,13 @@ function aggregate(runs, lifts, start, end) {
   }
 
   const runByMonth = {}, liftByMonth = {};
-  for (const r of filteredRuns) {
-    const ym = r.date.slice(0,7);
+  // Monthly run counts: roll up session-deduped daily counts
+  for (const [d, dayData] of Object.entries(runByDay)) {
+    const ym = d.slice(0,7);
     if (!runByMonth[ym]) runByMonth[ym] = {count:0, distance:0, duration:0};
-    runByMonth[ym].count++;
-    runByMonth[ym].distance += r.distance || 0;
-    runByMonth[ym].duration += r.duration || 0;
+    runByMonth[ym].count += dayData.count;
+    runByMonth[ym].distance += dayData.distance;
+    runByMonth[ym].duration += dayData.duration;
   }
   for (const l of filteredLifts) {
     const ym = l.date.slice(0,7);
@@ -367,7 +383,7 @@ function aggregate(runs, lifts, start, end) {
   return {
     runByDay, liftByDay, runByMonth, liftByMonth, prByExercise,
     currentStreak, bestStreak,
-    totalsRun: {count: filteredRuns.length, distance: totalDist, duration: totalDur, calories: totalCal},
+    totalsRun: {count: Object.values(runByDay).reduce((s, d) => s + d.count, 0), distance: totalDist, duration: totalDur, calories: totalCal},
     totalsLift: {sets: totalSets, volume: totalVol, sessions: Object.keys(liftByDay).length},
     rangeStart: start, rangeEnd: end,
     runDays: Object.keys(runByDay).length,
