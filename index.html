@@ -436,7 +436,7 @@ function renderHeatmap(agg) {
           primary = data.distance ? `${data.distance.toFixed(2)} km` : t("noRun");
           if (val > 0) {
             const dayPace = data.distance > 0 ? data.duration / data.distance : 0;
-            secondary = `${data.count} ${t("runsUnit")} · ${Math.round(data.duration)} ${t("minUnit")} · ${fmtPace(dayPace)}/km`;
+            secondary = `${data.count} ${t("runsUnit")} · ${Math.round(data.duration)} ${t("minUnit")} · ${fmtPace(dayPace)}`;
           } else { secondary = ""; }
         } else {
           primary = data.sets ? `${data.sets} ${t("setsUnit")}` : t("noLift");
