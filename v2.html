@@ -624,8 +624,9 @@ function renderHeatmap(agg) {
 
   // Stats cards (merged from Habit view)
   const today = new Date(); today.setHours(23,59,59,999);
+  // Last 7 days = yesterday backward (today excluded since may not be done yet)
   let week_done = 0;
-  for (let i = 0; i < 7; i++) {
+  for (let i = 1; i <= 7; i++) {
     const d = addDays(today, -i);
     if (d < start) break;
     const iso = isoDate(d);
@@ -665,15 +666,18 @@ function renderHeatmap(agg) {
   const cols = Math.min(53, Math.max(7, Math.ceil(Math.sqrt(days * 1.5))));
 
   return `
+    <div class="grid grid-3">
+      <div class="card"><h3>${t("currentStreak")}</h3><div class="stat-big" style="color:var(--accent);">${agg.currentStreak}<span style="font-size:14px; color:var(--muted)"> ${t("daysShort")}</span></div><div class="stat-label">${t("consecutive")}</div></div>
+      <div class="card"><h3>${t("bestStreak")}</h3><div class="stat-big">${agg.bestStreak}<span style="font-size:14px; color:var(--muted)"> ${t("daysShort")}</span></div><div class="stat-label">${t("longest")}</div></div>
+      <div class="card"><h3>${t("last7days")}</h3><div class="stat-big">${week_done}<span style="font-size:14px; color:var(--muted)"> / 7</span></div><div class="stat-label">${t("recent")}</div></div>
+    </div>
+
     <div class="card">
-      <div style="display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:12px; margin-bottom:14px;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:12px;">
         <h2 style="margin:0;">Dashboard <span style="color:var(--muted); font-weight:400; font-size:13px; font-family:'JetBrains Mono', monospace; margin-left:4px;">${days} days</span></h2>
-        <div style="color:var(--muted); font-size:11px; font-family:'JetBrains Mono', monospace; letter-spacing:0.05em;">
-          🔥 <span style="color:var(--accent); font-weight:600;">${agg.currentStreak}d</span> streak
-          &nbsp;·&nbsp; best <span style="color:var(--text);">${agg.bestStreak}d</span>
-          &nbsp;·&nbsp; 7d <span style="color:var(--text);">${week_done}/7</span>
-          &nbsp;·&nbsp; consistency <span style="color:var(--accent);">${consistency}%</span>
-        </div>
+        <p style="color:var(--muted); font-size:11px; margin:0; font-family:'JetBrains Mono', monospace;">
+          consistency <span style="color:var(--accent);">${consistency}%</span> (${cleanDaysDone}/${days})
+        </p>
       </div>
       <p style="color:var(--muted); font-size:11px; margin-bottom:10px; font-family:'JetBrains Mono', monospace;">
         <span style="display:inline-block;width:10px;height:10px;background:${COLORS.run};border-radius:50%;margin-right:4px;vertical-align:middle;"></span> Running
