@@ -236,7 +236,7 @@ const TRANSLATIONS = {
     noPrData: "기간 내 PR 데이터 없음", noData: "데이터 없음",
     daysUnit: "일", daysShort: "days", noRun: "no run", noLift: "no lift",
     bodyComp: "체성분", weight: "체중", bodyFatPct: "체지방률",
-    leanMass: "근육량", vo2max: "VO2 Max",
+    leanMass: "골격근량", vo2max: "VO2 Max",
     latest: "최근", change: "변화", noBodyData: "기간 내 데이터 없음",
     runMap: "러닝 지도", routes: "루트", noRoutes: "기간 내 루트 없음",
     restDay: "Rest day", runPlus: "Run + Lift",
@@ -258,7 +258,7 @@ const TRANSLATIONS = {
     noPrData: "No PR data in period", noData: "No data",
     daysUnit: "days", daysShort: "days", noRun: "no run", noLift: "no lift",
     bodyComp: "Body Composition", weight: "Weight", bodyFatPct: "Body Fat %",
-    leanMass: "Muscle Mass", vo2max: "VO2 Max",
+    leanMass: "Skeletal Muscle Mass", vo2max: "VO2 Max",
     latest: "Latest", change: "Change", noBodyData: "No data in period",
     runMap: "Run Map", routes: "routes", noRoutes: "No routes in period",
     restDay: "Rest day", runPlus: "Run + Lift",
@@ -784,10 +784,14 @@ function renderBody(agg) {
     const dt = parseDateOnly(d.date);
     return dt >= start && dt <= end;
   });
+  // Skeletal Muscle Mass = LeanBodyMass × ratio (calibrated to InBody 38.9 kg @ 2026-03-22)
+  const SMM_RATIO = 0.5737;
+  const smmData = (body.leanMass || []).map(d => ({...d, value: d.value * SMM_RATIO}));
+
   const series = {
     weight: { data: inRng(body.weight), label: t("weight"), unit: "kg", color: COLORS.run, betterDown: false },
     bodyFat: { data: inRng(body.bodyFat), label: t("bodyFatPct"), unit: "%", color: COLORS.lift, betterDown: true },
-    leanMass: { data: inRng(body.leanMass), label: t("leanMass"), unit: "kg", color: COLORS.accent, betterDown: false },
+    leanMass: { data: inRng(smmData), label: t("leanMass"), unit: "kg", color: COLORS.accent, betterDown: false },
     vo2max: { data: inRng(body.vo2max), label: t("vo2max"), unit: "mL/min·kg", color: "#22d3ee", betterDown: false },
   };
 
@@ -939,16 +943,12 @@ function renderMap(agg) {
     const map = L.map("map", {
       zoomControl: true,
       attributionControl: false,
-      worldCopyJump: false,
-      maxBoundsViscosity: 1.0,
+      worldCopyJump: true,
     }).setView([37.5, 127.0], 12);
-    map.setMaxBounds([[-90, -180], [90, 180]]);
     L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
       maxZoom: 19,
       minZoom: 2,
       subdomains: "abcd",
-      noWrap: true,
-      bounds: [[-90, -180], [90, 180]],
     }).addTo(map);
     L.control.attribution({position: "bottomright"}).addAttribution("© OSM · CARTO").addTo(map);
 
@@ -1022,8 +1022,9 @@ function renderConventions() {
     ],
     bodyHead: "BODY",
     bodyItems: [
-      "출처: OntoFit (스마트 체중계) + Apple Watch (VO2Max)",
-      "체중 / 체지방률 / 근육량 / VO2Max 시계열",
+      "출처: OntoFit / InBody (스마트 체중계) + Apple Watch (VO2Max)",
+      "체중 / 체지방률 / 골격근량 / VO2Max 시계열",
+      "골격근량 = Lean Body Mass × 0.5737 (InBody 38.9kg @ 2026-03-22 보정)",
       "Apple Health export 시점 기준 갱신",
     ],
     mapHead: "MAP",
@@ -1054,8 +1055,9 @@ function renderConventions() {
     ],
     bodyHead: "BODY",
     bodyItems: [
-      "Source: OntoFit (smart scale) + Apple Watch (VO2Max)",
-      "Weight / body fat % / muscle mass / VO2Max time series",
+      "Source: OntoFit / InBody (smart scale) + Apple Watch (VO2Max)",
+      "Weight / body fat % / skeletal muscle mass / VO2Max time series",
+      "Skeletal Muscle = Lean Body Mass × 0.5737 (calibrated to InBody 38.9kg @ 2026-03-22)",
       "Refreshed on Apple Health re-export",
     ],
     mapHead: "MAP",
