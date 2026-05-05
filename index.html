@@ -742,7 +742,7 @@ function renderHevy(agg) {
     : prList.slice(0, 12).map(([name, info]) =>
         `<div class="card" style="margin:0;"><h3>${name}</h3>
          <div class="stat-big">${info.maxWeight.toFixed(1)}<span style="font-size:14px; color:var(--muted)"> kg</span></div>
-         <div class="stat-label">PR · ${info.maxDate} · ${info.sessions} ${t("sessions").toLowerCase()}</div></div>`
+         <div class="stat-label">PR · <span class="lift-date-link" data-lift-date="${info.maxDate}" style="border-bottom: 1px dotted var(--accent); color: var(--accent);">${info.maxDate}</span> · ${info.sessions} ${t("sessions").toLowerCase()}</div></div>`
       ).join("");
 
   // Body part frequency from runs/lifts (simplified - use lift count)
