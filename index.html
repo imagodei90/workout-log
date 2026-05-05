@@ -149,8 +149,8 @@ h3 { font-size: 12px; font-weight: 500; color: var(--muted);
     </select>
   </label>
   <span id="customRange">
-    <label><span data-i18n="from">From</span> <input type="date" id="customFrom"></label>
-    <label><span data-i18n="to">To</span> <input type="date" id="customTo"></label>
+    <label><span data-i18n="from">From</span> <input type="date" id="customFrom" lang="en"></label>
+    <label><span data-i18n="to">To</span> <input type="date" id="customTo" lang="en"></label>
   </span>
 </div>
 
@@ -382,8 +382,15 @@ function renderHeatmap(agg) {
     let s = new Date(rangeStart);
     while (s.getDay() !== 1) s = addDays(s, -1); // Monday-start
     const cols = Math.ceil(((rangeEnd - s) / 86400000 + 1) / 7);
-    const w = cols * (cell + gap);
+    const labelW = 16;
+    const w = labelW + cols * (cell + gap);
     const h = 7 * (cell + gap) + 20;
+
+    // Weekday labels (MTWTFSS) on the left
+    const weekdayChars = ["M","T","W","T","F","S","S"];
+    const wdayLabels = weekdayChars.map((ch, idx) =>
+      `<text x="0" y="${idx*(cell+gap)+16+cell*0.75}" fill="${COLORS.muted}" font-size="9" font-family="JetBrains Mono, SF Mono, monospace" letter-spacing="0">${ch}</text>`
+    ).join("");
 
     const rects = [];
     const monthLabels = [];
@@ -396,7 +403,7 @@ function renderHeatmap(agg) {
         const iso = isoDate(cur);
         const data = byDay[iso] || {};
         const val = data[valueKey] || 0;
-        let fillColor = "#1a2138";
+        let fillColor = "rgba(255,255,255,0.04)";
         let opacity = 1;
         if (val > 0) {
           fillColor = color;
@@ -412,16 +419,16 @@ function renderHeatmap(agg) {
           secondary = val > 0 ? `${num(data.volume, 0)} ${t("kgVolume")}` : "";
         }
         const payload = JSON.stringify({date: `${iso} (${wd})`, primary, secondary}).replace(/"/g, "&quot;");
-        rects.push(`<rect x="${c*(cell+gap)}" y="${r*(cell+gap)+16}" width="${cell}" height="${cell}" rx="3" fill="${fillColor}" opacity="${opacity.toFixed(2)}" class="hcell" data-payload="${payload}"></rect>`);
+        rects.push(`<rect x="${labelW + c*(cell+gap)}" y="${r*(cell+gap)+16}" width="${cell}" height="${cell}" rx="3" fill="${fillColor}" opacity="${opacity.toFixed(2)}" class="hcell" data-payload="${payload}"></rect>`);
         cur = addDays(cur, 1);
       }
       // month label
       if (cur <= rangeEnd && cur.getMonth() !== lastMonth && cur.getDate() <= 7) {
-        monthLabels.push(`<text x="${c*(cell+gap)}" y="12" fill="${COLORS.muted}" font-size="10">${MONTH_NAMES[cur.getMonth()]}</text>`);
+        monthLabels.push(`<text x="${labelW + c*(cell+gap)}" y="12" fill="${COLORS.muted}" font-size="10">${MONTH_NAMES[cur.getMonth()]}</text>`);
         lastMonth = cur.getMonth();
       }
     }
-    return `<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg">${monthLabels.join("")}${rects.join("")}</svg>`;
+    return `<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg">${wdayLabels}${monthLabels.join("")}${rects.join("")}</svg>`;
   }
 
   function buildHeatmap(byDay, color, kind, valueKey) {
@@ -465,9 +472,11 @@ function renderHeatmap(agg) {
     const r = agg.runByDay[iso], l = agg.liftByDay[iso];
     const hasR = r && r.count > 0, hasL = l && l.sets > 0;
     let color, primary, secondary;
+    let extraStyle = "";
     if (hasR && hasL) {
-      color = COLORS.accent; primary = t("runPlus");
+      color = COLORS.lift; primary = t("runPlus");
       secondary = `${r.distance.toFixed(1)} km · ${l.sets} ${t("setsUnit")} (${num(l.volume, 0)} kg)`;
+      extraStyle = "box-shadow: 0 0 0 2px var(--text);";
     } else if (hasR) {
       color = COLORS.run; primary = `${r.distance.toFixed(2)} km`;
       secondary = `${r.count} ${t("runsUnit")} · ${Math.round(r.duration)} ${t("minUnit")}`;
@@ -475,10 +484,10 @@ function renderHeatmap(agg) {
       color = COLORS.lift; primary = `${l.sets} ${t("setsUnit")}`;
       secondary = `${num(l.volume, 0)} ${t("kgVolume")}`;
     } else {
-      color = "#1a2138"; primary = t("restDay"); secondary = "";
+      color = "rgba(255,255,255,0.04)"; primary = t("restDay"); secondary = "";
     }
     const payload = JSON.stringify({date: `${iso} (${wd})`, primary, secondary}).replace(/"/g, "&quot;");
-    dotsHtml.push(`<div class="hdot" data-payload="${payload}" style="width:14px; height:14px; border-radius:50%; background:${color};"></div>`);
+    dotsHtml.push(`<div class="hdot" data-payload="${payload}" style="width:14px; height:14px; border-radius:50%; background:${color}; ${extraStyle}"></div>`);
   }
   const cols = Math.min(53, Math.max(7, Math.ceil(Math.sqrt(days * 1.5))));
 
@@ -498,7 +507,6 @@ function renderHeatmap(agg) {
         </div>
       </div>
       <div style="overflow-x:auto;">${buildHeatmap(agg.runByDay, COLORS.run, "run", "distance")}</div>
-      <p style="color:var(--muted); font-size:11px; margin-top:8px;">${t("darkerMore")}</p>
     </div>
 
     <div class="card">
@@ -517,7 +525,7 @@ function renderHeatmap(agg) {
       <p style="color:var(--muted); font-size:13px; margin-bottom:12px;">
         <span style="display:inline-block;width:10px;height:10px;background:${COLORS.run};border-radius:50%;margin-right:4px;"></span> Running
         <span style="display:inline-block;width:10px;height:10px;background:${COLORS.lift};border-radius:50%;margin:0 4px 0 8px;"></span> Lifting
-        <span style="display:inline-block;width:10px;height:10px;background:${COLORS.accent};border-radius:50%;margin:0 4px 0 8px;"></span> Both
+        <span style="display:inline-block;width:10px;height:10px;background:${COLORS.lift};border-radius:50%;box-shadow:0 0 0 2px var(--text);margin:0 4px 0 12px;"></span> Both
       </p>
       <div style="display:grid; grid-template-columns:repeat(${cols}, 1fr); gap:3px;">${dotsHtml.join("")}</div>
       <p style="color:var(--muted); margin-top:14px; font-size:13px;">${t("consistency")}: <strong style="color:var(--accent)">${consistency}%</strong> (${cleanDaysDone}/${days} ${t("daysUnit")})</p>
@@ -619,9 +627,11 @@ function renderHabit(agg) {
     const r = agg.runByDay[iso], l = agg.liftByDay[iso];
     const hasR = r && r.count > 0, hasL = l && l.sets > 0;
     let color, primary, secondary;
+    let extraStyle = "";
     if (hasR && hasL) {
-      color = COLORS.accent; primary = t("runPlus");
+      color = COLORS.lift; primary = t("runPlus");
       secondary = `${r.distance.toFixed(1)} km · ${l.sets} ${t("setsUnit")} (${num(l.volume, 0)} kg)`;
+      extraStyle = "box-shadow: 0 0 0 2px var(--text);";
     } else if (hasR) {
       color = COLORS.run; primary = `${r.distance.toFixed(2)} km`;
       secondary = `${r.count} ${t("runsUnit")} · ${Math.round(r.duration)} ${t("minUnit")}`;
@@ -629,10 +639,10 @@ function renderHabit(agg) {
       color = COLORS.lift; primary = `${l.sets} ${t("setsUnit")}`;
       secondary = `${num(l.volume, 0)} ${t("kgVolume")}`;
     } else {
-      color = "#1a2138"; primary = t("restDay"); secondary = "";
+      color = "rgba(255,255,255,0.04)"; primary = t("restDay"); secondary = "";
     }
     const payload = JSON.stringify({date: `${iso} (${wd})`, primary, secondary}).replace(/"/g, "&quot;");
-    dotsHtml.push(`<div class="hdot" data-payload="${payload}" style="width:14px; height:14px; border-radius:50%; background:${color};"></div>`);
+    dotsHtml.push(`<div class="hdot" data-payload="${payload}" style="width:14px; height:14px; border-radius:50%; background:${color}; ${extraStyle}"></div>`);
   }
 
   const daysDone = agg.runDays + agg.liftDays - new Set([...Object.keys(agg.runByDay).filter(d => agg.liftByDay[d])]).size;
@@ -663,7 +673,7 @@ function renderHabit(agg) {
       <p style="color:var(--muted); font-size:13px; margin-bottom:12px;">
         <span style="display:inline-block;width:10px;height:10px;background:${COLORS.run};border-radius:50%;margin-right:4px;"></span> Running
         <span style="display:inline-block;width:10px;height:10px;background:${COLORS.lift};border-radius:50%;margin:0 4px 0 8px;"></span> Lifting
-        <span style="display:inline-block;width:10px;height:10px;background:${COLORS.accent};border-radius:50%;margin:0 4px 0 8px;"></span> Both
+        <span style="display:inline-block;width:10px;height:10px;background:${COLORS.lift};border-radius:50%;box-shadow:0 0 0 2px var(--text);margin:0 4px 0 12px;"></span> Both
       </p>
       <div style="display:grid; grid-template-columns:repeat(${cols}, 1fr); gap:3px;">${dotsHtml.join("")}</div>
       <p style="color:var(--muted); margin-top:14px; font-size:13px;">일관성: <strong style="color:var(--accent)">${consistency}%</strong> (${cleanDaysDone}/${days} 일)</p>
@@ -702,6 +712,12 @@ function refresh() {
   const view = document.getElementById("viewSelect").value;
   const range = document.getElementById("rangeSelect").value;
   const [start, end] = computeRange(range);
+
+  // Sync From/To inputs with computed range (unless user is editing custom)
+  if (range !== "custom") {
+    document.getElementById("customFrom").value = isoDate(start);
+    document.getElementById("customTo").value = isoDate(end);
+  }
 
   const customWrap = document.getElementById("customRange");
   customWrap.classList.toggle("disabled", range !== "custom");
@@ -755,8 +771,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const viewSel = document.getElementById("viewSelect");
   const rangeSel = document.getElementById("rangeSelect");
 
-  // Language: URL > localStorage > default ko
-  LANG = params.get("lang") || localStorage.getItem("dashboardLang") || "ko";
+  // Language: URL > localStorage > default en
+  LANG = params.get("lang") || localStorage.getItem("dashboardLang") || "en";
 
   viewSel.value = params.get("view") || "heatmap";
   rangeSel.value = params.get("range") || "all";
