@@ -69,11 +69,19 @@ h1 { font-size: 24px; margin-bottom: 8px; }
   color: #FF1A8C; font-family: "JetBrains Mono", monospace;
   font-size: 12px; font-weight: 600;
 }
+
+/* === Option 6 & 7: Wave / synchronized pulses === */
+@keyframes wave {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 26, 140, 0.5); }
+  50%      { box-shadow: 0 0 0 6px rgba(255, 26, 140, 0); }
+}
+#opt-6 .dot.wave { animation: wave 1.6s ease-out infinite; }
+#opt-7 .dot.wave { animation: wave 1.6s ease-out infinite; }
 </style>
 </head>
 <body>
 <h1>Streak design options</h1>
-<p class="subtitle">5가지 시각화 — dot grid와 streak이 자연스럽게 이어지는 느낌. 샘플: 60일 grid, 마지막 14일 = streak.</p>
+<p class="subtitle">7가지 시각화 — dot grid와 streak이 자연스럽게 이어지는 느낌. 샘플: 60일 grid, 마지막 14일 = streak.</p>
 
 
     <div class="option" id="opt-1">
@@ -159,8 +167,8 @@ h1 { font-size: 24px; margin-bottom: 8px; }
     
 
     <div class="option" id="opt-5">
-      <h2>Option 5 — Pulse + arrow</h2>
-      <p class="desc">오늘 dot이 부드럽게 펄스, 화살표가 그쪽을 가리킴. 동적, 주목도 ↑.</p>
+      <h2>Option 5 — Pulse on latest only</h2>
+      <p class="desc">오늘 dot 1개만 부드럽게 펄스. 가벼움, 주목도 ↑.</p>
       <div class="dashboard-card">
         <div class="dashboard-card-header">
           <h3>Dashboard <span style="color:#71717a; font-weight:400; font-size:12px; font-family:'JetBrains Mono',monospace;">60 days</span></h3>
@@ -172,6 +180,42 @@ h1 { font-size: 24px; margin-bottom: 8px; }
           <span class="swatch" style="background:#a3e635; margin-left:12px;"></span> Both
         </p>
         <div class="arrow-row">🔥 14 day streak →</div><div class="dot-grid"><div class="dot" style="background:#a3e635;"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:#fafafa;"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:#fafafa;"></div><div class="dot" style="background:#FF1A8C;"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:#fafafa;"></div><div class="dot" style="background:#FF1A8C;"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:#FF1A8C;"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:#fafafa;"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:#FF1A8C;"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:#FF1A8C;"></div><div class="dot" style="background:#a3e635;"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:#FF1A8C;"></div><div class="dot" style="background:#fafafa;"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:#fafafa;"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:#FF1A8C;"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:#fafafa;"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:#a3e635;"></div><div class="dot" style="background:#FF1A8C;"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:#fafafa;"></div><div class="dot" style="background:#FF1A8C;"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:#a3e635;"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:#fafafa;"></div><div class="dot" style="background:#FF1A8C;"></div><div class="dot" style="background:#fafafa;"></div><div class="dot" style="background:#FF1A8C;"></div><div class="dot" style="background:#a3e635;"></div><div class="dot" style="background:#FF1A8C;"></div><div class="dot" style="background:#fafafa;"></div><div class="dot" style="background:#FF1A8C;"></div><div class="dot" style="background:#fafafa;"></div><div class="dot" style="background:#FF1A8C;"></div><div class="dot" style="background:#fafafa;"></div><div class="dot" style="background:#a3e635;"></div><div class="dot" style="background:#fafafa;"></div><div class="dot" style="background:#FF1A8C;"></div><div class="dot pulse" style="background:#fafafa;"></div></div>
+      </div>
+    </div>
+    
+
+    <div class="option" id="opt-6">
+      <h2>Option 6 — Wave / ripple</h2>
+      <p class="desc">Streak 첫 dot부터 마지막 dot까지 펄스가 시간차로 퍼짐 (물결 효과). 부드럽고 흐름 자연스러움.</p>
+      <div class="dashboard-card">
+        <div class="dashboard-card-header">
+          <h3>Dashboard <span style="color:#71717a; font-weight:400; font-size:12px; font-family:'JetBrains Mono',monospace;">60 days</span></h3>
+          <span class="meta">consistency 65%</span>
+        </div>
+        <p class="legend">
+          <span class="swatch" style="background:#fafafa;"></span> Running
+          <span class="swatch" style="background:#FF1A8C; margin-left:12px;"></span> Lifting
+          <span class="swatch" style="background:#a3e635; margin-left:12px;"></span> Both
+        </p>
+        <div class="dot-grid"><div class="dot" style="background:#a3e635;"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:#fafafa;"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:#fafafa;"></div><div class="dot" style="background:#FF1A8C;"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:#fafafa;"></div><div class="dot" style="background:#FF1A8C;"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:#FF1A8C;"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:#fafafa;"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:#FF1A8C;"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:#FF1A8C;"></div><div class="dot" style="background:#a3e635;"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:#FF1A8C;"></div><div class="dot" style="background:#fafafa;"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:#fafafa;"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:#FF1A8C;"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:#fafafa;"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:#a3e635;"></div><div class="dot" style="background:#FF1A8C;"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:#fafafa;"></div><div class="dot" style="background:#FF1A8C;"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:#a3e635;"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:#fafafa;"></div><div class="dot wave" style="background:#FF1A8C; animation-delay: 0ms;"></div><div class="dot wave" style="background:#fafafa; animation-delay: 107ms;"></div><div class="dot wave" style="background:#FF1A8C; animation-delay: 215ms;"></div><div class="dot wave" style="background:#a3e635; animation-delay: 323ms;"></div><div class="dot wave" style="background:#FF1A8C; animation-delay: 430ms;"></div><div class="dot wave" style="background:#fafafa; animation-delay: 538ms;"></div><div class="dot wave" style="background:#FF1A8C; animation-delay: 646ms;"></div><div class="dot wave" style="background:#fafafa; animation-delay: 753ms;"></div><div class="dot wave" style="background:#FF1A8C; animation-delay: 861ms;"></div><div class="dot wave" style="background:#fafafa; animation-delay: 969ms;"></div><div class="dot wave" style="background:#a3e635; animation-delay: 1076ms;"></div><div class="dot wave" style="background:#fafafa; animation-delay: 1184ms;"></div><div class="dot wave" style="background:#FF1A8C; animation-delay: 1292ms;"></div><div class="dot wave" style="background:#fafafa; animation-delay: 1400ms;"></div></div>
+      </div>
+    </div>
+    
+
+    <div class="option" id="opt-7">
+      <h2>Option 7 — All streak pulse (sync)</h2>
+      <p class="desc">Streak 모든 dot이 동시에 펄스. 강한 강조지만 시각적으로 다소 분주함.</p>
+      <div class="dashboard-card">
+        <div class="dashboard-card-header">
+          <h3>Dashboard <span style="color:#71717a; font-weight:400; font-size:12px; font-family:'JetBrains Mono',monospace;">60 days</span></h3>
+          <span class="meta">consistency 65%</span>
+        </div>
+        <p class="legend">
+          <span class="swatch" style="background:#fafafa;"></span> Running
+          <span class="swatch" style="background:#FF1A8C; margin-left:12px;"></span> Lifting
+          <span class="swatch" style="background:#a3e635; margin-left:12px;"></span> Both
+        </p>
+        <div class="dot-grid"><div class="dot" style="background:#a3e635;"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:#fafafa;"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:#fafafa;"></div><div class="dot" style="background:#FF1A8C;"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:#fafafa;"></div><div class="dot" style="background:#FF1A8C;"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:#FF1A8C;"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:#fafafa;"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:#FF1A8C;"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:#FF1A8C;"></div><div class="dot" style="background:#a3e635;"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:#FF1A8C;"></div><div class="dot" style="background:#fafafa;"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:#fafafa;"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:#FF1A8C;"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:#fafafa;"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:#a3e635;"></div><div class="dot" style="background:#FF1A8C;"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:#fafafa;"></div><div class="dot" style="background:#FF1A8C;"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:#a3e635;"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:rgba(255,255,255,0.04);"></div><div class="dot" style="background:#fafafa;"></div><div class="dot wave" style="background:#FF1A8C;"></div><div class="dot wave" style="background:#fafafa;"></div><div class="dot wave" style="background:#FF1A8C;"></div><div class="dot wave" style="background:#a3e635;"></div><div class="dot wave" style="background:#FF1A8C;"></div><div class="dot wave" style="background:#fafafa;"></div><div class="dot wave" style="background:#FF1A8C;"></div><div class="dot wave" style="background:#fafafa;"></div><div class="dot wave" style="background:#FF1A8C;"></div><div class="dot wave" style="background:#fafafa;"></div><div class="dot wave" style="background:#a3e635;"></div><div class="dot wave" style="background:#fafafa;"></div><div class="dot wave" style="background:#FF1A8C;"></div><div class="dot wave" style="background:#fafafa;"></div></div>
       </div>
     </div>
     
