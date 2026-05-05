@@ -665,10 +665,22 @@ function renderHeatmap(agg) {
   const cols = Math.min(53, Math.max(7, Math.ceil(Math.sqrt(days * 1.5))));
 
   return `
-    <div class="grid grid-3">
-      <div class="card"><h3>${t("currentStreak")}</h3><div class="stat-big" style="color:var(--accent);">${agg.currentStreak}<span style="font-size:14px; color:var(--muted)"> ${t("daysShort")}</span></div><div class="stat-label">${t("consecutive")}</div></div>
-      <div class="card"><h3>${t("bestStreak")}</h3><div class="stat-big">${agg.bestStreak}<span style="font-size:14px; color:var(--muted)"> ${t("daysShort")}</span></div><div class="stat-label">${t("longest")}</div></div>
-      <div class="card"><h3>${t("last7days")}</h3><div class="stat-big">${week_done}<span style="font-size:14px; color:var(--muted)"> / 7</span></div><div class="stat-label">${t("recent")}</div></div>
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:12px; margin-bottom:14px;">
+        <h2 style="margin:0;">Dashboard <span style="color:var(--muted); font-weight:400; font-size:13px; font-family:'JetBrains Mono', monospace; margin-left:4px;">${days} days</span></h2>
+        <div style="color:var(--muted); font-size:11px; font-family:'JetBrains Mono', monospace; letter-spacing:0.05em;">
+          🔥 <span style="color:var(--accent); font-weight:600;">${agg.currentStreak}d</span> streak
+          &nbsp;·&nbsp; best <span style="color:var(--text);">${agg.bestStreak}d</span>
+          &nbsp;·&nbsp; 7d <span style="color:var(--text);">${week_done}/7</span>
+          &nbsp;·&nbsp; consistency <span style="color:var(--accent);">${consistency}%</span>
+        </div>
+      </div>
+      <p style="color:var(--muted); font-size:11px; margin-bottom:10px; font-family:'JetBrains Mono', monospace;">
+        <span style="display:inline-block;width:10px;height:10px;background:${COLORS.run};border-radius:50%;margin-right:4px;vertical-align:middle;"></span> Running
+        <span style="display:inline-block;width:10px;height:10px;background:${COLORS.lift};border-radius:50%;margin:0 4px 0 12px;vertical-align:middle;"></span> Lifting
+        <span style="display:inline-block;width:10px;height:10px;background:${COLORS.lift};border-radius:50%;box-shadow:0 0 0 2px var(--text);margin:0 4px 0 14px;vertical-align:middle;"></span> Both
+      </p>
+      <div style="display:grid; grid-template-columns:repeat(${cols}, 1fr); gap:3px;">${dotsHtml.join("")}</div>
     </div>
 
     <div class="card">
@@ -691,17 +703,6 @@ function renderHeatmap(agg) {
         </div>
       </div>
       <div style="overflow-x:auto;">${buildHeatmap(agg.liftByDay, COLORS.lift, "lift", "sets")}</div>
-    </div>
-
-    <div class="card">
-      <h2>${t("activityOverview")} (${days}${t("periodDays")})</h2>
-      <p style="color:var(--muted); font-size:13px; margin-bottom:12px;">
-        <span style="display:inline-block;width:10px;height:10px;background:${COLORS.run};border-radius:50%;margin-right:4px;"></span> Running
-        <span style="display:inline-block;width:10px;height:10px;background:${COLORS.lift};border-radius:50%;margin:0 4px 0 8px;"></span> Lifting
-        <span style="display:inline-block;width:10px;height:10px;background:${COLORS.lift};border-radius:50%;box-shadow:0 0 0 2px var(--text);margin:0 4px 0 12px;"></span> Both
-      </p>
-      <div style="display:grid; grid-template-columns:repeat(${cols}, 1fr); gap:3px;">${dotsHtml.join("")}</div>
-      <p style="color:var(--muted); margin-top:14px; font-size:13px;">${t("consistency")}: <strong style="color:var(--accent)">${consistency}%</strong> (${cleanDaysDone}/${days} ${t("daysUnit")})</p>
     </div>`;
 }
 
