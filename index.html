@@ -155,6 +155,7 @@ h3 { font-size: 12px; font-weight: 500; color: var(--muted);
 </div>
 
 <div id="content"></div>
+<div id="conventions"></div>
 <div id="hovertip"></div>
 <div class="footer"><span data-i18n="autoRefresh">매일 자동 갱신</span> · 2026-05-05</div>
 
@@ -728,6 +729,67 @@ function bindTooltips() {
   });
 }
 
+function renderConventions() {
+  const KO = {
+    title: "기록 기준",
+    runHead: "RUNNING",
+    runItems: [
+      "2025-04-05부터 기록 (이전 데이터 archive)",
+      "출처: Nike Run Club · Apple Watch · Strava (Apple Health 통합)",
+      "중복 제거: 5분 + 20% 거리 유사 시 같은 운동 → duration 낮은 것 유지",
+      "0.5km 미만 / 거리 누락 / Apple Watch가 NRC와 겹치는 row archive",
+      "세션 카운트: 같은 날 3시간 이상 간격이면 별개 세션",
+    ],
+    liftHead: "LIFTING",
+    liftItems: [
+      "2023-07-16부터 기록",
+      "출처: Fleek (텍스트 paste)",
+      "1 row = 1 세트 (한 워크아웃 = 여러 행)",
+      "볼륨 = 무게 × 횟수",
+      "1RM 추정: Epley 공식",
+    ],
+  };
+  const EN = {
+    title: "Data Conventions",
+    runHead: "RUNNING",
+    runItems: [
+      "Tracked since 2025-04-05",
+      "Sources: Nike Run Club · Apple Watch · Strava (via Apple Health)",
+      "Dedup: same run within 5min + 20% distance → keep lower duration",
+      "Cleanup: <0.5km, missing distance, AW-overlapping-NRC rows archived",
+      "Sessions: 3h+ gap on same day = separate session",
+    ],
+    liftHead: "LIFTING",
+    liftItems: [
+      "Tracked since 2023-07-16",
+      "Source: Fleek (text paste)",
+      "1 row = 1 set (one workout = many rows)",
+      "Volume = weight × reps",
+      "1RM Est: Epley formula",
+    ],
+  };
+  const c = LANG === "ko" ? KO : EN;
+  const renderItems = items => items.map(i => `<li style="padding-left:14px; text-indent:-14px;">·  ${i}</li>`).join("");
+  return `
+    <div class="card conventions">
+      <div style="color:var(--muted); font-size:10px; letter-spacing:0.18em; text-transform:uppercase; margin-bottom:14px;">${c.title}</div>
+      <div class="grid grid-2" style="gap:24px;">
+        <div>
+          <div style="color:var(--text); font-size:11px; font-weight:600; letter-spacing:0.1em; margin-bottom:10px; font-family:'JetBrains Mono', monospace;">${c.runHead}</div>
+          <ul style="list-style:none; padding:0; margin:0; color:var(--muted); font-size:11px; line-height:1.8;">
+            ${renderItems(c.runItems)}
+          </ul>
+        </div>
+        <div>
+          <div style="color:var(--text); font-size:11px; font-weight:600; letter-spacing:0.1em; margin-bottom:10px; font-family:'JetBrains Mono', monospace;">${c.liftHead}</div>
+          <ul style="list-style:none; padding:0; margin:0; color:var(--muted); font-size:11px; line-height:1.8;">
+            ${renderItems(c.liftItems)}
+          </ul>
+        </div>
+      </div>
+    </div>`;
+}
+
 function refresh() {
   const view = document.getElementById("viewSelect").value;
   const range = document.getElementById("rangeSelect").value;
@@ -745,6 +807,7 @@ function refresh() {
   const agg = aggregate(DATA.runs, DATA.lifts, start, end);
   const html = VIEWS[view](agg);
   document.getElementById("content").innerHTML = html;
+  document.getElementById("conventions").innerHTML = renderConventions();
   bindTooltips();
 
   // Update URL state
