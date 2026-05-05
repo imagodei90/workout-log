@@ -77,6 +77,7 @@ h3 { font-size: 12px; font-weight: 500; color: var(--muted);
   border-radius: 8px; padding: 18px; margin-bottom: 14px;
 }
 .grid { display: grid; gap: 14px; }
+.grid-4 { grid-template-columns: repeat(4, 1fr); }
 .grid-3 { grid-template-columns: repeat(3, 1fr); }
 .grid-2 { grid-template-columns: repeat(2, 1fr); }
 .stat-big {
@@ -242,7 +243,7 @@ const TRANSLATIONS = {
     noPrData: "기간 내 PR 데이터 없음", noData: "데이터 없음",
     daysUnit: "일", daysShort: "days", noRun: "no run", noLift: "no lift",
     bodyComp: "체성분", weight: "체중", bodyFatPct: "체지방률",
-    leanMass: "골격근량", vo2max: "VO2 Max",
+    leanMass: "골격근량", vo2max: "VO2 Max", visceralFat: "내장지방",
     latest: "최근", change: "변화", noBodyData: "기간 내 데이터 없음",
     runMap: "러닝 지도", routes: "루트", noRoutes: "기간 내 루트 없음",
     restDay: "Rest day", runPlus: "Run + Lift",
@@ -264,7 +265,7 @@ const TRANSLATIONS = {
     noPrData: "No PR data in period", noData: "No data",
     daysUnit: "days", daysShort: "days", noRun: "no run", noLift: "no lift",
     bodyComp: "Body Composition", weight: "Weight", bodyFatPct: "Body Fat %",
-    leanMass: "Skeletal Muscle Mass", vo2max: "VO2 Max",
+    leanMass: "Skeletal Muscle Mass", vo2max: "VO2 Max", visceralFat: "Visceral Fat",
     latest: "Latest", change: "Change", noBodyData: "No data in period",
     runMap: "Run Map", routes: "routes", noRoutes: "No routes in period",
     restDay: "Rest day", runPlus: "Run + Lift",
@@ -882,11 +883,18 @@ function renderBody(agg) {
   lbmEstimates.sort((a, b) => a.date.localeCompare(b.date));
   const smmData = lbmEstimates;
 
+  // Visceral fat from InBody readings only
+  const visceralData = (DATA.inbody || [])
+    .filter(r => r.visceralFat !== undefined && r.visceralFat !== null)
+    .map(r => ({date: r.date, value: r.visceralFat, source: "InBody"}))
+    .sort((a, b) => a.date.localeCompare(b.date));
+
   const series = {
     weight: { data: inRng(body.weight), label: t("weight"), unit: "kg", color: COLORS.run, betterDown: false },
     bodyFat: { data: inRng(body.bodyFat), label: t("bodyFatPct"), unit: "%", color: COLORS.lift, betterDown: true },
     leanMass: { data: inRng(smmData), label: t("leanMass"), unit: "kg", color: COLORS.accent, betterDown: false },
     vo2max: { data: inRng(body.vo2max), label: t("vo2max"), unit: "mL/min·kg", color: "#22d3ee", betterDown: false },
+    visceral: { data: inRng(visceralData), label: t("visceralFat"), unit: "lvl", color: "#a855f7", betterDown: true },
   };
 
   function lineChart(points, color) {
@@ -1013,14 +1021,14 @@ function renderBody(agg) {
   }
 
   // Smaller cards for the rest
-  const smallSeries = [series.bodyFat, series.weight, series.vo2max];
+  const smallSeries = [series.bodyFat, series.weight, series.vo2max, series.visceral];
   const smallCards = smallSeries.map(smallCard).join("");
   const smallCharts = smallSeries.map(chartCard).join("");
 
   return `
     <h2>${t("bodyComp")}</h2>
     ${heroHtml}
-    <div class="grid grid-3">${smallCards}</div>
+    <div class="grid grid-4">${smallCards}</div>
     ${smallCharts}`;
 }
 
