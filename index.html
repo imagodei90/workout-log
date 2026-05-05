@@ -214,6 +214,10 @@ const TRANSLATIONS = {
 let LANG = "ko";
 function t(key) { return (TRANSLATIONS[LANG] || TRANSLATIONS.ko)[key] || key; }
 
+// Tracked-since dates for header labels
+const RUN_TRACKED_SINCE = "2025-04-05";
+const LIFT_TRACKED_SINCE = "2023-07-16";
+
 // === Utilities ===
 function parseDateOnly(s) {
   // Accepts "YYYY-MM-DD" or full ISO; returns Date at local midnight (or original time)
@@ -500,7 +504,7 @@ function renderHeatmap(agg) {
 
     <div class="card">
       <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:12px;">
-        <div><span class="pill-run">RUNNING</span><h2 style="margin-top:4px;">${t("intensityHeatmap")}</h2></div>
+        <div><span class="pill-run">RUNNING</span><span style="color:var(--muted); font-size:11px; margin-left:8px; font-family: 'JetBrains Mono', monospace;">since ${RUN_TRACKED_SINCE}</span><h2 style="margin-top:4px;">${t("intensityHeatmap")}</h2></div>
         <div style="text-align:right;">
           <div class="stat-big" style="font-size:26px; color:var(--run);">${tr.distance.toFixed(0)}<span style="font-size:14px; color:var(--muted)"> km</span></div>
           <div class="stat-label">${tr.count} ${t("runsUnit")} · ${num(tr.duration, 0)} ${t("minUnit")}</div>
@@ -511,7 +515,7 @@ function renderHeatmap(agg) {
 
     <div class="card">
       <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:12px;">
-        <div><span class="pill-lift">LIFTING</span><h2 style="margin-top:4px;">${t("intensityHeatmap")}</h2></div>
+        <div><span class="pill-lift">LIFTING</span><span style="color:var(--muted); font-size:11px; margin-left:8px; font-family: 'JetBrains Mono', monospace;">since ${LIFT_TRACKED_SINCE}</span><h2 style="margin-top:4px;">${t("intensityHeatmap")}</h2></div>
         <div style="text-align:right;">
           <div class="stat-big" style="font-size:26px; color:var(--lift);">${tl.sessions}<span style="font-size:14px; color:var(--muted)"> ${t("sessions").toLowerCase()}</span></div>
           <div class="stat-label">${tl.sets} ${t("setsUnit")} · ${num(tl.volume, 0)} kg</div>
