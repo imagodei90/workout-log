@@ -83,18 +83,40 @@ h3 { font-size: 12px; font-weight: 500; color: var(--muted);
   font-feature-settings: "tnum";
 }
 .stat-label { color: var(--muted); font-size: 12px; margin-top: 4px; }
+.pill-run, .pill-lift, .label-mono {
+  font-family: "JetBrains Mono", "SF Mono", monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
 .pill-run {
   background: var(--run-dim); color: var(--run);
   padding: 2px 10px; border-radius: 10px; font-size: 10px;
-  font-family: "JetBrains Mono", monospace;
-  text-transform: uppercase; letter-spacing: 0.1em;
 }
 .pill-lift {
   background: var(--lift-dim); color: var(--lift);
   padding: 2px 10px; border-radius: 10px; font-size: 10px;
-  font-family: "JetBrains Mono", monospace;
-  text-transform: uppercase; letter-spacing: 0.1em;
 }
+.label-mono {
+  color: var(--text); font-size: 11px; font-weight: 600;
+  display: block; margin-bottom: 10px;
+}
+
+details.conventions-toggle {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 8px; padding: 14px 18px; margin-bottom: 14px;
+}
+details.conventions-toggle > summary {
+  cursor: pointer; user-select: none; list-style: none;
+  color: var(--muted); font-size: 10px; letter-spacing: 0.18em;
+  text-transform: uppercase; font-family: "JetBrains Mono", monospace;
+  display: flex; align-items: center; justify-content: space-between;
+}
+details.conventions-toggle > summary::-webkit-details-marker { display: none; }
+details.conventions-toggle > summary::after {
+  content: "+"; font-size: 16px; transition: transform 0.2s;
+}
+details.conventions-toggle[open] > summary::after { content: "−"; }
+details.conventions-toggle[open] > .conv-body { margin-top: 16px; }
 
 .hcell { cursor: pointer; transition: stroke 0.1s; }
 .hcell:hover { stroke: var(--text); stroke-width: 1.5; }
@@ -189,7 +211,7 @@ const TRANSLATIONS = {
     noPrData: "기간 내 PR 데이터 없음", noData: "데이터 없음",
     daysUnit: "일", daysShort: "days", noRun: "no run", noLift: "no lift",
     bodyComp: "체성분", weight: "체중", bodyFatPct: "체지방률",
-    leanMass: "제지방량", vo2max: "VO2 Max",
+    leanMass: "근육량", vo2max: "VO2 Max",
     latest: "최근", change: "변화", noBodyData: "기간 내 데이터 없음",
     restDay: "Rest day", runPlus: "Run + Lift",
     runsUnit: "runs", minUnit: "min", kgVolume: "kg volume",
@@ -210,7 +232,7 @@ const TRANSLATIONS = {
     noPrData: "No PR data in period", noData: "No data",
     daysUnit: "days", daysShort: "days", noRun: "no run", noLift: "no lift",
     bodyComp: "Body Composition", weight: "Weight", bodyFatPct: "Body Fat %",
-    leanMass: "Lean Mass", vo2max: "VO2 Max",
+    leanMass: "Muscle Mass", vo2max: "VO2 Max",
     latest: "Latest", change: "Change", noBodyData: "No data in period",
     restDay: "Rest day", runPlus: "Run + Lift",
     runsUnit: "runs", minUnit: "min", kgVolume: "kg volume",
@@ -254,9 +276,16 @@ function computeRange(rangeKey) {
   today.setHours(23,59,59,999);
   switch(rangeKey) {
     case "all": {
-      // earliest = min date across DATA
+      // earliest = min date across all data types (runs, lifts, body)
       let earliest = today;
-      for (const r of DATA.runs.concat(DATA.lifts)) {
+      const allEntries = [
+        ...DATA.runs, ...DATA.lifts,
+        ...((DATA.body && DATA.body.weight) || []),
+        ...((DATA.body && DATA.body.bodyFat) || []),
+        ...((DATA.body && DATA.body.leanMass) || []),
+        ...((DATA.body && DATA.body.vo2max) || []),
+      ];
+      for (const r of allEntries) {
         const d = parseDateOnly(r.date);
         if (d < earliest) earliest = d;
       }
@@ -782,32 +811,67 @@ function renderBody(agg) {
     return `<span style="color:${color}; font-family:'JetBrains Mono', monospace;">${sign}${diff.toFixed(1)}</span>`;
   }
 
-  const cards = Object.values(series).map(s => {
+  function smallCard(s) {
     if (s.data.length === 0) {
       return `<div class="card"><h3>${s.label}</h3><div class="stat-big" style="color:var(--muted); font-size:24px;">—</div></div>`;
     }
     const latest = s.data[s.data.length - 1];
     return `<div class="card">
       <h3>${s.label}</h3>
-      <div class="stat-big" style="color:${s.color};">${latest.value.toFixed(1)}<span style="font-size:14px; color:var(--muted)"> ${s.unit}</span></div>
-      <div class="stat-label">${t("latest")} ${latest.date} · ${t("change")} ${changeIndicator(s.data, s.betterDown)} ${s.unit}</div>
+      <div class="stat-big" style="color:${s.color}; font-size:26px;">${latest.value.toFixed(1)}<span style="font-size:13px; color:var(--muted)"> ${s.unit}</span></div>
+      <div class="stat-label">${t("latest")} ${latest.date} · ${changeIndicator(s.data, s.betterDown)} ${s.unit}</div>
     </div>`;
-  }).join("");
+  }
 
-  const charts = Object.values(series).map(s =>
-    `<div class="card">
+  function chartCard(s) {
+    return `<div class="card">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
         <h3 style="margin:0;">${s.label}</h3>
         <span style="color:var(--muted); font-size:11px; font-family:'JetBrains Mono', monospace;">${s.data.length} pts</span>
       </div>
       <div style="overflow-x:auto;">${lineChart(s.data, s.color)}</div>
-    </div>`
-  ).join("");
+    </div>`;
+  }
+
+  // Hero: muscle mass card with embedded chart
+  const m = series.leanMass;
+  let heroHtml = "";
+  if (m.data.length > 0) {
+    const latest = m.data[m.data.length-1];
+    const earliest = m.data[0];
+    const diff = latest.value - earliest.value;
+    const diffSign = diff > 0 ? "+" : "";
+    const diffColor = diff > 0 ? COLORS.accent : "#f87171";
+    heroHtml = `
+      <div class="card" style="background: linear-gradient(135deg, var(--card) 0%, ${COLORS.lift}10 100%); border-color: ${COLORS.accent}40;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
+          <div>
+            <span class="label-mono" style="color:var(--accent);">${m.label}</span>
+            <div style="font-family:'JetBrains Mono', monospace; font-size:48px; font-weight:500; letter-spacing:-0.04em; color:var(--accent); line-height:1; margin-top:4px;">
+              ${latest.value.toFixed(1)}<span style="font-size:18px; color:var(--muted)"> kg</span>
+            </div>
+            <div class="stat-label" style="margin-top:8px;">
+              ${earliest.date} → ${latest.date} ·
+              <span style="color:${diffColor}; font-family:'JetBrains Mono', monospace;">${diffSign}${diff.toFixed(1)} kg</span>
+            </div>
+          </div>
+        </div>
+        <div style="overflow-x:auto;">${lineChart(m.data, COLORS.accent)}</div>
+      </div>`;
+  } else {
+    heroHtml = `<div class="card"><h3>${m.label}</h3><p style="color:var(--muted)">${t("noBodyData")}</p></div>`;
+  }
+
+  // Smaller cards for the rest
+  const smallSeries = [series.bodyFat, series.weight, series.vo2max];
+  const smallCards = smallSeries.map(smallCard).join("");
+  const smallCharts = smallSeries.map(chartCard).join("");
 
   return `
     <h2>${t("bodyComp")}</h2>
-    <div class="grid grid-2">${cards}</div>
-    ${charts}`;
+    ${heroHtml}
+    <div class="grid grid-3">${smallCards}</div>
+    ${smallCharts}`;
 }
 
 const VIEWS = { heatmap: renderHeatmap, strava: renderStrava, hevy: renderHevy, body: renderBody };
@@ -889,29 +953,29 @@ function renderConventions() {
   const c = LANG === "ko" ? KO : EN;
   const renderItems = items => items.map(i => `<li style="padding-left:14px; text-indent:-14px;">·  ${i}</li>`).join("");
   return `
-    <div class="card conventions">
-      <div style="color:var(--muted); font-size:10px; letter-spacing:0.18em; text-transform:uppercase; margin-bottom:14px;">${c.title}</div>
-      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:24px;">
+    <details class="conventions-toggle">
+      <summary>${c.title}</summary>
+      <div class="conv-body" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:24px;">
         <div>
-          <div style="color:var(--text); font-size:11px; font-weight:600; letter-spacing:0.1em; margin-bottom:10px; font-family:'JetBrains Mono', monospace;">${c.runHead}</div>
+          <span class="label-mono">${c.runHead}</span>
           <ul style="list-style:none; padding:0; margin:0; color:var(--muted); font-size:11px; line-height:1.8;">
             ${renderItems(c.runItems)}
           </ul>
         </div>
         <div>
-          <div style="color:var(--text); font-size:11px; font-weight:600; letter-spacing:0.1em; margin-bottom:10px; font-family:'JetBrains Mono', monospace;">${c.liftHead}</div>
+          <span class="label-mono">${c.liftHead}</span>
           <ul style="list-style:none; padding:0; margin:0; color:var(--muted); font-size:11px; line-height:1.8;">
             ${renderItems(c.liftItems)}
           </ul>
         </div>
         <div>
-          <div style="color:var(--text); font-size:11px; font-weight:600; letter-spacing:0.1em; margin-bottom:10px; font-family:'JetBrains Mono', monospace;">${c.bodyHead}</div>
+          <span class="label-mono">${c.bodyHead}</span>
           <ul style="list-style:none; padding:0; margin:0; color:var(--muted); font-size:11px; line-height:1.8;">
             ${renderItems(c.bodyItems)}
           </ul>
         </div>
       </div>
-    </div>`;
+    </details>`;
 }
 
 function refresh() {
