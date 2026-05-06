@@ -267,8 +267,7 @@ details.conventions-toggle[open] > .conv-body { margin-top: 16px; }
   <label><span data-i18n="view">보기</span>
     <select id="viewSelect">
       <option value="heatmap">Heatmap</option>
-      <option value="pr">PR</option>
-      <option value="strava">Strava</option>
+      <option value="pr">PR</option><option value="trends">Trends</option>
       <option value="body">Body</option>
       <option value="map">Map</option>
     </select>
@@ -1054,10 +1053,10 @@ function renderPR(agg) {
     info.isBig7 = !!info.bigKey;
   }
 
-  // Big 7 PRs (max across all matching exercise variants)
+  // Big 7 PRs (max across all matching exercise variants — within selected period)
   const big7Order = ["SQUAT","BENCH","DEADLIFT","OHP","BB ROW","PULL-UP","DIP"];
   const big7PRs = {};
-  for (const k of big7Order) big7PRs[k] = {weight:0, vol:0, total:0, date:"", name:""};
+  for (const k of big7Order) big7PRs[k] = {weight:0, vol:0, total:0, date:"", name:"", prevWeight:0, prevDate:""};
   for (const [name, info] of exStats) {
     if (!info.bigKey) continue;
     const k = info.bigKey;
@@ -1069,47 +1068,66 @@ function renderPR(agg) {
       big7PRs[k].name = name;
     }
   }
+  // For each Big 7 key, find best weight in DATA.lifts BEFORE current period start (for change indicator)
+  const periodStartIso = isoDate(agg.rangeStart);
+  for (const l of (DATA.lifts || [])) {
+    const k = findBigMatch(l.exercise || "", BIG7_PATTERNS);
+    if (!k) continue;
+    const d = dateOnly(l.date);
+    if (d >= periodStartIso) continue;  // only "before" period
+    const w = l.weight || 0;
+    if (w > big7PRs[k].prevWeight) {
+      big7PRs[k].prevWeight = w;
+      big7PRs[k].prevDate = d;
+    }
+  }
   const big3Total = ["SQUAT","BENCH","DEADLIFT"].reduce((s, k) => s + big7PRs[k].weight, 0);
 
-  // Radar
-  const cx = 120, cy = 120, R = 90;
-  const angDeg = {};
-  big7Order.forEach((k, i) => angDeg[k] = -90 + i * (360 / big7Order.length));
-  const radarMetric = sortMetric === 'weight' ? 'weight' : (sortMetric === 'volume' ? 'vol' : 'total');
-  const maxV = Math.max(...big7Order.map(k => big7PRs[k][radarMetric]), 1);
-  const points = big7Order.map(k => {
-    const r = big7PRs[k][radarMetric] / maxV * R;
-    const a = angDeg[k] * Math.PI / 180;
-    return [cx + r * Math.cos(a), cy + r * Math.sin(a)];
-  });
-  const polygon = points.map(p => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" ");
-  const dotsSvg = points.map(p => `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3" fill="${COLORS.lift}"/>`).join("");
-  const grids = [25, 50, 75, 90].map(r => `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>`).join("");
-  const spokes = big7Order.map(k => {
-    const a = angDeg[k] * Math.PI / 180;
-    const x = cx + R * Math.cos(a);
-    const y = cy + R * Math.sin(a);
-    return `<line x1="${cx}" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="rgba(255,255,255,0.06)"/>`;
-  }).join("");
-  const labelSvg = big7Order.map(k => {
-    const a = angDeg[k] * Math.PI / 180;
-    const lr = R + 16;
-    const x = cx + lr * Math.cos(a);
-    const y = cy + lr * Math.sin(a) + 3;
-    const anchor = Math.abs(Math.cos(a)) < 0.3 ? "middle" : (Math.cos(a) > 0 ? "start" : "end");
-    return `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" fill="var(--muted)" font-size="9" text-anchor="${anchor}" font-family="JetBrains Mono">${k}</text>`;
-  }).join("");
+  // Latest body weight for BW ratio
+  let bodyWeight = 0;
+  if (DATA.body && DATA.body.weight && DATA.body.weight.length > 0) {
+    const sorted = [...DATA.body.weight].sort((a,b) => a.date.localeCompare(b.date));
+    bodyWeight = sorted[sorted.length - 1].value;
+  }
+  const bwRatio = bodyWeight > 0 && big3Total > 0 ? big3Total / bodyWeight : 0;
 
-  // Big 3 list HTML
-  const big3Html = ["SQUAT","BENCH","DEADLIFT"].map(k => {
-    const p = big7PRs[k];
-    let v = "—";
-    if (sortMetric === 'weight' && p.weight > 0)  v = `${p.weight.toFixed(1)} kg`;
-    else if (sortMetric === 'volume' && p.vol > 0) v = `${num(p.vol, 0)} kg`;
-    else if (sortMetric === 'totalVolume' && p.total > 0) v = `${num(p.total, 0)} kg`;
-    else if (p.weight > 0) v = `${p.weight.toFixed(1)} kg`;
-    return `<div style="display:flex; justify-content:space-between; align-items:baseline; padding:8px 0; border-bottom:1px solid var(--border);"><span style="font-family:'JetBrains Mono', monospace; color:var(--muted); font-size:11px; letter-spacing:0.05em;">${k}</span><span style="font-family:'JetBrains Mono', monospace; color:var(--text); font-size:14px;">${v}</span></div>`;
-  }).join("");
+  // Helper to build a PR row
+  function prRowHtml(label, p) {
+    if (!p.weight || p.weight <= 0) {
+      return `<div style="display:flex; justify-content:space-between; align-items:baseline; padding:10px 0; border-bottom:1px solid var(--border);">
+        <div><div style="font-family:'JetBrains Mono', monospace; color:var(--muted); font-size:11px; letter-spacing:0.05em;">${label}</div></div>
+        <div style="text-align:right;"><div style="font-family:'JetBrains Mono', monospace; color:var(--muted); font-size:13px;">— no data</div></div>
+      </div>`;
+    }
+    let changeHtml = "";
+    if (p.prevWeight === 0) {
+      changeHtml = `<div style="font-family:'JetBrains Mono', monospace; color:var(--muted); font-size:10px;">first record</div>`;
+    } else {
+      const diff = p.weight - p.prevWeight;
+      const prevMonth = p.prevDate ? new Date(p.prevDate + "T00:00:00") : null;
+      const prevLabel = prevMonth ? MONTH_NAMES[prevMonth.getMonth()] + " " + String(prevMonth.getFullYear()).slice(2) : "";
+      if (Math.abs(diff) < 0.05) {
+        changeHtml = `<div style="font-family:'JetBrains Mono', monospace; color:var(--muted); font-size:10px;">= unchanged</div>`;
+      } else if (diff > 0) {
+        changeHtml = `<div style="font-family:'JetBrains Mono', monospace; color:#84cc16; font-size:10px;">↑ +${diff.toFixed(1)}kg vs ${prevLabel}</div>`;
+      } else {
+        changeHtml = `<div style="font-family:'JetBrains Mono', monospace; color:#f43f5e; font-size:10px;">↓ ${diff.toFixed(1)}kg vs ${prevLabel}</div>`;
+      }
+    }
+    return `<div style="display:flex; justify-content:space-between; align-items:baseline; padding:10px 0; border-bottom:1px solid var(--border);">
+      <div>
+        <div style="font-family:'JetBrains Mono', monospace; color:var(--muted); font-size:11px; letter-spacing:0.05em;">${label}</div>
+        <div style="font-family:'JetBrains Mono', monospace; color:var(--muted); font-size:10px;">${p.date || ''}</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-family:'JetBrains Mono', monospace; color:var(--text); font-size:14px;">${p.weight.toFixed(1)} kg</div>
+        ${changeHtml}
+      </div>
+    </div>`;
+  }
+
+  const big3Html = ["SQUAT","BENCH","DEADLIFT"].map(k => prRowHtml(k, big7PRs[k])).join("");
+  const big7RestHtml = ["OHP","BB ROW","PULL-UP","DIP"].map(k => prRowHtml(k, big7PRs[k])).join("");
 
   // Body part summary
   const bpSummary = {};
@@ -1176,23 +1194,20 @@ function renderPR(agg) {
       }).join("");
 
   return `
-    <div class="grid grid-2" style="gap:16px; margin-bottom:16px;">
-      <div class="card" style="background: linear-gradient(135deg, rgba(255,26,140,0.04), transparent); text-align:center;">
-        <div class="label-mono" style="color:var(--silver); margin-bottom:8px;">⭐ BIG 7 RADAR (${sortMetric === 'weight' ? 'Weight' : (sortMetric === 'volume' ? 'Set Volume' : 'Total Volume')})</div>
-        <svg viewBox="0 0 240 240" width="100%" style="max-width:280px;">
-          ${grids}${spokes}
-          <polygon points="${polygon}" fill="${COLORS.lift}33" stroke="${COLORS.lift}" stroke-width="1.5"/>
-          ${dotsSvg}${labelSvg}
-        </svg>
+    <div class="card" style="background: linear-gradient(135deg, rgba(251,191,36,0.06), transparent); border-color: rgba(251,191,36,0.3); margin-bottom:16px;">
+      <div class="label-mono" style="color:var(--gold); margin-bottom:8px;">🏆 BIG 3 PR</div>
+      ${big3Html}
+      <div style="display:flex; justify-content:space-between; align-items:baseline; padding:14px 0 0 0; margin-top:4px; border-top:2px solid rgba(251,191,36,0.3);">
+        <span style="font-family:'JetBrains Mono', monospace; color:var(--gold); font-size:11px; letter-spacing:0.1em;">TOTAL</span>
+        <span style="font-family:'JetBrains Mono', monospace; color:var(--gold); font-size:22px;">${big3Total > 0 ? big3Total.toFixed(0) + ' kg' : '—'}</span>
       </div>
-      <div class="card" style="background: linear-gradient(135deg, rgba(251,191,36,0.06), transparent); border-color: rgba(251,191,36,0.3);">
-        <div class="label-mono" style="color:var(--gold); margin-bottom:12px;">🏆 BIG 3 PR</div>
-        ${big3Html}
-        <div style="display:flex; justify-content:space-between; align-items:baseline; padding:10px 0 0 0; margin-top:8px; border-top:2px solid rgba(251,191,36,0.3);">
-          <span style="font-family:'JetBrains Mono', monospace; color:var(--gold); font-size:11px; letter-spacing:0.1em;">TOTAL</span>
-          <span style="font-family:'JetBrains Mono', monospace; color:var(--gold); font-size:22px;">${big3Total > 0 ? big3Total.toFixed(0) + ' kg' : '—'}</span>
-        </div>
-      </div>
+      ${bwRatio > 0 ? `<div style="display:flex; justify-content:space-between; align-items:baseline; padding:8px 0;">
+        <span style="font-family:'JetBrains Mono', monospace; color:var(--muted); font-size:11px; letter-spacing:0.1em;">BW RATIO</span>
+        <span style="font-family:'JetBrains Mono', monospace; color:var(--text); font-size:14px;">${bwRatio.toFixed(2)}× (${bodyWeight.toFixed(1)} kg)</span>
+      </div>` : ''}
+      <div style="border-top:1px dashed var(--border); margin:12px 0;"></div>
+      <div class="label-mono" style="color:var(--silver); margin-bottom:8px;">⭐ BIG 7 (rest)</div>
+      ${big7RestHtml}
     </div>
 
     <h2><span class="pill-lift">LIFTING</span> Body Part Summary</h2>
@@ -1209,6 +1224,216 @@ function renderPR(agg) {
     </div>
     <div class="bp-chips">${chipsHtml}</div>
     <div class="grid grid-3">${exCards}</div>
+  `;
+}
+
+// === View: Trends (v3) — running + lifting time-series ===
+function renderTrends(agg) {
+  const mode = window.TRENDS_MODE || 'run';  // 'run' | 'lift'
+  const tr = agg.totalsRun, tl = agg.totalsLift;
+  const days = Math.floor((agg.rangeEnd - agg.rangeStart) / 86400000) + 1;
+
+  // === Running Best Efforts ===
+  function runBestEfforts() {
+    const runs = (DATA.runs || []).filter(r => inRange(r.date, agg.rangeStart, agg.rangeEnd));
+    let longest = {distance:0, date:""}, fastestPace = {pace:99, date:"", distance:0};
+    let fastest5k = {pace:99, date:""}, fastest10k = {pace:99, date:""};
+    let mostCal = {calories:0, date:""}, highestHR = {hr:0, date:""};
+    for (const r of runs) {
+      if ((r.distance||0) > longest.distance) { longest = {distance:r.distance, date:dateOnly(r.date)}; }
+      if (r.distance >= 1 && r.pace && r.pace < fastestPace.pace) { fastestPace = {pace:r.pace, distance:r.distance, date:dateOnly(r.date)}; }
+      if (r.distance >= 5 && r.pace && r.pace < fastest5k.pace) { fastest5k = {pace:r.pace, date:dateOnly(r.date)}; }
+      if (r.distance >= 10 && r.pace && r.pace < fastest10k.pace) { fastest10k = {pace:r.pace, date:dateOnly(r.date)}; }
+      if ((r.calories||0) > mostCal.calories) { mostCal = {calories:r.calories, date:dateOnly(r.date)}; }
+      if ((r.hr||0) > highestHR.hr) { highestHR = {hr:r.hr, date:dateOnly(r.date)}; }
+    }
+    function card(label, val, sub) {
+      return `<div class="card" style="margin:0;">
+        <h3>${label}</h3>
+        <div class="stat-big" style="font-size:22px; color:var(--run);">${val}</div>
+        <div class="stat-label">${sub}</div>
+      </div>`;
+    }
+    return `<div class="grid grid-3" style="margin-bottom:12px;">
+      ${card('LONGEST', longest.distance > 0 ? longest.distance.toFixed(2) + ' km' : '—', longest.date || '—')}
+      ${card('FASTEST PACE', fastestPace.pace < 99 ? fmtPace(fastestPace.pace) : '—', fastestPace.distance > 0 ? `${fastestPace.distance.toFixed(2)}km · ${fastestPace.date}` : '—')}
+      ${card('FASTEST 5K', fastest5k.pace < 99 ? fmtPace(fastest5k.pace) : '—', fastest5k.date || '—')}
+      ${card('FASTEST 10K', fastest10k.pace < 99 ? fmtPace(fastest10k.pace) : '—', fastest10k.date || '—')}
+      ${card('MOST CAL', mostCal.calories > 0 ? num(mostCal.calories,0) + ' kcal' : '—', mostCal.date || '—')}
+      ${card('HIGHEST HR', highestHR.hr > 0 ? highestHR.hr.toFixed(0) + ' bpm' : '—', highestHR.date || '—')}
+    </div>`;
+  }
+
+  // === Line chart: numeric series over time ===
+  function buildLineChart(points, yLabel, color, opts) {
+    opts = opts || {};
+    const w = 800, h = 180, padL = 40, padR = 12, padT = 12, padB = 28;
+    if (points.length < 2) return `<div style="color:var(--muted); padding:20px;">${t("noData")}</div>`;
+    points.sort((a,b) => a.t - b.t);
+    const ys = points.map(p => p.v);
+    const yMin = opts.yMin !== undefined ? opts.yMin : Math.min(...ys);
+    const yMax = opts.yMax !== undefined ? opts.yMax : Math.max(...ys);
+    const yRng = (yMax - yMin) || 1;
+    const xMin = points[0].t, xMax = points[points.length-1].t;
+    const xRng = (xMax - xMin) || 1;
+    const xS = t => padL + (t - xMin) / xRng * (w - padL - padR);
+    const yS = v => h - padB - (v - yMin) / yRng * (h - padT - padB);
+    const path = points.map(p => `${xS(p.t).toFixed(1)},${yS(p.v).toFixed(1)}`).join(" L");
+    const dots = points.map(p =>
+      `<circle cx="${xS(p.t).toFixed(1)}" cy="${yS(p.v).toFixed(1)}" r="2.5" fill="${color}" data-payload="${(p.payload||'').replace(/"/g,'&quot;')}" class="hbar"/>`
+    ).join("");
+    // axis labels
+    const yMidVal = (yMin + yMax) / 2;
+    const yLabels = `
+      <text x="2" y="${(padT+8).toFixed(1)}" fill="var(--muted)" font-size="9" font-family="JetBrains Mono">${opts.yFmt ? opts.yFmt(yMax) : yMax.toFixed(opts.decimals||1)}</text>
+      <text x="2" y="${yS(yMidVal).toFixed(1)}" fill="var(--muted)" font-size="9" font-family="JetBrains Mono">${opts.yFmt ? opts.yFmt(yMidVal) : yMidVal.toFixed(opts.decimals||1)}</text>
+      <text x="2" y="${(h-padB-2).toFixed(1)}" fill="var(--muted)" font-size="9" font-family="JetBrains Mono">${opts.yFmt ? opts.yFmt(yMin) : yMin.toFixed(opts.decimals||1)}</text>
+    `;
+    // x-axis: first and last date
+    const fdate = isoDate(new Date(xMin));
+    const ldate = isoDate(new Date(xMax));
+    const xLabels = `
+      <text x="${padL}" y="${(h-6).toFixed(1)}" fill="var(--muted)" font-size="9" font-family="JetBrains Mono">${fdate}</text>
+      <text x="${(w - padR).toFixed(1)}" y="${(h-6).toFixed(1)}" fill="var(--muted)" font-size="9" text-anchor="end" font-family="JetBrains Mono">${ldate}</text>
+    `;
+    return `<svg width="100%" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="overflow:visible;">
+      ${yLabels}
+      <path d="M${path}" stroke="${color}" stroke-width="1.5" fill="none"/>
+      ${dots}
+      ${xLabels}
+    </svg>`;
+  }
+
+  // === Bar chart: monthly aggregation ===
+  function buildMonthlyBars(months, byMonth, color, kind) {
+    if (!months.length) return `<div style="color:var(--muted); padding:20px;">${t("noData")}</div>`;
+    const cw = 800, ch = 180;
+    const maxV = Math.max(1, ...months.map(m => kind==="run" ? byMonth[m].distance : byMonth[m].volume));
+    const out = [];
+    months.forEach((m, i) => {
+      const md = byMonth[m];
+      const v = kind === "run" ? md.distance : md.volume;
+      const x = (i + 0.5) * (cw / months.length);
+      const bw = (cw / months.length) * 0.6;
+      const bx = x - bw / 2;
+      const by = ch - 24 - (v / maxV) * (ch - 60);
+      const bh = (v / maxV) * (ch - 60);
+      const primary = kind === "run" ? `${v.toFixed(1)} km` : `${num(v, 0)} kg volume`;
+      const secondary = kind === "run" ? `${md.count} runs · ${Math.round(md.duration)} min` : `${md.sets} sets · ${md.sessions} sessions`;
+      const payload = JSON.stringify({date: m, primary, secondary}).replace(/"/g, "&quot;");
+      out.push(`<rect x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="${bw.toFixed(1)}" height="${bh.toFixed(1)}" fill="${color}" opacity="0.7" rx="2" class="hbar" data-payload="${payload}"></rect>`);
+      out.push(`<text x="${x.toFixed(1)}" y="${ch-6}" fill="var(--muted)" font-size="10" text-anchor="middle">${m.slice(5)}</text>`);
+    });
+    return `<svg width="100%" height="${ch}" viewBox="0 0 ${cw} ${ch}" preserveAspectRatio="none">${out.join("")}</svg>`;
+  }
+
+  // === Run mode ===
+  function renderRunMode() {
+    const monthsR = Object.keys(agg.runByMonth).sort();
+    const distancePts = (DATA.runs || [])
+      .filter(r => inRange(r.date, agg.rangeStart, agg.rangeEnd))
+      .map(r => ({t: parseDateOnly(dateOnly(r.date)).getTime(), v: r.distance || 0,
+                  payload: JSON.stringify({date: dateOnly(r.date), primary: `${(r.distance||0).toFixed(2)} km`, secondary: `${Math.round(r.duration||0)} min · ${fmtPace(r.pace||0)}`})}));
+    const pacePts = (DATA.runs || [])
+      .filter(r => inRange(r.date, agg.rangeStart, agg.rangeEnd) && r.pace && r.distance >= 1)
+      .map(r => ({t: parseDateOnly(dateOnly(r.date)).getTime(), v: r.pace,
+                  payload: JSON.stringify({date: dateOnly(r.date), primary: fmtPace(r.pace), secondary: `${(r.distance||0).toFixed(2)} km`})}));
+
+    return `
+      <h2><span class="pill-run">RUNNING</span> Best Efforts</h2>
+      ${runBestEfforts()}
+      <div class="card">
+        <h3>DISTANCE OVER TIME</h3>
+        ${buildLineChart(distancePts, "km", COLORS.run, {decimals:1, yFmt: v => v.toFixed(1)+' km'})}
+      </div>
+      <div class="card">
+        <h3>PACE PROGRESSION (min/km, lower = better)</h3>
+        ${buildLineChart(pacePts, "min/km", COLORS.run, {decimals:2, yFmt: fmtPace})}
+      </div>
+      <div class="card">
+        <h3>MONTHLY DISTANCE</h3>
+        ${buildMonthlyBars(monthsR, agg.runByMonth, COLORS.run, "run")}
+      </div>
+    `;
+  }
+
+  // === Lift mode ===
+  function renderLiftMode() {
+    const monthsL = Object.keys(agg.liftByMonth).sort();
+    // Top 5 exercises by total volume in period
+    const exVol = new Map();
+    for (const l of (DATA.lifts || [])) {
+      if (!inRange(l.date, agg.rangeStart, agg.rangeEnd)) continue;
+      const ex = l.exercise || "(unnamed)";
+      exVol.set(ex, (exVol.get(ex)||0) + (l.weight||0)*(l.reps||0));
+    }
+    const top5 = [...exVol.entries()].sort((a,b) => b[1]-a[1]).slice(0, 5);
+
+    // Volume by month
+    const volByMonth = {};
+    for (const m of monthsL) volByMonth[m] = agg.liftByMonth[m].volume;
+
+    // Sessions by month
+    const sessionsBars = monthsL.length ? (() => {
+      const cw = 800, ch = 140;
+      const maxV = Math.max(1, ...monthsL.map(m => agg.liftByMonth[m].sessions));
+      const out = [];
+      monthsL.forEach((m, i) => {
+        const md = agg.liftByMonth[m];
+        const v = md.sessions;
+        const x = (i + 0.5) * (cw / monthsL.length);
+        const bw = (cw / monthsL.length) * 0.6;
+        const bx = x - bw/2;
+        const by = ch - 24 - (v / maxV) * (ch - 60);
+        const bh = (v / maxV) * (ch - 60);
+        const payload = JSON.stringify({date: m, primary: `${v} sessions`, secondary: `${md.sets} sets · ${num(md.volume,0)} kg vol`});
+        out.push(`<rect x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="${bw.toFixed(1)}" height="${bh.toFixed(1)}" fill="${COLORS.lift}" opacity="0.7" rx="2" class="hbar" data-payload="${payload.replace(/"/g,'&quot;')}"></rect>`);
+        out.push(`<text x="${x.toFixed(1)}" y="${ch-6}" fill="var(--muted)" font-size="10" text-anchor="middle">${m.slice(5)}</text>`);
+      });
+      return `<svg width="100%" height="${ch}" viewBox="0 0 ${cw} ${ch}" preserveAspectRatio="none">${out.join("")}</svg>`;
+    })() : `<div style="color:var(--muted); padding:20px;">${t("noData")}</div>`;
+
+    const top5Html = top5.map(([name, vol]) => {
+      const bp = bodyPart(name);
+      const c = BP_COLORS[bp];
+      return `<div class="card" style="margin:0;">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+          <h3 style="margin:0; font-size:11px; flex:1;">${name}</h3>
+          <span style="background:${c}30; color:${c}; padding: 2px 8px; border-radius: 8px; font-size: 9px; font-family:'JetBrains Mono', monospace; letter-spacing: 0.1em;">${bp}</span>
+        </div>
+        <div class="stat-big" style="font-size:18px; color:var(--lift); margin-top:6px;">${num(vol, 0)} kg</div>
+        <div class="stat-label">total volume</div>
+      </div>`;
+    }).join("");
+
+    return `
+      <h2><span class="pill-lift">LIFTING</span> Top 5 by Volume</h2>
+      <div class="grid grid-3" style="margin-bottom:12px;">${top5Html || `<div style="color:var(--muted)">${t("noData")}</div>`}</div>
+      <div class="card">
+        <h3>MONTHLY VOLUME</h3>
+        ${buildMonthlyBars(monthsL, agg.liftByMonth, COLORS.lift, "lift")}
+      </div>
+      <div class="card">
+        <h3>MONTHLY SESSIONS</h3>
+        ${sessionsBars}
+      </div>
+    `;
+  }
+
+  // Toggle UI
+  const toggleHtml = `
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+      <span class="label-mono" style="margin:0;">VIEW:</span>
+      <div style="display:inline-flex; background:var(--surface-2,#161616); border:1px solid var(--border); border-radius:8px; padding:2px;">
+        <button onclick="window.TRENDS_MODE='run'; refresh();" style="background:${mode==='run'?'var(--run)':'transparent'}; color:${mode==='run'?'#000':'var(--muted)'}; border:none; padding:6px 14px; border-radius:6px; cursor:pointer; font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.05em;">RUN</button>
+        <button onclick="window.TRENDS_MODE='lift'; refresh();" style="background:${mode==='lift'?'var(--lift)':'transparent'}; color:${mode==='lift'?'#fff':'var(--muted)'}; border:none; padding:6px 14px; border-radius:6px; cursor:pointer; font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.05em;">LIFT</button>
+      </div>
+    </div>
+  `;
+
+  return `
+    ${toggleHtml}
+    ${mode === 'run' ? renderRunMode() : renderLiftMode()}
   `;
 }
 
@@ -1600,7 +1825,7 @@ function renderMap(agg) {
 }
 
 const VIEWS = IS_V3
-  ? { heatmap: renderHeatmap, strava: renderStrava, pr: renderPR, body: renderBody, map: renderMap }
+  ? { heatmap: renderHeatmap, pr: renderPR, trends: renderTrends, body: renderBody, map: renderMap }
   : { heatmap: renderHeatmap, strava: renderStrava, hevy: renderHevy, body: renderBody, map: renderMap };
 
 function bindTooltips() {
