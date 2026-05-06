@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>PR Design Options — Big 7 Radar + Big 3 PR</title>
+<style>
+  :root {
+    --bg: #0a0a0a; --surface: #111; --surface-2: #161616;
+    --text: #fafafa; --muted: #71717a;
+    --accent: #FF1A8C; --lift: #FF1A8C;
+    --gold: #fbbf24; --silver: #cbd5e1;
+    --border: #1f1f23;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: "Inter", -apple-system, sans-serif;
+    padding: 24px; max-width: 1200px; margin: 0 auto; line-height: 1.5;
+  }
+  h1 { font-size: 24px; font-weight: 600; margin-bottom: 8px; letter-spacing: -0.02em; }
+  h2 { font-size: 18px; font-weight: 500; margin: 32px 0 16px; }
+  h3 { font-size: 13px; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.08em; font-family: 'JetBrains Mono', monospace; font-weight: 400; }
+  .label-mono { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+  .grid { display: grid; gap: 16px; }
+  .grid-2 { grid-template-columns: 1fr 1fr; }
+  @media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } }
+  .section { margin: 48px 0; padding-top: 24px; border-top: 1px dashed var(--border); }
+  .section-title {
+    display: flex; align-items: baseline; gap: 12px; margin-bottom: 20px;
+  }
+  .section-title h2 { margin: 0; font-size: 20px; }
+  .section-title .badge { background: var(--accent); color: #fff; padding: 3px 10px; border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.1em; }
+  .section-title .desc { color: var(--muted); font-size: 13px; }
+  .pill-lift { display: inline-block; background: rgba(255,26,140,0.15); color: var(--lift); padding: 2px 8px; border-radius: 6px; font-size: 9px; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.1em; }
+  .gold-card { background: linear-gradient(135deg, rgba(251,191,36,0.06), transparent); border-color: rgba(251,191,36,0.3); }
+  .radar-card { background: linear-gradient(135deg, rgba(255,26,140,0.04), transparent); text-align: center; }
+
+  /* Big 3 row styles */
+  .pr-row { display: flex; justify-content: space-between; align-items: baseline; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .pr-row:last-child { border-bottom: none; }
+  .pr-row-name { font-family: 'JetBrains Mono', monospace; color: var(--muted); font-size: 11px; letter-spacing: 0.05em; min-width: 80px; }
+  .pr-row-val { font-family: 'JetBrains Mono', monospace; color: var(--text); font-size: 14px; }
+  .pr-row-meta { font-family: 'JetBrains Mono', monospace; color: var(--muted); font-size: 10px; }
+  .change-up { color: #84cc16; }
+  .change-down { color: #f43f5e; }
+  .change-flat { color: var(--muted); }
+
+  /* Sparkline mini chart */
+  .spark { display: inline-block; vertical-align: middle; }
+
+  /* Footer */
+  .footer-note { margin-top: 60px; padding: 24px; background: var(--surface); border-radius: 12px; color: var(--muted); font-size: 13px; text-align: center; }
+
+  /* Compact unified card for option B */
+  .opt-b-row { display: grid; grid-template-columns: 100px 1fr; gap: 12px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); }
+  .opt-b-row:last-child { border-bottom: none; }
+  .opt-b-row-name { font-family: 'JetBrains Mono', monospace; color: var(--muted); font-size: 11px; }
+  .opt-b-row-val { font-family: 'JetBrains Mono', monospace; color: var(--text); font-size: 13px; display: flex; justify-content: space-between; align-items: baseline; }
+</style>
+</head>
+<body>
+<h1>PR 섹션 디자인 옵션 프리뷰</h1>
+<p style="color: var(--muted); margin-bottom: 24px;">실제 데이터 기반. 마음에 드는 옵션 (A/B/C)를 알려주세요.</p>
+
+<!-- ============================== -->
+<!-- 현재 상태 (참고용)            -->
+<!-- ============================== -->
+<div class="section">
+  <div class="section-title">
+    <span class="badge" style="background: var(--muted);">현재</span>
+    <h2>지금 v3 화면</h2>
+    <span class="desc">라벨 잘림 (DEA, -UP), 우측 카드 빈 공간 많음</span>
+  </div>
+  <div class="grid grid-2">
+    <div class="card radar-card">
+      <div class="label-mono" style="color: var(--silver); margin-bottom: 8px;">⭐ BIG 7 RADAR (WEIGHT)</div>
+      <svg viewBox="0 0 240 240" width="100%" style="max-width: 280px;">
+        <circle cx="120" cy="120" r="25" fill="none" stroke="rgba(255,255,255,0.05)"/>
+        <circle cx="120" cy="120" r="50" fill="none" stroke="rgba(255,255,255,0.05)"/>
+        <circle cx="120" cy="120" r="75" fill="none" stroke="rgba(255,255,255,0.05)"/>
+        <circle cx="120" cy="120" r="100" fill="none" stroke="rgba(255,255,255,0.08)"/>
+        <line x1="120" y1="120" x2="120" y2="20" stroke="rgba(255,255,255,0.06)"/>
+        <line x1="120" y1="120" x2="198" y2="71" stroke="rgba(255,255,255,0.06)"/>
+        <line x1="120" y1="120" x2="218" y2="143" stroke="rgba(255,255,255,0.06)"/>
+        <line x1="120" y1="120" x2="172" y2="217" stroke="rgba(255,255,255,0.06)"/>
+        <line x1="120" y1="120" x2="68" y2="217" stroke="rgba(255,255,255,0.06)"/>
+        <line x1="120" y1="120" x2="22" y2="143" stroke="rgba(255,255,255,0.06)"/>
+        <line x1="120" y1="120" x2="42" y2="71" stroke="rgba(255,255,255,0.06)"/>
+        <polygon points="120,53 173,90 220,143 142,200 75,196 92,160 95,131" fill="rgba(255,26,140,0.18)" stroke="#FF1A8C" stroke-width="1.5"/>
+        <circle cx="120" cy="53" r="3" fill="#FF1A8C"/>
+        <circle cx="173" cy="90" r="3" fill="#FF1A8C"/>
+        <circle cx="220" cy="143" r="3" fill="#FF1A8C"/>
+        <circle cx="142" cy="200" r="3" fill="#FF1A8C"/>
+        <circle cx="75" cy="196" r="3" fill="#FF1A8C"/>
+        <circle cx="92" cy="160" r="3" fill="#FF1A8C"/>
+        <circle cx="95" cy="131" r="3" fill="#FF1A8C"/>
+        <text x="120" y="14" fill="var(--muted)" font-size="9" text-anchor="middle" font-family="JetBrains Mono">SQUAT</text>
+        <text x="200" y="68" fill="var(--muted)" font-size="9" font-family="JetBrains Mono">BENCH</text>
+        <text x="226" y="143" fill="var(--muted)" font-size="9" font-family="JetBrains Mono">DEA</text>
+        <text x="172" y="232" fill="var(--muted)" font-size="9" text-anchor="middle" font-family="JetBrains Mono">OHP</text>
+        <text x="68" y="232" fill="var(--muted)" font-size="9" text-anchor="middle" font-family="JetBrains Mono">BB ROW</text>
+        <text x="14" y="143" fill="var(--muted)" font-size="9" font-family="JetBrains Mono">-UP</text>
+        <text x="40" y="68" fill="var(--muted)" font-size="9" text-anchor="end" font-family="JetBrains Mono">DIP</text>
+      </svg>
+    </div>
+    <div class="card gold-card">
+      <div class="label-mono" style="color: var(--gold); margin-bottom: 12px;">🏆 BIG 3 PR</div>
+      <div class="pr-row"><span class="pr-row-name">SQUAT</span><span class="pr-row-val">120.0 kg</span></div>
+      <div class="pr-row"><span class="pr-row-name">BENCH</span><span class="pr-row-val">100.0 kg</span></div>
+      <div class="pr-row"><span class="pr-row-name">DEADLIFT</span><span class="pr-row-val">180.0 kg</span></div>
+      <div style="display: flex; justify-content: space-between; padding: 12px 0 0; margin-top: 8px; border-top: 2px solid rgba(251,191,36,0.3);">
+        <span class="label-mono" style="color: var(--gold);">TOTAL</span>
+        <span style="font-family: 'JetBrains Mono', monospace; color: var(--gold); font-size: 22px;">400 kg</span>
+      </div>
+      <div style="margin-top: 80px; color: var(--muted); font-size: 11px; text-align: center;">↑ 빈 공간</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================== -->
+<!-- OPTION A                       -->
+<!-- ============================== -->
+<div class="section">
+  <div class="section-title">
+    <span class="badge">옵션 A</span>
+    <h2>라벨 fix + Big 3 정보 보강</h2>
+    <span class="desc">날짜 · 변화량 · 체중배수 추가</span>
+  </div>
+  <div class="grid grid-2">
+    <div class="card radar-card">
+      <div class="label-mono" style="color: var(--silver); margin-bottom: 8px;">⭐ BIG 7 RADAR (WEIGHT)</div>
+      <svg viewBox="0 0 280 240" width="100%" style="max-width: 320px;">
+        <!-- bigger SVG, tighter R, more padding for labels -->
+        <circle cx="140" cy="120" r="22" fill="none" stroke="rgba(255,255,255,0.05)"/>
+        <circle cx="140" cy="120" r="44" fill="none" stroke="rgba(255,255,255,0.05)"/>
+        <circle cx="140" cy="120" r="66" fill="none" stroke="rgba(255,255,255,0.05)"/>
+        <circle cx="140" cy="120" r="88" fill="none" stroke="rgba(255,255,255,0.08)"/>
+        <line x1="140" y1="120" x2="140" y2="32" stroke="rgba(255,255,255,0.06)"/>
+        <line x1="140" y1="120" x2="209" y2="76" stroke="rgba(255,255,255,0.06)"/>
+        <line x1="140" y1="120" x2="225" y2="139" stroke="rgba(255,255,255,0.06)"/>
+        <line x1="140" y1="120" x2="187" y2="194" stroke="rgba(255,255,255,0.06)"/>
+        <line x1="140" y1="120" x2="93" y2="194" stroke="rgba(255,255,255,0.06)"/>
+        <line x1="140" y1="120" x2="55" y2="139" stroke="rgba(255,255,255,0.06)"/>
+        <line x1="140" y1="120" x2="71" y2="76" stroke="rgba(255,255,255,0.06)"/>
+        <polygon points="140,61 187,84 225,139 165,180 109,176 124,151 122,127" fill="rgba(255,26,140,0.18)" stroke="#FF1A8C" stroke-width="1.5"/>
+        <circle cx="140" cy="61" r="3" fill="#FF1A8C"/>
+        <circle cx="187" cy="84" r="3" fill="#FF1A8C"/>
+        <circle cx="225" cy="139" r="3" fill="#FF1A8C"/>
+        <circle cx="165" cy="180" r="3" fill="#FF1A8C"/>
+        <circle cx="109" cy="176" r="3" fill="#FF1A8C"/>
+        <circle cx="124" cy="151" r="3" fill="#FF1A8C"/>
+        <circle cx="122" cy="127" r="3" fill="#FF1A8C"/>
+        <text x="140" y="22" fill="var(--muted)" font-size="9" text-anchor="middle" font-family="JetBrains Mono">SQUAT</text>
+        <text x="216" y="70" fill="var(--muted)" font-size="9" font-family="JetBrains Mono">BENCH</text>
+        <text x="240" y="142" fill="var(--muted)" font-size="9" font-family="JetBrains Mono">DEADLIFT</text>
+        <text x="187" y="210" fill="var(--muted)" font-size="9" text-anchor="middle" font-family="JetBrains Mono">OHP</text>
+        <text x="93" y="210" fill="var(--muted)" font-size="9" text-anchor="middle" font-family="JetBrains Mono">BB ROW</text>
+        <text x="40" y="142" fill="var(--muted)" font-size="9" font-family="JetBrains Mono">PULL-UP</text>
+        <text x="64" y="70" fill="var(--muted)" font-size="9" text-anchor="end" font-family="JetBrains Mono">DIP</text>
+      </svg>
+      <div class="label-mono" style="margin-top: 4px; color: var(--muted);">레이더 비율 정상화 (max 90% 채움 = 시각적 여유)</div>
+    </div>
+    <div class="card gold-card">
+      <div class="label-mono" style="color: var(--gold); margin-bottom: 12px;">🏆 BIG 3 PR</div>
+      <div class="pr-row">
+        <div>
+          <div class="pr-row-name">SQUAT</div>
+          <div class="pr-row-meta">2026-04-12</div>
+        </div>
+        <div style="text-align: right;">
+          <div class="pr-row-val">120.0 kg</div>
+          <div class="pr-row-meta change-up">↑ +5kg vs Mar</div>
+        </div>
+      </div>
+      <div class="pr-row">
+        <div>
+          <div class="pr-row-name">BENCH</div>
+          <div class="pr-row-meta">2026-03-08</div>
+        </div>
+        <div style="text-align: right;">
+          <div class="pr-row-val">100.0 kg</div>
+          <div class="pr-row-meta change-flat">= unchanged</div>
+        </div>
+      </div>
+      <div class="pr-row">
+        <div>
+          <div class="pr-row-name">DEADLIFT</div>
+          <div class="pr-row-meta">2026-04-25</div>
+        </div>
+        <div style="text-align: right;">
+          <div class="pr-row-val">180.0 kg</div>
+          <div class="pr-row-meta change-up">↑ +10kg vs Feb</div>
+        </div>
+      </div>
+      <div style="display: flex; justify-content: space-between; padding: 12px 0 0; margin-top: 8px; border-top: 2px solid rgba(251,191,36,0.3);">
+        <span class="label-mono" style="color: var(--gold);">TOTAL</span>
+        <span style="font-family: 'JetBrains Mono', monospace; color: var(--gold); font-size: 22px;">400 kg</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: baseline; margin-top: 8px;">
+        <span class="label-mono" style="color: var(--muted);">BW RATIO</span>
+        <span style="font-family: 'JetBrains Mono', monospace; color: var(--text); font-size: 14px;">5.12× (78.2 kg)</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================== -->
+<!-- OPTION B                       -->
+<!-- ============================== -->
+<div class="section">
+  <div class="section-title">
+    <span class="badge">옵션 B</span>
+    <h2>Compact 통합 카드</h2>
+    <span class="desc">한 카드에 Big 7 + Big 3 모두</span>
+  </div>
+  <div class="card" style="background: linear-gradient(135deg, rgba(251,191,36,0.04), transparent); border-color: rgba(251,191,36,0.2);">
+    <div style="display: grid; grid-template-columns: 240px 1fr; gap: 24px; align-items: center;">
+      <!-- Compact radar -->
+      <div style="text-align: center;">
+        <svg viewBox="0 0 280 240" width="100%" style="max-width: 240px;">
+          <circle cx="140" cy="120" r="22" fill="none" stroke="rgba(255,255,255,0.05)"/>
+          <circle cx="140" cy="120" r="44" fill="none" stroke="rgba(255,255,255,0.05)"/>
+          <circle cx="140" cy="120" r="66" fill="none" stroke="rgba(255,255,255,0.05)"/>
+          <circle cx="140" cy="120" r="88" fill="none" stroke="rgba(255,255,255,0.08)"/>
+          <line x1="140" y1="120" x2="140" y2="32" stroke="rgba(255,255,255,0.06)"/>
+          <line x1="140" y1="120" x2="209" y2="76" stroke="rgba(255,255,255,0.06)"/>
+          <line x1="140" y1="120" x2="225" y2="139" stroke="rgba(255,255,255,0.06)"/>
+          <line x1="140" y1="120" x2="187" y2="194" stroke="rgba(255,255,255,0.06)"/>
+          <line x1="140" y1="120" x2="93" y2="194" stroke="rgba(255,255,255,0.06)"/>
+          <line x1="140" y1="120" x2="55" y2="139" stroke="rgba(255,255,255,0.06)"/>
+          <line x1="140" y1="120" x2="71" y2="76" stroke="rgba(255,255,255,0.06)"/>
+          <polygon points="140,61 187,84 225,139 165,180 109,176 124,151 122,127" fill="rgba(255,26,140,0.18)" stroke="#FF1A8C" stroke-width="1.5"/>
+          <circle cx="140" cy="61" r="3" fill="#FF1A8C"/>
+          <circle cx="187" cy="84" r="3" fill="#FF1A8C"/>
+          <circle cx="225" cy="139" r="3" fill="#FF1A8C"/>
+          <circle cx="165" cy="180" r="3" fill="#FF1A8C"/>
+          <circle cx="109" cy="176" r="3" fill="#FF1A8C"/>
+          <circle cx="124" cy="151" r="3" fill="#FF1A8C"/>
+          <circle cx="122" cy="127" r="3" fill="#FF1A8C"/>
+          <text x="140" y="22" fill="var(--muted)" font-size="9" text-anchor="middle" font-family="JetBrains Mono">SQUAT</text>
+          <text x="216" y="70" fill="var(--muted)" font-size="9" font-family="JetBrains Mono">BENCH</text>
+          <text x="240" y="142" fill="var(--muted)" font-size="9" font-family="JetBrains Mono">DEADLIFT</text>
+          <text x="187" y="210" fill="var(--muted)" font-size="9" text-anchor="middle" font-family="JetBrains Mono">OHP</text>
+          <text x="93" y="210" fill="var(--muted)" font-size="9" text-anchor="middle" font-family="JetBrains Mono">BB ROW</text>
+          <text x="40" y="142" fill="var(--muted)" font-size="9" font-family="JetBrains Mono">PULL-UP</text>
+          <text x="64" y="70" fill="var(--muted)" font-size="9" text-anchor="end" font-family="JetBrains Mono">DIP</text>
+        </svg>
+      </div>
+      <div>
+        <div class="label-mono" style="color: var(--gold); margin-bottom: 8px;">🏆 BIG 3</div>
+        <div class="opt-b-row"><span class="opt-b-row-name">SQUAT</span><span class="opt-b-row-val"><span>120.0 kg</span><span class="change-up" style="font-size: 10px;">+5</span></span></div>
+        <div class="opt-b-row"><span class="opt-b-row-name">BENCH</span><span class="opt-b-row-val"><span>100.0 kg</span><span class="change-flat" style="font-size: 10px;">=</span></span></div>
+        <div class="opt-b-row"><span class="opt-b-row-name">DEADLIFT</span><span class="opt-b-row-val"><span>180.0 kg</span><span class="change-up" style="font-size: 10px;">+10</span></span></div>
+        <div style="display: flex; justify-content: space-between; padding: 10px 0 0; margin-top: 4px; border-top: 1px solid rgba(251,191,36,0.3);">
+          <span class="label-mono" style="color: var(--gold);">TOTAL · BW RATIO</span>
+          <span style="font-family: 'JetBrains Mono', monospace; color: var(--gold); font-size: 18px;">400 kg · 5.12×</span>
+        </div>
+        <div class="label-mono" style="color: var(--silver); margin: 16px 0 8px;">⭐ BIG 7 (rest)</div>
+        <div class="opt-b-row"><span class="opt-b-row-name">OHP</span><span class="opt-b-row-val"><span>50 kg</span><span class="change-up" style="font-size: 10px;">+2.5</span></span></div>
+        <div class="opt-b-row"><span class="opt-b-row-name">BB ROW</span><span class="opt-b-row-val"><span>65 kg</span><span class="change-flat" style="font-size: 10px;">=</span></span></div>
+        <div class="opt-b-row"><span class="opt-b-row-name">PULL-UP</span><span class="opt-b-row-val"><span>+10 kg</span><span class="change-up" style="font-size: 10px;">+2.5</span></span></div>
+        <div class="opt-b-row"><span class="opt-b-row-name">DIP</span><span class="opt-b-row-val"><span>+20 kg</span><span class="change-up" style="font-size: 10px;">+5</span></span></div>
+      </div>
+    </div>
+  </div>
+  <div style="color: var(--muted); font-size: 12px; margin-top: 8px; text-align: center;">단일 카드. 모바일에서 자동으로 vertical stack. 정보 밀도 ↑</div>
+</div>
+
+<!-- ============================== -->
+<!-- OPTION C                       -->
+<!-- ============================== -->
+<div class="section">
+  <div class="section-title">
+    <span class="badge">옵션 C</span>
+    <h2>Sparkline 추이 차트 추가</h2>
+    <span class="desc">Big 3에 12개월 미니 차트</span>
+  </div>
+  <div class="grid grid-2">
+    <div class="card radar-card">
+      <div class="label-mono" style="color: var(--silver); margin-bottom: 8px;">⭐ BIG 7 RADAR (WEIGHT)</div>
+      <svg viewBox="0 0 280 240" width="100%" style="max-width: 320px;">
+        <circle cx="140" cy="120" r="22" fill="none" stroke="rgba(255,255,255,0.05)"/>
+        <circle cx="140" cy="120" r="44" fill="none" stroke="rgba(255,255,255,0.05)"/>
+        <circle cx="140" cy="120" r="66" fill="none" stroke="rgba(255,255,255,0.05)"/>
+        <circle cx="140" cy="120" r="88" fill="none" stroke="rgba(255,255,255,0.08)"/>
+        <line x1="140" y1="120" x2="140" y2="32" stroke="rgba(255,255,255,0.06)"/>
+        <line x1="140" y1="120" x2="209" y2="76" stroke="rgba(255,255,255,0.06)"/>
+        <line x1="140" y1="120" x2="225" y2="139" stroke="rgba(255,255,255,0.06)"/>
+        <line x1="140" y1="120" x2="187" y2="194" stroke="rgba(255,255,255,0.06)"/>
+        <line x1="140" y1="120" x2="93" y2="194" stroke="rgba(255,255,255,0.06)"/>
+        <line x1="140" y1="120" x2="55" y2="139" stroke="rgba(255,255,255,0.06)"/>
+        <line x1="140" y1="120" x2="71" y2="76" stroke="rgba(255,255,255,0.06)"/>
+        <polygon points="140,61 187,84 225,139 165,180 109,176 124,151 122,127" fill="rgba(255,26,140,0.18)" stroke="#FF1A8C" stroke-width="1.5"/>
+        <circle cx="140" cy="61" r="3" fill="#FF1A8C"/>
+        <circle cx="187" cy="84" r="3" fill="#FF1A8C"/>
+        <circle cx="225" cy="139" r="3" fill="#FF1A8C"/>
+        <circle cx="165" cy="180" r="3" fill="#FF1A8C"/>
+        <circle cx="109" cy="176" r="3" fill="#FF1A8C"/>
+        <circle cx="124" cy="151" r="3" fill="#FF1A8C"/>
+        <circle cx="122" cy="127" r="3" fill="#FF1A8C"/>
+        <text x="140" y="22" fill="var(--muted)" font-size="9" text-anchor="middle" font-family="JetBrains Mono">SQUAT</text>
+        <text x="216" y="70" fill="var(--muted)" font-size="9" font-family="JetBrains Mono">BENCH</text>
+        <text x="240" y="142" fill="var(--muted)" font-size="9" font-family="JetBrains Mono">DEADLIFT</text>
+        <text x="187" y="210" fill="var(--muted)" font-size="9" text-anchor="middle" font-family="JetBrains Mono">OHP</text>
+        <text x="93" y="210" fill="var(--muted)" font-size="9" text-anchor="middle" font-family="JetBrains Mono">BB ROW</text>
+        <text x="40" y="142" fill="var(--muted)" font-size="9" font-family="JetBrains Mono">PULL-UP</text>
+        <text x="64" y="70" fill="var(--muted)" font-size="9" text-anchor="end" font-family="JetBrains Mono">DIP</text>
+      </svg>
+    </div>
+    <div class="card gold-card">
+      <div class="label-mono" style="color: var(--gold); margin-bottom: 12px;">🏆 BIG 3 PR — 12-MONTH TREND</div>
+
+      <div class="pr-row" style="padding: 14px 0;">
+        <div style="flex: 0 0 70px;">
+          <div class="pr-row-name">SQUAT</div>
+          <div class="pr-row-val">120 kg</div>
+        </div>
+        <svg width="100%" height="40" viewBox="0 0 200 40" style="flex: 1; margin: 0 12px;">
+          <polyline points="0,32 20,30 40,28 60,28 80,25 100,22 120,20 140,18 160,15 180,12 200,8" fill="none" stroke="#FF1A8C" stroke-width="1.5"/>
+          <circle cx="200" cy="8" r="2.5" fill="#FF1A8C"/>
+        </svg>
+        <span class="change-up" style="font-family: 'JetBrains Mono', monospace; font-size: 11px;">+15 12mo</span>
+      </div>
+
+      <div class="pr-row" style="padding: 14px 0;">
+        <div style="flex: 0 0 70px;">
+          <div class="pr-row-name">BENCH</div>
+          <div class="pr-row-val">100 kg</div>
+        </div>
+        <svg width="100%" height="40" viewBox="0 0 200 40" style="flex: 1; margin: 0 12px;">
+          <polyline points="0,30 20,28 40,26 60,22 80,18 100,18 120,18 140,16 160,15 180,15 200,15" fill="none" stroke="#FF1A8C" stroke-width="1.5"/>
+          <circle cx="200" cy="15" r="2.5" fill="#FF1A8C"/>
+        </svg>
+        <span class="change-up" style="font-family: 'JetBrains Mono', monospace; font-size: 11px;">+10 12mo</span>
+      </div>
+
+      <div class="pr-row" style="padding: 14px 0;">
+        <div style="flex: 0 0 70px;">
+          <div class="pr-row-name">DEADLIFT</div>
+          <div class="pr-row-val">180 kg</div>
+        </div>
+        <svg width="100%" height="40" viewBox="0 0 200 40" style="flex: 1; margin: 0 12px;">
+          <polyline points="0,32 20,30 40,28 60,25 80,22 100,18 120,12 140,10 160,8 180,5 200,2" fill="none" stroke="#FF1A8C" stroke-width="1.5"/>
+          <circle cx="200" cy="2" r="2.5" fill="#FF1A8C"/>
+        </svg>
+        <span class="change-up" style="font-family: 'JetBrains Mono', monospace; font-size: 11px;">+20 12mo</span>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; padding: 12px 0 0; margin-top: 4px; border-top: 2px solid rgba(251,191,36,0.3);">
+        <span class="label-mono" style="color: var(--gold);">TOTAL</span>
+        <span style="font-family: 'JetBrains Mono', monospace; color: var(--gold); font-size: 22px;">400 kg</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer-note">
+  👉 어떤 옵션이 마음에 드세요? <strong>A / B / C</strong> 또는 조합 (예: "A + C의 sparkline") 알려주세요.
+</div>
+</body>
+</html>
