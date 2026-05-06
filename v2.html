@@ -610,21 +610,24 @@ function renderHeatmap(agg) {
     return `<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg">${wdayLabels}${monthLabels.join("")}${rects.join("")}</svg>`;
   }
 
-  function buildHeatmap(byDay, color, kind, valueKey) {
+  function buildHeatmap(byDay, color, kind, valueKey, minStart) {
     const vals = Object.values(byDay).map(d => d[valueKey] || 0);
     const maxVal = Math.max(1, ...vals);
-    if (useYearStack) {
-      const startYear = start.getFullYear();
+    const effStart = (minStart && minStart > start) ? minStart : start;
+    if (effStart > end) return `<div style="color:var(--muted); font-size:12px; padding:12px;">${t("noData")}</div>`;
+    const effUseYearStack = (end - effStart) / 86400000 > 400;
+    if (effUseYearStack) {
+      const startYear = effStart.getFullYear();
       const endYear = end.getFullYear();
       const out = [];
       for (let y = endYear; y >= startYear; y--) {
-        const ys = new Date(Math.max(start, new Date(y, 0, 1)));
+        const ys = new Date(Math.max(effStart, new Date(y, 0, 1)));
         const ye = new Date(Math.min(end, new Date(y, 11, 31, 23, 59, 59)));
         out.push(`<div style="margin-bottom:6px;"><div style="color:var(--muted); font-size:11px; margin-bottom:4px;">${y}</div>${buildOneRange(ys, ye, byDay, color, kind, valueKey, maxVal)}</div>`);
       }
       return out.join("");
     }
-    return buildOneRange(start, end, byDay, color, kind, valueKey, maxVal);
+    return buildOneRange(effStart, end, byDay, color, kind, valueKey, maxVal);
   }
 
   const tr = agg.totalsRun, tl = agg.totalsLift;
@@ -722,7 +725,7 @@ function renderHeatmap(agg) {
           <div class="stat-label">${tr.count} ${t("runsUnit")} · ${num(tr.duration, 0)} ${t("minUnit")}</div>
         </div>
       </div>
-      <div style="overflow-x:auto;">${buildHeatmap(agg.runByDay, COLORS.run, "run", "distance")}</div>
+      <div style="overflow-x:auto;">${buildHeatmap(agg.runByDay, COLORS.run, "run", "distance", parseDateOnly(RUN_TRACKED_SINCE))}</div>
     </div>
 
     <div class="card">
