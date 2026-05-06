@@ -25,6 +25,9 @@
   --gold: #fbbf24;
   --silver: #cbd5e1;
 }
+.change-up { color: #84cc16; }
+.change-down { color: #f43f5e; }
+.change-flat { color: #71717a; }
 .pr-card.big3 { border-color: rgba(251,191,36,0.5) !important; box-shadow: 0 0 0 1px rgba(251,191,36,0.15); }
 .pr-card.big7 { border-color: rgba(203,213,225,0.4) !important; }
 .pr-card.big3:hover { border-color: var(--gold) !important; }
@@ -1229,9 +1232,11 @@ function renderPR(agg) {
 
 // === View: Trends (v3) — running + lifting time-series ===
 function renderTrends(agg) {
-  const mode = window.TRENDS_MODE || 'run';  // 'run' | 'lift'
+  const mode = window.TRENDS_MODE || 'run';  // 'run' | 'lift' | 'compare'
   const tr = agg.totalsRun, tl = agg.totalsLift;
   const days = Math.floor((agg.rangeEnd - agg.rangeStart) / 86400000) + 1;
+  const liftBpFilter = window.TRENDS_LIFT_BP || 'ALL';
+  const liftDrillEx = window.TRENDS_LIFT_DRILL || '';
 
   // === Running Best Efforts ===
   function runBestEfforts() {
@@ -1304,6 +1309,163 @@ function renderTrends(agg) {
     </svg>`;
   }
 
+  // === Scatter chart ===
+  function buildScatter(points, xLabel, yLabel, opts) {
+    opts = opts || {};
+    const w = 800, h = 220, padL = 50, padR = 12, padT = 12, padB = 38;
+    if (!points.length) return `<div style="color:var(--muted); padding:20px;">${t("noData")}</div>`;
+    const xs = points.map(p => p.x), ys = points.map(p => p.y);
+    const xMin = opts.xMin !== undefined ? opts.xMin : Math.min(...xs);
+    const xMax = opts.xMax !== undefined ? opts.xMax : Math.max(...xs);
+    const yMin = opts.yMin !== undefined ? opts.yMin : Math.min(...ys);
+    const yMax = opts.yMax !== undefined ? opts.yMax : Math.max(...ys);
+    const xRng = (xMax - xMin) || 1, yRng = (yMax - yMin) || 1;
+    const xS = x => padL + (x - xMin) / xRng * (w - padL - padR);
+    const yS = y => h - padB - (y - yMin) / yRng * (h - padT - padB);
+    const dots = points.map(p =>
+      `<circle cx="${xS(p.x).toFixed(1)}" cy="${yS(p.y).toFixed(1)}" r="${p.r||3}" fill="${p.color||opts.color||'#888'}" opacity="0.7" data-payload="${(p.payload||'').replace(/"/g,'&quot;')}" class="hbar"/>`
+    ).join("");
+    const fmtX = opts.xFmt || (v => v.toFixed(opts.xDec||1));
+    const fmtY = opts.yFmt || (v => v.toFixed(opts.yDec||1));
+    const yMid = (yMin + yMax) / 2;
+    return `<svg width="100%" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+      <text x="2" y="${(padT+8).toFixed(1)}" fill="var(--muted)" font-size="9" font-family="JetBrains Mono">${fmtY(yMax)}</text>
+      <text x="2" y="${yS(yMid).toFixed(1)}" fill="var(--muted)" font-size="9" font-family="JetBrains Mono">${fmtY(yMid)}</text>
+      <text x="2" y="${(h-padB-2).toFixed(1)}" fill="var(--muted)" font-size="9" font-family="JetBrains Mono">${fmtY(yMin)}</text>
+      ${dots}
+      <text x="${(padL).toFixed(1)}" y="${(h-12).toFixed(1)}" fill="var(--muted)" font-size="9" font-family="JetBrains Mono">${fmtX(xMin)}</text>
+      <text x="${(w-padR).toFixed(1)}" y="${(h-12).toFixed(1)}" fill="var(--muted)" font-size="9" text-anchor="end" font-family="JetBrains Mono">${fmtX(xMax)}</text>
+      <text x="${(w/2).toFixed(1)}" y="${(h-2).toFixed(1)}" fill="var(--muted)" font-size="9" text-anchor="middle" font-family="JetBrains Mono">${xLabel}</text>
+    </svg>`;
+  }
+
+  // === Donut chart ===
+  function buildDonut(slices) {
+    const total = slices.reduce((s, x) => s + x.value, 0);
+    if (total === 0) return `<div style="color:var(--muted); padding:20px;">${t("noData")}</div>`;
+    const cx = 100, cy = 100, R = 80, r = 50;
+    let cumulative = 0;
+    const arcs = slices.map(s => {
+      if (s.value === 0) return "";
+      const startAngle = (cumulative / total) * Math.PI * 2 - Math.PI/2;
+      cumulative += s.value;
+      const endAngle = (cumulative / total) * Math.PI * 2 - Math.PI/2;
+      const x1 = cx + R * Math.cos(startAngle), y1 = cy + R * Math.sin(startAngle);
+      const x2 = cx + R * Math.cos(endAngle), y2 = cy + R * Math.sin(endAngle);
+      const x3 = cx + r * Math.cos(endAngle), y3 = cy + r * Math.sin(endAngle);
+      const x4 = cx + r * Math.cos(startAngle), y4 = cy + r * Math.sin(startAngle);
+      const largeArc = (endAngle - startAngle) > Math.PI ? 1 : 0;
+      return `<path d="M ${x1.toFixed(1)} ${y1.toFixed(1)} A ${R} ${R} 0 ${largeArc} 1 ${x2.toFixed(1)} ${y2.toFixed(1)} L ${x3.toFixed(1)} ${y3.toFixed(1)} A ${r} ${r} 0 ${largeArc} 0 ${x4.toFixed(1)} ${y4.toFixed(1)} Z" fill="${s.color}" opacity="0.85"/>`;
+    }).join("");
+    const legend = slices.map(s =>
+      `<div style="display:flex; align-items:center; gap:8px; padding:3px 0;">
+        <div style="width:10px; height:10px; background:${s.color}; border-radius:2px;"></div>
+        <span style="flex:1; font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--text);">${s.label}</span>
+        <span style="font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--muted);">${(s.value/total*100).toFixed(0)}% (${s.value})</span>
+      </div>`
+    ).join("");
+    return `<div style="display:flex; align-items:center; gap:24px; flex-wrap:wrap;">
+      <svg width="200" height="200" viewBox="0 0 200 200">
+        ${arcs}
+        <text x="${cx}" y="${cy}" fill="var(--text)" font-size="16" text-anchor="middle" font-family="JetBrains Mono" dy="-2">${total}</text>
+        <text x="${cx}" y="${cy+14}" fill="var(--muted)" font-size="9" text-anchor="middle" font-family="JetBrains Mono">total</text>
+      </svg>
+      <div style="flex:1; min-width:160px;">${legend}</div>
+    </div>`;
+  }
+
+  // === Stacked bars (monthly with segments) ===
+  function buildStackedBars(labels, stacks, segOrder, colorMap) {
+    if (!labels.length) return `<div style="color:var(--muted); padding:20px;">${t("noData")}</div>`;
+    const cw = 800, ch = 200, padB = 24;
+    const totals = labels.map(l => Object.values(stacks[l] || {}).reduce((s, v) => s + v, 0));
+    const maxV = Math.max(1, ...totals);
+    const out = [];
+    labels.forEach((m, i) => {
+      let yCursor = ch - padB;
+      const x = (i + 0.5) * (cw / labels.length);
+      const bw = (cw / labels.length) * 0.6;
+      const bx = x - bw / 2;
+      const segments = stacks[m] || {};
+      const total = totals[i];
+      for (const seg of segOrder) {
+        const val = segments[seg] || 0;
+        if (val <= 0) continue;
+        const segH = (val / maxV) * (ch - 40 - padB);
+        yCursor -= segH;
+        const payload = JSON.stringify({date:m, primary:`${seg}: ${num(val,0)} kg`, secondary:`total ${num(total,0)} kg (${(val/total*100).toFixed(0)}%)`}).replace(/"/g,"&quot;");
+        out.push(`<rect x="${bx.toFixed(1)}" y="${yCursor.toFixed(1)}" width="${bw.toFixed(1)}" height="${segH.toFixed(1)}" fill="${colorMap[seg]||'#888'}" opacity="0.85" rx="1" class="hbar" data-payload="${payload}"></rect>`);
+      }
+      out.push(`<text x="${x.toFixed(1)}" y="${ch-6}" fill="var(--muted)" font-size="10" text-anchor="middle">${m.slice(5)}</text>`);
+    });
+    const legend = segOrder.map(k => `<span style="margin-right:12px; font-family:'JetBrains Mono', monospace; font-size:10px;"><span style="display:inline-block; width:8px; height:8px; background:${colorMap[k]||'#888'}; vertical-align:middle; margin-right:3px; border-radius:1px;"></span>${k}</span>`).join("");
+    return `<svg width="100%" height="${ch}" viewBox="0 0 ${cw} ${ch}" preserveAspectRatio="none">${out.join("")}</svg>
+      <div style="margin-top:8px;">${legend}</div>`;
+  }
+
+  // === Simple bar chart (for day-of-week, HR histogram) ===
+  function buildBarChart(labels, values, color, opts) {
+    opts = opts || {};
+    if (!labels.length) return `<div style="color:var(--muted); padding:20px;">${t("noData")}</div>`;
+    const cw = 800, ch = 160, padB = 28;
+    const maxV = Math.max(1, ...values);
+    const out = [];
+    labels.forEach((lbl, i) => {
+      const v = values[i] || 0;
+      const x = (i + 0.5) * (cw / labels.length);
+      const bw = (cw / labels.length) * 0.6;
+      const bx = x - bw / 2;
+      const by = ch - padB - (v / maxV) * (ch - 40 - padB);
+      const bh = (v / maxV) * (ch - 40 - padB);
+      const payload = JSON.stringify({date:lbl, primary:opts.fmt ? opts.fmt(v) : v.toString(), secondary: opts.unit||""}).replace(/"/g,"&quot;");
+      out.push(`<rect x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="${bw.toFixed(1)}" height="${bh.toFixed(1)}" fill="${color}" opacity="0.7" rx="2" class="hbar" data-payload="${payload}"></rect>`);
+      out.push(`<text x="${x.toFixed(1)}" y="${(ch-padB+12).toFixed(1)}" fill="var(--muted)" font-size="10" text-anchor="middle">${lbl}</text>`);
+      if (v > 0) out.push(`<text x="${x.toFixed(1)}" y="${(by-3).toFixed(1)}" fill="var(--muted)" font-size="9" text-anchor="middle" font-family="JetBrains Mono">${opts.fmt ? opts.fmt(v) : v}</text>`);
+    });
+    return `<svg width="100%" height="${ch}" viewBox="0 0 ${cw} ${ch}" preserveAspectRatio="none">${out.join("")}</svg>`;
+  }
+
+  // === Multi-line chart ===
+  function buildMultiLine(seriesByLabel, opts) {
+    opts = opts || {};
+    const w = 800, h = 200, padL = 50, padR = 12, padT = 12, padB = 28;
+    const allPts = [];
+    for (const [, pts] of Object.entries(seriesByLabel)) for (const p of pts) allPts.push(p);
+    if (allPts.length < 2) return `<div style="color:var(--muted); padding:20px;">${t("noData")}</div>`;
+    const xs = allPts.map(p => p.t), ys = allPts.map(p => p.v);
+    const xMin = Math.min(...xs), xMax = Math.max(...xs);
+    const yMin = opts.yMin !== undefined ? opts.yMin : Math.min(...ys);
+    const yMax = opts.yMax !== undefined ? opts.yMax : Math.max(...ys);
+    const xRng = (xMax - xMin) || 1, yRng = (yMax - yMin) || 1;
+    const xS = x => padL + (x - xMin) / xRng * (w - padL - padR);
+    const yS = y => h - padB - (y - yMin) / yRng * (h - padT - padB);
+    const lines = [];
+    const legendBits = [];
+    for (const [label, pts] of Object.entries(seriesByLabel)) {
+      const sorted = [...pts].sort((a,b) => a.t - b.t);
+      const c = (opts.colors && opts.colors[label]) || COLORS.lift;
+      if (sorted.length < 1) continue;
+      const path = sorted.map(p => `${xS(p.t).toFixed(1)},${yS(p.v).toFixed(1)}`).join(" L");
+      lines.push(`<path d="M${path}" stroke="${c}" stroke-width="1.5" fill="none"/>`);
+      const dots = sorted.map(p => `<circle cx="${xS(p.t).toFixed(1)}" cy="${yS(p.v).toFixed(1)}" r="2.5" fill="${c}" data-payload="${(p.payload||'').replace(/"/g,'&quot;')}" class="hbar"/>`).join("");
+      lines.push(dots);
+      legendBits.push(`<span style="margin-right:12px; font-family:'JetBrains Mono', monospace; font-size:10px;"><span style="display:inline-block; width:14px; height:2px; background:${c}; vertical-align:middle; margin-right:4px;"></span>${label}</span>`);
+    }
+    const fmtY = opts.yFmt || (v => v.toFixed(opts.yDec||1));
+    const yMid = (yMin + yMax)/2;
+    const fdate = isoDate(new Date(xMin));
+    const ldate = isoDate(new Date(xMax));
+    return `<svg width="100%" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+      <text x="2" y="${(padT+8).toFixed(1)}" fill="var(--muted)" font-size="9" font-family="JetBrains Mono">${fmtY(yMax)}</text>
+      <text x="2" y="${yS(yMid).toFixed(1)}" fill="var(--muted)" font-size="9" font-family="JetBrains Mono">${fmtY(yMid)}</text>
+      <text x="2" y="${(h-padB-2).toFixed(1)}" fill="var(--muted)" font-size="9" font-family="JetBrains Mono">${fmtY(yMin)}</text>
+      ${lines.join("")}
+      <text x="${padL}" y="${(h-6).toFixed(1)}" fill="var(--muted)" font-size="9" font-family="JetBrains Mono">${fdate}</text>
+      <text x="${(w-padR).toFixed(1)}" y="${(h-6).toFixed(1)}" fill="var(--muted)" font-size="9" text-anchor="end" font-family="JetBrains Mono">${ldate}</text>
+    </svg>
+    <div style="margin-top:8px;">${legendBits.join("")}</div>`;
+  }
+
   // === Bar chart: monthly aggregation ===
   function buildMonthlyBars(months, byMonth, color, kind) {
     if (!months.length) return `<div style="color:var(--muted); padding:20px;">${t("noData")}</div>`;
@@ -1330,18 +1492,68 @@ function renderTrends(agg) {
   // === Run mode ===
   function renderRunMode() {
     const monthsR = Object.keys(agg.runByMonth).sort();
-    const distancePts = (DATA.runs || [])
-      .filter(r => inRange(r.date, agg.rangeStart, agg.rangeEnd))
-      .map(r => ({t: parseDateOnly(dateOnly(r.date)).getTime(), v: r.distance || 0,
-                  payload: JSON.stringify({date: dateOnly(r.date), primary: `${(r.distance||0).toFixed(2)} km`, secondary: `${Math.round(r.duration||0)} min · ${fmtPace(r.pace||0)}`})}));
-    const pacePts = (DATA.runs || [])
-      .filter(r => inRange(r.date, agg.rangeStart, agg.rangeEnd) && r.pace && r.distance >= 1)
+    const runsInRange = (DATA.runs || []).filter(r => inRange(r.date, agg.rangeStart, agg.rangeEnd));
+
+    const distancePts = runsInRange.map(r => ({t: parseDateOnly(dateOnly(r.date)).getTime(), v: r.distance || 0,
+      payload: JSON.stringify({date: dateOnly(r.date), primary: `${(r.distance||0).toFixed(2)} km`, secondary: `${Math.round(r.duration||0)} min · ${fmtPace(r.pace||0)}`})}));
+    const pacePts = runsInRange.filter(r => r.pace && r.distance >= 1)
       .map(r => ({t: parseDateOnly(dateOnly(r.date)).getTime(), v: r.pace,
                   payload: JSON.stringify({date: dateOnly(r.date), primary: fmtPace(r.pace), secondary: `${(r.distance||0).toFixed(2)} km`})}));
+
+    // F. HR distribution (avg HR histogram)
+    const hrBuckets = [{lo:0, hi:120, label:"<120", color:"#22d3ee"}, {lo:120, hi:140, label:"120-140 (Z2)", color:"#84cc16"}, {lo:140, hi:160, label:"140-160 (Z3)", color:"#fbbf24"}, {lo:160, hi:175, label:"160-175 (Z4)", color:"#f97316"}, {lo:175, hi:999, label:"175+ (Z5)", color:"#f43f5e"}];
+    const hrCounts = hrBuckets.map(b => runsInRange.filter(r => (r.hr||0) >= b.lo && (r.hr||0) < b.hi).length);
+    const hrLabels = hrBuckets.map(b => b.label);
+
+    // G. Pace × Distance scatter
+    const paceVsDistPts = runsInRange.filter(r => r.distance >= 1 && r.pace).map(r => ({
+      x: r.distance, y: r.pace, color: COLORS.run, r: 4,
+      payload: JSON.stringify({date: dateOnly(r.date), primary: `${r.distance.toFixed(2)} km @ ${fmtPace(r.pace)}`, secondary: `${Math.round(r.duration||0)} min · ${(r.hr||0).toFixed(0)} bpm`})
+    }));
+
+    // H. Source distribution donut
+    const srcCounts = {};
+    for (const r of runsInRange) { const s = r.source || 'Unknown'; srcCounts[s] = (srcCounts[s]||0) + 1; }
+    const srcSlices = Object.entries(srcCounts).map(([label, value]) => {
+      const colorMap = {'Apple Watch':'#a3a3a3', 'Nike Run Club':'#fb923c', 'Strava':'#fc4c02', 'Unknown':'#71717a'};
+      return {label, value, color: colorMap[label] || '#888'};
+    });
+
+    // I. Day of week frequency
+    const dowLabels = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+    const dowCounts = [0,0,0,0,0,0,0];
+    for (const r of runsInRange) {
+      const d = parseDateOnly(dateOnly(r.date));
+      const wd = d.getDay() === 0 ? 6 : d.getDay() - 1;
+      dowCounts[wd]++;
+    }
+
+    // J. Best 5km/10km PR progression (rolling best per month)
+    const months = monthsR;
+    const best5kSeries = [], best10kSeries = [];
+    let runningBest5k = 99, runningBest10k = 99;
+    for (const m of months) {
+      const ymRuns = runsInRange.filter(r => dateOnly(r.date).startsWith(m));
+      let m5k = 99, m10k = 99;
+      for (const r of ymRuns) {
+        if (r.distance >= 5 && r.pace && r.pace < m5k) m5k = r.pace;
+        if (r.distance >= 10 && r.pace && r.pace < m10k) m10k = r.pace;
+      }
+      const t = parseDateOnly(m + "-15").getTime();
+      if (m5k < 99) {
+        runningBest5k = Math.min(runningBest5k, m5k);
+        best5kSeries.push({t, v: runningBest5k, payload: JSON.stringify({date:m, primary:`5K best: ${fmtPace(runningBest5k)}`})});
+      }
+      if (m10k < 99) {
+        runningBest10k = Math.min(runningBest10k, m10k);
+        best10kSeries.push({t, v: runningBest10k, payload: JSON.stringify({date:m, primary:`10K best: ${fmtPace(runningBest10k)}`})});
+      }
+    }
 
     return `
       <h2><span class="pill-run">RUNNING</span> Best Efforts</h2>
       ${runBestEfforts()}
+
       <div class="card">
         <h3>DISTANCE OVER TIME</h3>
         ${buildLineChart(distancePts, "km", COLORS.run, {decimals:1, yFmt: v => v.toFixed(1)+' km'})}
@@ -1351,8 +1563,32 @@ function renderTrends(agg) {
         ${buildLineChart(pacePts, "min/km", COLORS.run, {decimals:2, yFmt: fmtPace})}
       </div>
       <div class="card">
+        <h3>5K / 10K PR PROGRESSION (cumulative best)</h3>
+        ${buildMultiLine({"5K best": best5kSeries, "10K best": best10kSeries}, {yFmt: fmtPace, colors:{"5K best":"#06b6d4", "10K best":"#fbbf24"}})}
+      </div>
+      <div class="card">
         <h3>MONTHLY DISTANCE</h3>
         ${buildMonthlyBars(monthsR, agg.runByMonth, COLORS.run, "run")}
+      </div>
+      <div class="grid grid-2" style="gap:12px;">
+        <div class="card">
+          <h3>PACE × DISTANCE</h3>
+          ${buildScatter(paceVsDistPts, "distance (km)", "pace (min/km)", {color: COLORS.run, xFmt: v => v.toFixed(1)+' km', yFmt: fmtPace})}
+        </div>
+        <div class="card">
+          <h3>HR ZONE DISTRIBUTION (avg HR per run)</h3>
+          ${buildBarChart(hrLabels, hrCounts, COLORS.run, {fmt: v => v + ' runs'})}
+        </div>
+      </div>
+      <div class="grid grid-2" style="gap:12px;">
+        <div class="card">
+          <h3>SOURCE BREAKDOWN</h3>
+          ${buildDonut(srcSlices)}
+        </div>
+        <div class="card">
+          <h3>DAY OF WEEK FREQUENCY</h3>
+          ${buildBarChart(dowLabels, dowCounts, COLORS.run, {fmt: v => v + ' runs'})}
+        </div>
       </div>
     `;
   }
@@ -1360,32 +1596,73 @@ function renderTrends(agg) {
   // === Lift mode ===
   function renderLiftMode() {
     const monthsL = Object.keys(agg.liftByMonth).sort();
-    // Top 5 exercises by total volume in period
+    const allLiftsRaw = (DATA.lifts || []).filter(l => inRange(l.date, agg.rangeStart, agg.rangeEnd));
+    // A. Body part filter
+    const allLifts = liftBpFilter === 'ALL' ? allLiftsRaw : allLiftsRaw.filter(l => bodyPart(l.exercise || "") === liftBpFilter);
+
+    // Filter UI (BP)
+    const bpOptions = ["ALL","CHEST","BACK","ARMS","SHOULDERS","LEGS","OTHER"];
+    const bpFilterHtml = `
+      <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px; flex-wrap:wrap;">
+        <span class="label-mono">FILTER:</span>
+        <select onchange="window.TRENDS_LIFT_BP=this.value; refresh();" style="background:var(--surface-2,#161616); color:var(--text); border:1px solid var(--border); padding:6px 10px; border-radius:6px; font-family:'JetBrains Mono', monospace; font-size:11px;">
+          ${bpOptions.map(bp => `<option value="${bp}" ${liftBpFilter===bp?'selected':''}>${bp === 'ALL' ? 'All body parts' : bp}</option>`).join("")}
+        </select>
+      </div>`;
+
+    // Top 5 exercises by total volume
     const exVol = new Map();
-    for (const l of (DATA.lifts || [])) {
-      if (!inRange(l.date, agg.rangeStart, agg.rangeEnd)) continue;
+    for (const l of allLifts) {
       const ex = l.exercise || "(unnamed)";
       exVol.set(ex, (exVol.get(ex)||0) + (l.weight||0)*(l.reps||0));
     }
     const top5 = [...exVol.entries()].sort((a,b) => b[1]-a[1]).slice(0, 5);
+    const top5Html = top5.length ? top5.map(([name, vol]) => {
+      const bp = bodyPart(name);
+      const c = BP_COLORS[bp];
+      const safeName = name.replace(/'/g, "\\'");
+      return `<div class="card" style="margin:0; cursor:pointer;" onclick="window.TRENDS_LIFT_DRILL='${safeName}'; refresh(); document.getElementById('lift-drill-section')?.scrollIntoView({behavior:'smooth'});">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+          <h3 style="margin:0; font-size:11px; flex:1;">${name}</h3>
+          <span style="background:${c}30; color:${c}; padding: 2px 8px; border-radius: 8px; font-size: 9px; font-family:'JetBrains Mono', monospace; letter-spacing: 0.1em;">${bp}</span>
+        </div>
+        <div class="stat-big" style="font-size:18px; color:var(--lift); margin-top:6px;">${num(vol, 0)} kg</div>
+        <div class="stat-label">total volume · click to drill down</div>
+      </div>`;
+    }).join("") : `<div style="color:var(--muted)">${t("noData")}</div>`;
 
-    // Volume by month
-    const volByMonth = {};
-    for (const m of monthsL) volByMonth[m] = agg.liftByMonth[m].volume;
+    // Filter agg.liftByMonth based on bp filter (recompute volumes by month from filtered lifts)
+    const filteredVolByMonth = {};
+    const filteredSessionsByMonth = {};
+    const filteredSetsByMonth = {};
+    for (const m of monthsL) { filteredVolByMonth[m] = 0; filteredSessionsByMonth[m] = new Set(); filteredSetsByMonth[m] = 0; }
+    for (const l of allLifts) {
+      const m = dateOnly(l.date).slice(0, 7);
+      if (filteredVolByMonth[m] === undefined) { filteredVolByMonth[m] = 0; filteredSessionsByMonth[m] = new Set(); filteredSetsByMonth[m] = 0; }
+      filteredVolByMonth[m] += (l.weight||0) * (l.reps||0);
+      filteredSessionsByMonth[m].add(dateOnly(l.date));
+      filteredSetsByMonth[m]++;
+    }
+    const filteredMonths = Object.keys(filteredVolByMonth).sort();
+    // Build a synthetic liftByMonth-like obj for buildMonthlyBars
+    const fakeLiftByMonth = {};
+    for (const m of filteredMonths) {
+      fakeLiftByMonth[m] = {volume: filteredVolByMonth[m], sets: filteredSetsByMonth[m], sessions: filteredSessionsByMonth[m].size};
+    }
 
-    // Sessions by month
-    const sessionsBars = monthsL.length ? (() => {
-      const cw = 800, ch = 140;
-      const maxV = Math.max(1, ...monthsL.map(m => agg.liftByMonth[m].sessions));
+    // Sessions monthly
+    const sessionsBars = filteredMonths.length ? (() => {
+      const cw = 800, ch = 160, padB = 24;
+      const maxV = Math.max(1, ...filteredMonths.map(m => fakeLiftByMonth[m].sessions));
       const out = [];
-      monthsL.forEach((m, i) => {
-        const md = agg.liftByMonth[m];
+      filteredMonths.forEach((m, i) => {
+        const md = fakeLiftByMonth[m];
         const v = md.sessions;
-        const x = (i + 0.5) * (cw / monthsL.length);
-        const bw = (cw / monthsL.length) * 0.6;
+        const x = (i + 0.5) * (cw / filteredMonths.length);
+        const bw = (cw / filteredMonths.length) * 0.6;
         const bx = x - bw/2;
-        const by = ch - 24 - (v / maxV) * (ch - 60);
-        const bh = (v / maxV) * (ch - 60);
+        const by = ch - padB - (v / maxV) * (ch - 40 - padB);
+        const bh = (v / maxV) * (ch - 40 - padB);
         const payload = JSON.stringify({date: m, primary: `${v} sessions`, secondary: `${md.sets} sets · ${num(md.volume,0)} kg vol`});
         out.push(`<rect x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="${bw.toFixed(1)}" height="${bh.toFixed(1)}" fill="${COLORS.lift}" opacity="0.7" rx="2" class="hbar" data-payload="${payload.replace(/"/g,'&quot;')}"></rect>`);
         out.push(`<text x="${x.toFixed(1)}" y="${ch-6}" fill="var(--muted)" font-size="10" text-anchor="middle">${m.slice(5)}</text>`);
@@ -1393,29 +1670,221 @@ function renderTrends(agg) {
       return `<svg width="100%" height="${ch}" viewBox="0 0 ${cw} ${ch}" preserveAspectRatio="none">${out.join("")}</svg>`;
     })() : `<div style="color:var(--muted); padding:20px;">${t("noData")}</div>`;
 
-    const top5Html = top5.map(([name, vol]) => {
-      const bp = bodyPart(name);
-      const c = BP_COLORS[bp];
-      return `<div class="card" style="margin:0;">
-        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
-          <h3 style="margin:0; font-size:11px; flex:1;">${name}</h3>
-          <span style="background:${c}30; color:${c}; padding: 2px 8px; border-radius: 8px; font-size: 9px; font-family:'JetBrains Mono', monospace; letter-spacing: 0.1em;">${bp}</span>
-        </div>
-        <div class="stat-big" style="font-size:18px; color:var(--lift); margin-top:6px;">${num(vol, 0)} kg</div>
-        <div class="stat-label">total volume</div>
-      </div>`;
-    }).join("");
+    // C. Body part stacked monthly volume (only when ALL filter)
+    const bpStackOrder = ["CHEST","BACK","ARMS","SHOULDERS","LEGS","OTHER"];
+    const bpStacks = {};
+    for (const m of monthsL) bpStacks[m] = {};
+    for (const l of allLiftsRaw) {  // use raw, ignore bp filter
+      const m = dateOnly(l.date).slice(0, 7);
+      const bp = bodyPart(l.exercise || "");
+      if (!bpStacks[m]) bpStacks[m] = {};
+      bpStacks[m][bp] = (bpStacks[m][bp] || 0) + (l.weight||0) * (l.reps||0);
+    }
+    const allMonthsForStack = Object.keys(bpStacks).sort();
+
+    // D. Rep range distribution
+    const repRanges = [
+      {lo:1, hi:5, label:"1-5 reps (Strength)", color:"#f43f5e"},
+      {lo:6, hi:12, label:"6-12 reps (Hypertrophy)", color:"#FF1A8C"},
+      {lo:13, hi:99, label:"13+ reps (Endurance)", color:"#a855f7"},
+    ];
+    const repCounts = repRanges.map(rr => allLifts.filter(l => (l.reps||0) >= rr.lo && (l.reps||0) <= rr.hi).length);
+    const repSlices = repRanges.map((rr, i) => ({label: rr.label, value: repCounts[i], color: rr.color}));
+
+    // E. PR timeline (each big7 PR event as a scatter point)
+    const prEvents = [];
+    const big7Order = ["SQUAT","BENCH","DEADLIFT","OHP","BB ROW","PULL-UP","DIP"];
+    const big7BestSoFar = {};
+    for (const k of big7Order) big7BestSoFar[k] = 0;
+    const sortedLifts = [...(DATA.lifts || [])].sort((a,b) => dateOnly(a.date).localeCompare(dateOnly(b.date)));
+    for (const l of sortedLifts) {
+      if (!inRange(l.date, agg.rangeStart, agg.rangeEnd)) continue;
+      const k = findBigMatch(l.exercise || "", BIG7_PATTERNS);
+      if (!k) continue;
+      if ((l.weight||0) > big7BestSoFar[k]) {
+        big7BestSoFar[k] = l.weight;
+        prEvents.push({
+          x: parseDateOnly(dateOnly(l.date)).getTime(),
+          y: l.weight,
+          color: ["SQUAT","BENCH","DEADLIFT"].includes(k) ? "#fbbf24" : "#cbd5e1",
+          r: 5,
+          label: k,
+          payload: JSON.stringify({date: dateOnly(l.date), primary:`${k} PR: ${l.weight.toFixed(1)} kg`, secondary: l.exercise})
+        });
+      }
+    }
+
+    // Drilldown section
+    const allExNames = [...new Set(allLifts.map(l => l.exercise))].sort();
+    const drillSection = (() => {
+      const exName = liftDrillEx && allExNames.includes(liftDrillEx) ? liftDrillEx : (allExNames[0] || "");
+      const drillLifts = allLifts.filter(l => l.exercise === exName);
+      // max weight per session
+      const maxByDate = new Map();
+      const volByDate = new Map();
+      for (const l of drillLifts) {
+        const d = dateOnly(l.date);
+        if (!maxByDate.has(d) || (l.weight||0) > maxByDate.get(d)) maxByDate.set(d, l.weight||0);
+        volByDate.set(d, (volByDate.get(d)||0) + (l.weight||0)*(l.reps||0));
+      }
+      const maxPts = [...maxByDate.entries()].sort((a,b) => a[0].localeCompare(b[0])).map(([d,v]) => ({
+        t: parseDateOnly(d).getTime(), v,
+        payload: JSON.stringify({date:d, primary:`${v.toFixed(1)} kg max`, secondary: exName})
+      }));
+      const volPts = [...volByDate.entries()].sort((a,b) => a[0].localeCompare(b[0])).map(([d,v]) => ({
+        t: parseDateOnly(d).getTime(), v,
+        payload: JSON.stringify({date:d, primary:`${num(v,0)} kg vol`, secondary: exName})
+      }));
+      const selectorHtml = `<select onchange="window.TRENDS_LIFT_DRILL=this.value; refresh();" style="background:var(--surface-2,#161616); color:var(--text); border:1px solid var(--border); padding:6px 10px; border-radius:6px; font-family:'JetBrains Mono', monospace; font-size:11px; min-width:240px;">
+        ${allExNames.map(n => `<option value="${n.replace(/"/g,'&quot;')}" ${n === exName ? 'selected':''}>${n}</option>`).join("")}
+      </select>`;
+      return `
+        <div id="lift-drill-section" class="card">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; gap:12px; flex-wrap:wrap;">
+            <h3 style="margin:0;">EXERCISE DRILLDOWN — ${exName || '—'}</h3>
+            ${selectorHtml}
+          </div>
+          ${maxPts.length < 2 ? `<div style="color:var(--muted); padding:20px;">${t("noData")}</div>` : `
+          <div class="grid grid-2" style="gap:12px;">
+            <div>
+              <div class="label-mono" style="margin-bottom:4px;">MAX WEIGHT PER SESSION</div>
+              ${buildLineChart(maxPts, "kg", COLORS.lift, {decimals:1, yFmt: v => v.toFixed(1)+' kg'})}
+            </div>
+            <div>
+              <div class="label-mono" style="margin-bottom:4px;">VOLUME PER SESSION</div>
+              ${buildLineChart(volPts, "kg", COLORS.lift, {decimals:0, yFmt: v => num(v,0)+' kg'})}
+            </div>
+          </div>`}
+        </div>`;
+    })();
 
     return `
       <h2><span class="pill-lift">LIFTING</span> Top 5 by Volume</h2>
-      <div class="grid grid-3" style="margin-bottom:12px;">${top5Html || `<div style="color:var(--muted)">${t("noData")}</div>`}</div>
+      ${bpFilterHtml}
+      <div class="grid grid-3" style="margin-bottom:12px;">${top5Html}</div>
       <div class="card">
-        <h3>MONTHLY VOLUME</h3>
-        ${buildMonthlyBars(monthsL, agg.liftByMonth, COLORS.lift, "lift")}
+        <h3>MONTHLY VOLUME${liftBpFilter !== 'ALL' ? ` (${liftBpFilter})` : ''}</h3>
+        ${buildMonthlyBars(filteredMonths, fakeLiftByMonth, COLORS.lift, "lift")}
       </div>
       <div class="card">
-        <h3>MONTHLY SESSIONS</h3>
+        <h3>MONTHLY SESSIONS${liftBpFilter !== 'ALL' ? ` (${liftBpFilter})` : ''}</h3>
         ${sessionsBars}
+      </div>
+      ${liftBpFilter === 'ALL' ? `<div class="card">
+        <h3>BODY PART STACKED VOLUME (monthly)</h3>
+        ${buildStackedBars(allMonthsForStack, bpStacks, bpStackOrder, BP_COLORS)}
+      </div>` : ''}
+      <div class="grid grid-2" style="gap:12px;">
+        <div class="card">
+          <h3>REP RANGE DISTRIBUTION</h3>
+          ${buildDonut(repSlices)}
+        </div>
+        <div class="card">
+          <h3>PR TIMELINE (Big 7 PRs as set)</h3>
+          ${buildScatter(prEvents, "date", "weight (kg)", {color: COLORS.lift, xFmt: v => isoDate(new Date(v)), yFmt: v => v.toFixed(0)+' kg'})}
+        </div>
+      </div>
+      ${drillSection}
+    `;
+  }
+
+  // === Compare mode ===
+  function renderCompareMode() {
+    const now = new Date();
+    function monthRange(year, month) {
+      const start = new Date(year, month, 1);
+      const end = new Date(year, month + 1, 0, 23, 59, 59);
+      return [start, end];
+    }
+    const [thisStart, thisEnd] = monthRange(now.getFullYear(), now.getMonth());
+    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const [prevStart, prevEnd] = monthRange(lastMonth.getFullYear(), lastMonth.getMonth());
+    const [yoyStart, yoyEnd] = monthRange(now.getFullYear() - 1, now.getMonth());
+
+    function summarize(start, end) {
+      const runs = (DATA.runs||[]).filter(r => inRange(r.date, start, end));
+      const lifts = (DATA.lifts||[]).filter(l => inRange(l.date, start, end));
+      const dist = runs.reduce((s,r) => s + (r.distance||0), 0);
+      const dur = runs.reduce((s,r) => s + (r.duration||0), 0);
+      const vol = lifts.reduce((s,l) => s + (l.weight||0)*(l.reps||0), 0);
+      const sess = new Set(lifts.map(l => dateOnly(l.date))).size;
+      return {runs: runs.length, distance: dist, duration: dur, sets: lifts.length, sessions: sess, volume: vol};
+    }
+    const cur = summarize(thisStart, thisEnd);
+    const prev = summarize(prevStart, prevEnd);
+    const yoy = summarize(yoyStart, yoyEnd);
+
+    function diff(a, b) {
+      if (b === 0) return a > 0 ? "+∞" : "—";
+      const pct = ((a - b) / b * 100).toFixed(0);
+      const cls = a > b ? "change-up" : (a < b ? "change-down" : "change-flat");
+      const sign = a > b ? "↑ +" : (a < b ? "↓ " : "= ");
+      return `<span class="${cls}" style="font-family:'JetBrains Mono', monospace; font-size:10px;">${sign}${pct}%</span>`;
+    }
+
+    function compareCard(label, curVal, prevVal, fmt) {
+      return `<div class="card" style="margin:0;">
+        <h3>${label}</h3>
+        <div style="display:flex; justify-content:space-between; align-items:baseline; gap:12px;">
+          <div>
+            <div class="stat-big" style="font-size:22px;">${fmt(curVal)}</div>
+            <div class="stat-label">this month</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-family:'JetBrains Mono', monospace; color:var(--muted); font-size:14px;">${fmt(prevVal)}</div>
+            <div class="stat-label">prev</div>
+            <div>${diff(curVal, prevVal)}</div>
+          </div>
+        </div>
+      </div>`;
+    }
+    function yoyCard(label, curVal, yoyVal, fmt) {
+      return `<div class="card" style="margin:0;">
+        <h3>${label}</h3>
+        <div style="display:flex; justify-content:space-between; align-items:baseline; gap:12px;">
+          <div>
+            <div class="stat-big" style="font-size:22px;">${fmt(curVal)}</div>
+            <div class="stat-label">this year</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-family:'JetBrains Mono', monospace; color:var(--muted); font-size:14px;">${fmt(yoyVal)}</div>
+            <div class="stat-label">last year</div>
+            <div>${diff(curVal, yoyVal)}</div>
+          </div>
+        </div>
+      </div>`;
+    }
+
+    const fmtKm = v => v.toFixed(1)+' km';
+    const fmtMin = v => Math.round(v)+' min';
+    const fmtCount = v => v.toString();
+    const fmtVol = v => num(v, 0)+' kg';
+
+    const thisLabel = `${MONTH_NAMES[thisStart.getMonth()]} ${thisStart.getFullYear()}`;
+    const prevLabel = `${MONTH_NAMES[prevStart.getMonth()]} ${prevStart.getFullYear()}`;
+    const yoyLabel = `${MONTH_NAMES[yoyStart.getMonth()]} ${yoyStart.getFullYear()}`;
+
+    return `
+      <h2><span class="pill-run">THIS MONTH</span> vs <span class="pill-lift">PREV MONTH</span></h2>
+      <p style="color:var(--muted); font-size:11px; margin-bottom:12px; font-family:'JetBrains Mono', monospace;">${thisLabel} vs ${prevLabel}</p>
+      <div class="grid grid-3" style="margin-bottom:16px;">
+        ${compareCard('RUNS', cur.runs, prev.runs, fmtCount)}
+        ${compareCard('DISTANCE', cur.distance, prev.distance, fmtKm)}
+        ${compareCard('DURATION', cur.duration, prev.duration, fmtMin)}
+        ${compareCard('LIFT SESSIONS', cur.sessions, prev.sessions, fmtCount)}
+        ${compareCard('LIFT SETS', cur.sets, prev.sets, fmtCount)}
+        ${compareCard('VOLUME', cur.volume, prev.volume, fmtVol)}
+      </div>
+
+      <h2>YEAR-OVER-YEAR</h2>
+      <p style="color:var(--muted); font-size:11px; margin-bottom:12px; font-family:'JetBrains Mono', monospace;">${thisLabel} vs ${yoyLabel}</p>
+      <div class="grid grid-3">
+        ${yoyCard('RUNS', cur.runs, yoy.runs, fmtCount)}
+        ${yoyCard('DISTANCE', cur.distance, yoy.distance, fmtKm)}
+        ${yoyCard('DURATION', cur.duration, yoy.duration, fmtMin)}
+        ${yoyCard('LIFT SESSIONS', cur.sessions, yoy.sessions, fmtCount)}
+        ${yoyCard('LIFT SETS', cur.sets, yoy.sets, fmtCount)}
+        ${yoyCard('VOLUME', cur.volume, yoy.volume, fmtVol)}
       </div>
     `;
   }
@@ -1427,13 +1896,19 @@ function renderTrends(agg) {
       <div style="display:inline-flex; background:var(--surface-2,#161616); border:1px solid var(--border); border-radius:8px; padding:2px;">
         <button onclick="window.TRENDS_MODE='run'; refresh();" style="background:${mode==='run'?'var(--run)':'transparent'}; color:${mode==='run'?'#000':'var(--muted)'}; border:none; padding:6px 14px; border-radius:6px; cursor:pointer; font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.05em;">RUN</button>
         <button onclick="window.TRENDS_MODE='lift'; refresh();" style="background:${mode==='lift'?'var(--lift)':'transparent'}; color:${mode==='lift'?'#fff':'var(--muted)'}; border:none; padding:6px 14px; border-radius:6px; cursor:pointer; font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.05em;">LIFT</button>
+        <button onclick="window.TRENDS_MODE='compare'; refresh();" style="background:${mode==='compare'?'var(--accent)':'transparent'}; color:${mode==='compare'?'#fff':'var(--muted)'}; border:none; padding:6px 14px; border-radius:6px; cursor:pointer; font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.05em;">COMPARE</button>
       </div>
     </div>
   `;
 
+  let body;
+  if (mode === 'run') body = renderRunMode();
+  else if (mode === 'lift') body = renderLiftMode();
+  else body = renderCompareMode();
+
   return `
     ${toggleHtml}
-    ${mode === 'run' ? renderRunMode() : renderLiftMode()}
+    ${body}
   `;
 }
 
