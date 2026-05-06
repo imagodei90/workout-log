@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>PR Final Preview — Big 3 + Big 7 unified</title>
+<style>
+  :root {
+    --bg: #0a0a0a; --surface: #111;
+    --text: #fafafa; --muted: #71717a;
+    --lift: #FF1A8C; --gold: #fbbf24; --silver: #cbd5e1;
+    --border: #1f1f23;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: "Inter", -apple-system, sans-serif;
+    padding: 24px; max-width: 760px; margin: 0 auto; line-height: 1.5;
+  }
+  h1 { font-size: 22px; margin-bottom: 16px; font-weight: 600; }
+  .label-mono { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+  .gold-card { background: linear-gradient(135deg, rgba(251,191,36,0.06), transparent); border-color: rgba(251,191,36,0.3); }
+  .pr-row { display: flex; justify-content: space-between; align-items: baseline; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .pr-row:last-child { border-bottom: none; }
+  .pr-row-name { font-family: 'JetBrains Mono', monospace; color: var(--muted); font-size: 11px; letter-spacing: 0.05em; }
+  .pr-row-val { font-family: 'JetBrains Mono', monospace; color: var(--text); font-size: 14px; }
+  .pr-row-meta { font-family: 'JetBrains Mono', monospace; color: var(--muted); font-size: 10px; }
+  .change-up { color: #84cc16; }
+  .change-down { color: #f43f5e; }
+  .change-flat { color: var(--muted); }
+  .section-divider { border: none; border-top: 1px dashed var(--border); margin: 16px 0; }
+</style>
+</head>
+<body>
+<h1>PR 섹션 최종 안 (radar 제거 + Big 7 통합)</h1>
+<p style="color: var(--muted); margin-bottom: 24px; font-size: 14px;">한 카드에 Big 3 (Total + BW ratio) + Big 7 (rest 4개) 모두 포함. radar 없이 텍스트만으로 정보 밀도 ↑.</p>
+
+<div class="card gold-card">
+  <div class="label-mono" style="color: var(--gold); margin-bottom: 8px;">🏆 BIG 3 PR</div>
+
+  <div class="pr-row">
+    <div>
+      <div class="pr-row-name">SQUAT</div>
+      <div class="pr-row-meta">2026-04-12</div>
+    </div>
+    <div style="text-align: right;">
+      <div class="pr-row-val">120.0 kg</div>
+      <div class="pr-row-meta change-up">↑ +5kg vs Mar</div>
+    </div>
+  </div>
+  <div class="pr-row">
+    <div>
+      <div class="pr-row-name">BENCH</div>
+      <div class="pr-row-meta">2026-03-08</div>
+    </div>
+    <div style="text-align: right;">
+      <div class="pr-row-val">100.0 kg</div>
+      <div class="pr-row-meta change-flat">= unchanged</div>
+    </div>
+  </div>
+  <div class="pr-row">
+    <div>
+      <div class="pr-row-name">DEADLIFT</div>
+      <div class="pr-row-meta">2026-04-25</div>
+    </div>
+    <div style="text-align: right;">
+      <div class="pr-row-val">180.0 kg</div>
+      <div class="pr-row-meta change-up">↑ +10kg vs Feb</div>
+    </div>
+  </div>
+
+  <div style="display: flex; justify-content: space-between; padding: 14px 0 0; margin-top: 4px; border-top: 2px solid rgba(251,191,36,0.3);">
+    <span class="label-mono" style="color: var(--gold);">TOTAL</span>
+    <span style="font-family: 'JetBrains Mono', monospace; color: var(--gold); font-size: 22px;">400 kg</span>
+  </div>
+  <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 8px 0;">
+    <span class="label-mono" style="color: var(--muted);">BW RATIO</span>
+    <span style="font-family: 'JetBrains Mono', monospace; color: var(--text); font-size: 14px;">5.12× (78.2 kg)</span>
+  </div>
+
+  <hr class="section-divider">
+
+  <div class="label-mono" style="color: var(--silver); margin-bottom: 8px;">⭐ BIG 7 (rest)</div>
+
+  <div class="pr-row">
+    <div>
+      <div class="pr-row-name">OHP</div>
+      <div class="pr-row-meta">2026-04-18</div>
+    </div>
+    <div style="text-align: right;">
+      <div class="pr-row-val">50.0 kg</div>
+      <div class="pr-row-meta change-up">↑ +2.5kg vs Mar</div>
+    </div>
+  </div>
+  <div class="pr-row">
+    <div>
+      <div class="pr-row-name">BB ROW</div>
+      <div class="pr-row-meta">2026-02-22</div>
+    </div>
+    <div style="text-align: right;">
+      <div class="pr-row-val">65.0 kg</div>
+      <div class="pr-row-meta change-flat">= unchanged</div>
+    </div>
+  </div>
+  <div class="pr-row">
+    <div>
+      <div class="pr-row-name">PULL-UP</div>
+      <div class="pr-row-meta">2026-04-08</div>
+    </div>
+    <div style="text-align: right;">
+      <div class="pr-row-val">+10.0 kg</div>
+      <div class="pr-row-meta change-up">↑ +2.5kg vs Feb</div>
+    </div>
+  </div>
+  <div class="pr-row">
+    <div>
+      <div class="pr-row-name">DIP</div>
+      <div class="pr-row-meta">2026-04-15</div>
+    </div>
+    <div style="text-align: right;">
+      <div class="pr-row-val">+20.0 kg</div>
+      <div class="pr-row-meta change-up">↑ +5kg vs Jan</div>
+    </div>
+  </div>
+</div>
+
+<p style="color: var(--muted); font-size: 12px; margin-top: 24px; text-align: center;">
+  이 형태로 진행 OK 하시면 generate_dashboard.py에 적용합니다.
+</p>
+</body>
+</html>
