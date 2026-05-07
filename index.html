@@ -2085,25 +2085,11 @@ function renderBody(agg) {
     const dt = parseDateOnly(d.date);
     return dt >= start && dt <= end;
   });
-  // Skeletal Muscle Mass: actual InBody readings preferred, fallback to LBM × ratio
-  const SMM_RATIO = 0.5737;
-  const inbodyMap = new Map();
-  (DATA.inbody || []).forEach(r => { if (r.smm) inbodyMap.set(r.date, r.smm); });
-
-  const lbmEstimates = (body.leanMass || []).map(d => {
-    const actual = inbodyMap.get(d.date);
-    return actual !== undefined
-      ? {date: d.date, value: actual, source: "InBody (actual)"}
-      : {date: d.date, value: d.value * SMM_RATIO, source: "estimated from LBM"};
-  });
-  const lbmDates = new Set(lbmEstimates.map(d => d.date));
-  (DATA.inbody || []).forEach(r => {
-    if (r.smm && !lbmDates.has(r.date)) {
-      lbmEstimates.push({date: r.date, value: r.smm, source: "InBody (actual)"});
-    }
-  });
-  lbmEstimates.sort((a, b) => a.date.localeCompare(b.date));
-  const smmData = lbmEstimates;
+  // Skeletal Muscle Mass: InBody readings only
+  const smmData = (DATA.inbody || [])
+    .filter(r => r.smm !== undefined && r.smm !== null)
+    .map(r => ({date: r.date, value: r.smm, source: r.device || "InBody"}))
+    .sort((a, b) => a.date.localeCompare(b.date));
 
   // Visceral fat from InBody readings only
   const visceralData = (DATA.inbody || [])
@@ -2140,11 +2126,8 @@ function renderBody(agg) {
     const dots = points.map(p => {
       const x = xS(parseDateOnly(p.date).getTime());
       const y = yS(p.value);
-      const isActual = (p.source || "").includes("InBody");
-      const r = isActual ? 5 : 2.5;
-      const stroke = isActual ? `stroke="var(--text)" stroke-width="2"` : "";
       const payload = JSON.stringify({date: p.date, primary: `${p.value.toFixed(1)}`, secondary: p.source || ""}).replace(/"/g, "&quot;");
-      return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r}" fill="${color}" ${stroke} class="hcell" data-payload="${payload}"></circle>`;
+      return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3" fill="${color}" class="hcell" data-payload="${payload}"></circle>`;
     }).join("");
 
     // Y axis labels: min and max
