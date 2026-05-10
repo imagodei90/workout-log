@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>Plan Tab Design Options</title>
+<style>
+  :root {
+    --bg: #0a0a0a; --surface: #111; --surface-2: #161616;
+    --text: #fafafa; --muted: #71717a;
+    --lift: #FF1A8C; --run: #06b6d4;
+    --gold: #fbbf24; --silver: #cbd5e1;
+    --green: #84cc16; --orange: #f97316; --red: #f43f5e;
+    --border: #1f1f23;
+    --chest: #FF1A8C; --back: #22d3ee; --arms: #a855f7;
+    --shoulders: #f59e0b; --legs: #84cc16; --core: #ec4899;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: "Inter", -apple-system, sans-serif;
+    padding: 24px; max-width: 1200px; margin: 0 auto; line-height: 1.5;
+  }
+  h1 { font-size: 22px; margin-bottom: 16px; font-weight: 600; }
+  h2 { font-size: 16px; margin: 24px 0 12px; }
+  h3 { font-size: 13px; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.08em; font-family: 'JetBrains Mono', monospace; font-weight: 400; }
+  .label-mono { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+  .grid { display: grid; gap: 12px; }
+  .grid-2 { grid-template-columns: 1fr 1fr; }
+  .grid-3 { grid-template-columns: repeat(3, 1fr); }
+  @media (max-width: 768px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+
+  .section { margin: 60px 0; padding-top: 24px; border-top: 1px dashed var(--border); }
+  .section-title { display: flex; align-items: baseline; gap: 12px; margin-bottom: 24px; }
+  .section-title h2 { margin: 0; font-size: 22px; }
+  .section-title .badge { background: var(--lift); color: #fff; padding: 3px 10px; border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.1em; }
+  .section-title .desc { color: var(--muted); font-size: 13px; }
+
+  /* Common elements */
+  .progress-bar { background: var(--surface-2); height: 8px; border-radius: 4px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--lift); border-radius: 4px; }
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 9px; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.1em; }
+  .pill-shoulders { background: rgba(245,158,11,0.2); color: var(--shoulders); }
+  .pill-chest { background: rgba(255,26,140,0.2); color: var(--chest); }
+  .pill-back { background: rgba(34,211,238,0.2); color: var(--back); }
+  .pill-legs { background: rgba(132,204,22,0.2); color: var(--legs); }
+  .pill-arms { background: rgba(168,85,247,0.2); color: var(--arms); }
+  .pill-core { background: rgba(236,72,153,0.2); color: var(--core); }
+
+  .stat-big { font-family: 'JetBrains Mono', monospace; font-size: 26px; font-weight: 500; }
+  .stat-label { color: var(--muted); font-size: 11px; font-family: 'JetBrains Mono', monospace; }
+
+  .ex-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .ex-row:last-child { border-bottom: none; }
+  .ex-name { font-size: 13px; color: var(--text); }
+  .ex-prescription { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--lift); }
+</style>
+</head>
+<body>
+<h1>Plan 탭 디자인 옵션</h1>
+<p style="color: var(--muted); margin-bottom: 32px;">목표: Athletic Lean Physique (SMM 40kg, BF 10%) — 모델 비주얼. 마음에 드는 옵션 하나(또는 조합) 선택해주세요.</p>
+
+<!-- ============ OPTION A — Vertical sections ============ -->
+<div class="section">
+  <div class="section-title">
+    <span class="badge">옵션 A</span>
+    <h2>Vertical 섹션 (목표 → 추천 → 리뷰 → 설정)</h2>
+    <span class="desc">위에서 아래로 정보 흐름</span>
+  </div>
+
+  <!-- Goal tracker -->
+  <div class="card" style="background: linear-gradient(135deg, rgba(251,191,36,0.06), transparent); border-color: rgba(251,191,36,0.3); margin-bottom: 12px;">
+    <div class="label-mono" style="color: var(--gold); margin-bottom: 12px;">🎯 GOAL TRACKER</div>
+    <div class="grid grid-2">
+      <div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+          <span class="stat-label">SKELETAL MUSCLE MASS</span>
+          <span class="mono" style="font-size: 13px;"><span style="color: var(--text);">38.6</span> → <span style="color: var(--gold);">40.0 kg</span></span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" style="width: 70%; background: var(--gold);"></div></div>
+        <div class="stat-label" style="margin-top: 4px; text-align: right;">+1.4 kg to goal · 70%</div>
+      </div>
+      <div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+          <span class="stat-label">BODY FAT %</span>
+          <span class="mono" style="font-size: 13px;"><span style="color: var(--text);">13.5%</span> → <span style="color: var(--gold);">10.0%</span></span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" style="width: 33%; background: var(--gold);"></div></div>
+        <div class="stat-label" style="margin-top: 4px; text-align: right;">-3.5%p to goal · 33%</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Today's recommendation -->
+  <div class="card" style="background: linear-gradient(135deg, rgba(245,158,11,0.06), transparent); border-color: rgba(245,158,11,0.3); margin-bottom: 12px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+      <div>
+        <div class="label-mono" style="color: var(--shoulders);">📅 TODAY'S FOCUS</div>
+        <div style="font-size: 28px; font-weight: 600; color: var(--shoulders); margin-top: 4px;">SHOULDERS</div>
+        <div class="stat-label" style="margin-top: 2px;">4 days since last · priority ⭐⭐⭐⭐⭐</div>
+      </div>
+      <div style="text-align: right;">
+        <div class="stat-label">EXPECTED</div>
+        <div class="mono" style="font-size: 18px;">~15 sets · 50min</div>
+        <div class="stat-label" style="color: var(--run);">+ optional 3km Z2 run</div>
+      </div>
+    </div>
+    <h3 style="margin-top: 12px;">Recommended exercises (from history)</h3>
+    <div class="ex-row"><span class="ex-name">1. Machine Shoulder Press</span><span class="ex-prescription">40kg × 12 (3 sets)</span></div>
+    <div class="ex-row"><span class="ex-name">2. Dumbbell Lateral Raise</span><span class="ex-prescription">5kg × 20 (4 sets)</span></div>
+    <div class="ex-row"><span class="ex-name">3. Barbell Upright Row</span><span class="ex-prescription">15kg × 15 (3 sets)</span></div>
+    <div class="ex-row"><span class="ex-name">4. Cable Face Pull</span><span class="ex-prescription">55kg × 12 (3 sets)</span></div>
+    <div class="ex-row"><span class="ex-name">5. Machine Reverse Fly</span><span class="ex-prescription">49kg × 15 (2 sets)</span></div>
+  </div>
+
+  <!-- 7-day review -->
+  <div class="card" style="margin-bottom: 12px;">
+    <div class="label-mono" style="margin-bottom: 12px;">📊 LAST 7 DAYS</div>
+    <div style="font-family: 'JetBrains Mono', monospace; font-size: 13px;">
+      <div style="display: flex; align-items: center; padding: 4px 0;"><span class="pill pill-chest" style="width: 90px; text-align:center;">CHEST</span> <span style="margin-left: 12px; color: var(--lift);">●●</span> <span style="color: var(--muted); margin-left: 12px;">2 sessions · 48 sets · 13.0k kg</span></div>
+      <div style="display: flex; align-items: center; padding: 4px 0;"><span class="pill pill-back" style="width: 90px; text-align:center;">BACK</span> <span style="margin-left: 12px; color: var(--back);">●</span> <span style="color: var(--muted); margin-left: 12px;">1 session · 22 sets · 7.4k kg</span></div>
+      <div style="display: flex; align-items: center; padding: 4px 0;"><span class="pill pill-arms" style="width: 90px; text-align:center;">ARMS</span> <span style="margin-left: 12px; color: var(--arms);">●</span> <span style="color: var(--muted); margin-left: 12px;">1 session · 26 sets · 7.3k kg</span></div>
+      <div style="display: flex; align-items: center; padding: 4px 0;"><span class="pill pill-shoulders" style="width: 90px; text-align:center;">SHOULDERS</span> <span style="margin-left: 12px; color: var(--red);">⚠️</span> <span style="color: var(--red); margin-left: 12px;">0 sessions — needs training</span></div>
+      <div style="display: flex; align-items: center; padding: 4px 0;"><span class="pill pill-legs" style="width: 90px; text-align:center;">LEGS</span> <span style="margin-left: 12px; color: var(--legs);">●</span> <span style="color: var(--muted); margin-left: 12px;">1 session · 8 sets · 8.4k kg</span></div>
+      <div style="display: flex; align-items: center; padding: 4px 0;"><span class="pill pill-core" style="width: 90px; text-align:center;">CORE</span> <span style="margin-left: 12px; color: var(--red);">⚠️</span> <span style="color: var(--red); margin-left: 12px;">0 sessions — needs training</span></div>
+      <div style="display: flex; align-items: center; padding: 4px 0; border-top: 1px solid var(--border); margin-top: 4px;"><span class="pill" style="width: 90px; text-align:center; background:rgba(6,182,212,0.2); color:var(--run);">RUNS</span> <span style="margin-left: 12px; color: var(--run);">●●●</span> <span style="color: var(--muted); margin-left: 12px;">3 runs · 12.5 km · 88 min</span></div>
+    </div>
+  </div>
+
+  <details>
+    <summary style="cursor: pointer; padding: 12px; background: var(--surface-2); border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 11px;">⚙️ AESTHETIC PRIORITIES & SETTINGS (click)</summary>
+    <div class="card" style="margin-top: 8px;">
+      <div style="font-size: 11px; color: var(--muted); margin-bottom: 12px; font-family: 'JetBrains Mono', monospace;">slider로 조정 → 추천 알고리즘 가중치 변경</div>
+      <div style="display: grid; grid-template-columns: 90px 1fr 30px; gap: 8px; align-items: center; font-size: 11px;">
+        <span class="pill pill-shoulders">SHOULDERS</span><div class="progress-bar"><div class="progress-fill" style="width: 100%; background: var(--shoulders);"></div></div><span class="mono">5</span>
+        <span class="pill pill-back">BACK</span><div class="progress-bar"><div class="progress-fill" style="width: 100%; background: var(--back);"></div></div><span class="mono">5</span>
+        <span class="pill pill-chest">CHEST</span><div class="progress-bar"><div class="progress-fill" style="width: 80%; background: var(--chest);"></div></div><span class="mono">4</span>
+        <span class="pill pill-arms">ARMS</span><div class="progress-bar"><div class="progress-fill" style="width: 80%; background: var(--arms);"></div></div><span class="mono">4</span>
+        <span class="pill pill-core">CORE</span><div class="progress-bar"><div class="progress-fill" style="width: 80%; background: var(--core);"></div></div><span class="mono">4</span>
+        <span class="pill pill-legs">LEGS</span><div class="progress-bar"><div class="progress-fill" style="width: 40%; background: var(--legs);"></div></div><span class="mono">2</span>
+      </div>
+    </div>
+  </details>
+</div>
+
+<!-- ============ OPTION B — Hero-focused ============ -->
+<div class="section">
+  <div class="section-title">
+    <span class="badge">옵션 B</span>
+    <h2>Hero — 오늘 큰 한 가지에 집중</h2>
+    <span class="desc">"오늘 뭐 할까"가 한 화면 꽉 채움</span>
+  </div>
+
+  <!-- Big hero -->
+  <div class="card" style="background: linear-gradient(135deg, rgba(245,158,11,0.15), rgba(255,26,140,0.05)); border-color: var(--shoulders); padding: 32px; margin-bottom: 12px; text-align: center;">
+    <div class="label-mono" style="color: var(--shoulders); margin-bottom: 8px;">📅 TODAY · 2026-05-10</div>
+    <div style="font-size: 56px; font-weight: 700; letter-spacing: -0.03em; color: var(--shoulders); margin: 8px 0; line-height: 1;">SHOULDERS</div>
+    <div style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--muted); margin: 12px 0;">
+      4 days since last · ~15 sets · 50min · priority <span style="color: var(--shoulders);">⭐⭐⭐⭐⭐</span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin: 24px auto; max-width: 700px;">
+      <div style="background: var(--surface); border-radius: 8px; padding: 10px;">
+        <div style="font-size: 24px;">1</div>
+        <div style="font-size: 11px; color: var(--muted); margin: 4px 0;">Machine Press</div>
+        <div class="mono" style="color: var(--shoulders); font-size: 11px;">40 × 12</div>
+      </div>
+      <div style="background: var(--surface); border-radius: 8px; padding: 10px;">
+        <div style="font-size: 24px;">2</div>
+        <div style="font-size: 11px; color: var(--muted); margin: 4px 0;">DB Lateral</div>
+        <div class="mono" style="color: var(--shoulders); font-size: 11px;">5 × 20</div>
+      </div>
+      <div style="background: var(--surface); border-radius: 8px; padding: 10px;">
+        <div style="font-size: 24px;">3</div>
+        <div style="font-size: 11px; color: var(--muted); margin: 4px 0;">Upright Row</div>
+        <div class="mono" style="color: var(--shoulders); font-size: 11px;">15 × 15</div>
+      </div>
+      <div style="background: var(--surface); border-radius: 8px; padding: 10px;">
+        <div style="font-size: 24px;">4</div>
+        <div style="font-size: 11px; color: var(--muted); margin: 4px 0;">Face Pull</div>
+        <div class="mono" style="color: var(--shoulders); font-size: 11px;">55 × 12</div>
+      </div>
+      <div style="background: var(--surface); border-radius: 8px; padding: 10px;">
+        <div style="font-size: 24px;">5</div>
+        <div style="font-size: 11px; color: var(--muted); margin: 4px 0;">Reverse Fly</div>
+        <div class="mono" style="color: var(--shoulders); font-size: 11px;">49 × 15</div>
+      </div>
+    </div>
+    <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); margin-top: 16px;">
+      ▸ Cardio: <span style="color: var(--run);">3km easy Z2 run (recovery)</span> — 어제 5km 뛰었음
+    </div>
+  </div>
+
+  <!-- Compact context strip -->
+  <div class="grid grid-3">
+    <div class="card" style="background: linear-gradient(135deg, rgba(251,191,36,0.04), transparent); border-color: rgba(251,191,36,0.2);">
+      <div class="label-mono" style="color: var(--gold);">🎯 GOAL</div>
+      <div class="mono" style="font-size: 14px; margin-top: 8px;">SMM 38.6 → <span style="color: var(--gold);">40.0</span> kg</div>
+      <div class="progress-bar" style="margin: 4px 0;"><div class="progress-fill" style="width: 70%; background: var(--gold);"></div></div>
+      <div class="mono" style="font-size: 14px;">BF 13.5 → <span style="color: var(--gold);">10.0</span> %</div>
+      <div class="progress-bar"><div class="progress-fill" style="width: 33%; background: var(--gold);"></div></div>
+    </div>
+    <div class="card">
+      <div class="label-mono">📊 7-DAY</div>
+      <div style="font-size: 11px; margin-top: 6px;">
+        <div>CHEST <span style="color: var(--lift);">●●</span> 2 sess</div>
+        <div>BACK <span style="color: var(--back);">●</span> 1 sess</div>
+        <div>ARMS <span style="color: var(--arms);">●</span> 1 sess</div>
+        <div>SHOULDERS <span style="color: var(--red);">⚠️ 0</span></div>
+        <div>LEGS <span style="color: var(--legs);">●</span> 1 sess</div>
+        <div>RUNS <span style="color: var(--run);">●●●</span> 3 runs</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="label-mono">⚙️ PRIORITY</div>
+      <div style="font-size: 11px; margin-top: 6px;">
+        <div>SHOULDERS ⭐⭐⭐⭐⭐</div>
+        <div>BACK ⭐⭐⭐⭐⭐</div>
+        <div>CHEST ⭐⭐⭐⭐</div>
+        <div>ARMS ⭐⭐⭐⭐</div>
+        <div>CORE ⭐⭐⭐⭐</div>
+        <div>LEGS ⭐⭐</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ OPTION C — 4-quadrant grid ============ -->
+<div class="section">
+  <div class="section-title">
+    <span class="badge">옵션 C</span>
+    <h2>Dashboard 4-quadrant</h2>
+    <span class="desc">균형잡힌 grid, 모든 정보 동등하게 노출</span>
+  </div>
+
+  <div class="grid grid-2">
+    <!-- TOP-LEFT: Goal -->
+    <div class="card" style="background: linear-gradient(135deg, rgba(251,191,36,0.06), transparent); border-color: rgba(251,191,36,0.3);">
+      <div class="label-mono" style="color: var(--gold); margin-bottom: 12px;">🎯 PHYSIQUE GOAL</div>
+      <div style="text-align: center; margin: 16px 0;">
+        <svg viewBox="0 0 200 100" width="100%" style="max-width: 200px;">
+          <circle cx="60" cy="50" r="35" stroke="var(--surface-2)" stroke-width="6" fill="none"/>
+          <circle cx="60" cy="50" r="35" stroke="var(--gold)" stroke-width="6" fill="none" stroke-dasharray="220" stroke-dashoffset="66" transform="rotate(-90 60 50)"/>
+          <text x="60" y="48" fill="var(--text)" font-size="14" text-anchor="middle" font-family="JetBrains Mono">70%</text>
+          <text x="60" y="62" fill="var(--muted)" font-size="8" text-anchor="middle" font-family="JetBrains Mono">SMM</text>
+          <circle cx="140" cy="50" r="35" stroke="var(--surface-2)" stroke-width="6" fill="none"/>
+          <circle cx="140" cy="50" r="35" stroke="var(--gold)" stroke-width="6" fill="none" stroke-dasharray="220" stroke-dashoffset="147" transform="rotate(-90 140 50)"/>
+          <text x="140" y="48" fill="var(--text)" font-size="14" text-anchor="middle" font-family="JetBrains Mono">33%</text>
+          <text x="140" y="62" fill="var(--muted)" font-size="8" text-anchor="middle" font-family="JetBrains Mono">BF</text>
+        </svg>
+      </div>
+      <div style="font-family: 'JetBrains Mono', monospace; font-size: 12px;">
+        <div style="display: flex; justify-content: space-between;"><span class="stat-label">SMM</span><span>38.6 → 40.0 kg <span style="color: var(--gold);">(+1.4)</span></span></div>
+        <div style="display: flex; justify-content: space-between;"><span class="stat-label">BF</span><span>13.5 → 10.0% <span style="color: var(--gold);">(-3.5)</span></span></div>
+      </div>
+    </div>
+
+    <!-- TOP-RIGHT: Today -->
+    <div class="card" style="background: linear-gradient(135deg, rgba(245,158,11,0.06), transparent); border-color: rgba(245,158,11,0.3);">
+      <div class="label-mono" style="color: var(--shoulders); margin-bottom: 8px;">📅 TODAY</div>
+      <div style="font-size: 36px; font-weight: 600; color: var(--shoulders); line-height: 1;">SHOULDERS</div>
+      <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); margin: 8px 0;">~15 sets · 50min · ⭐⭐⭐⭐⭐</div>
+      <div style="margin-top: 12px;">
+        <div class="ex-row" style="font-size: 11px; padding: 4px 0;"><span>1. Machine Shoulder Press</span><span class="mono" style="color:var(--shoulders);">40×12</span></div>
+        <div class="ex-row" style="font-size: 11px; padding: 4px 0;"><span>2. DB Lateral Raise</span><span class="mono" style="color:var(--shoulders);">5×20</span></div>
+        <div class="ex-row" style="font-size: 11px; padding: 4px 0;"><span>3. BB Upright Row</span><span class="mono" style="color:var(--shoulders);">15×15</span></div>
+        <div class="ex-row" style="font-size: 11px; padding: 4px 0;"><span>4. Cable Face Pull</span><span class="mono" style="color:var(--shoulders);">55×12</span></div>
+        <div class="ex-row" style="font-size: 11px; padding: 4px 0;"><span>5. Machine Reverse Fly</span><span class="mono" style="color:var(--shoulders);">49×15</span></div>
+      </div>
+      <div style="margin-top: 8px; padding: 6px; background: var(--surface-2); border-radius: 6px; font-size: 11px;">
+        🏃 +3km Zone 2 (optional)
+      </div>
+    </div>
+
+    <!-- BOTTOM-LEFT: 7-day review -->
+    <div class="card">
+      <div class="label-mono" style="margin-bottom: 12px;">📊 LAST 7 DAYS</div>
+      <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 12px;">
+        <!-- Each cell = day -->
+        <div style="background: var(--chest); border-radius: 4px; padding: 8px 2px; text-align: center;"><div style="font-size: 8px; color: rgba(0,0,0,0.6);">MON</div><div style="font-size: 10px; color: #fff;">CHE</div></div>
+        <div style="background: var(--back); border-radius: 4px; padding: 8px 2px; text-align: center;"><div style="font-size: 8px; color: rgba(0,0,0,0.6);">TUE</div><div style="font-size: 10px; color: #fff;">BAC</div></div>
+        <div style="background: var(--arms); border-radius: 4px; padding: 8px 2px; text-align: center;"><div style="font-size: 8px; color: rgba(0,0,0,0.6);">WED</div><div style="font-size: 10px; color: #fff;">ARM</div></div>
+        <div style="background: var(--legs); border-radius: 4px; padding: 8px 2px; text-align: center;"><div style="font-size: 8px; color: rgba(0,0,0,0.6);">THU</div><div style="font-size: 10px; color: #fff;">LEG</div></div>
+        <div style="background: var(--chest); border-radius: 4px; padding: 8px 2px; text-align: center;"><div style="font-size: 8px; color: rgba(0,0,0,0.6);">FRI</div><div style="font-size: 10px; color: #fff;">CHE</div></div>
+        <div style="background: var(--surface-2); border-radius: 4px; padding: 8px 2px; text-align: center;"><div style="font-size: 8px; color: var(--muted);">SAT</div><div style="font-size: 10px; color: var(--muted);">rest</div></div>
+        <div style="background: var(--shoulders); opacity: 0.3; border-radius: 4px; padding: 8px 2px; text-align: center; border: 1.5px dashed var(--shoulders);"><div style="font-size: 8px; color: var(--shoulders);">TODAY</div><div style="font-size: 10px; color: var(--shoulders);">SHO</div></div>
+      </div>
+      <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted);">
+        <div>✓ CHEST 2 · BACK 1 · ARMS 1 · LEGS 1 · 3 runs</div>
+        <div style="color: var(--red); margin-top: 4px;">⚠ SHOULDERS 0 · CORE 0</div>
+      </div>
+    </div>
+
+    <!-- BOTTOM-RIGHT: Priority/Settings -->
+    <div class="card">
+      <div class="label-mono" style="margin-bottom: 12px;">⚙️ AESTHETIC PRIORITY</div>
+      <div style="font-size: 11px; font-family: 'JetBrains Mono', monospace; line-height: 2;">
+        <div style="display: flex; align-items: center; gap: 8px;"><span class="pill pill-shoulders" style="width: 80px; text-align:center;">SHOULDERS</span><div class="progress-bar" style="flex: 1;"><div class="progress-fill" style="width: 100%; background: var(--shoulders);"></div></div><span>5</span></div>
+        <div style="display: flex; align-items: center; gap: 8px;"><span class="pill pill-back" style="width: 80px; text-align:center;">BACK</span><div class="progress-bar" style="flex: 1;"><div class="progress-fill" style="width: 100%; background: var(--back);"></div></div><span>5</span></div>
+        <div style="display: flex; align-items: center; gap: 8px;"><span class="pill pill-chest" style="width: 80px; text-align:center;">CHEST</span><div class="progress-bar" style="flex: 1;"><div class="progress-fill" style="width: 80%; background: var(--chest);"></div></div><span>4</span></div>
+        <div style="display: flex; align-items: center; gap: 8px;"><span class="pill pill-arms" style="width: 80px; text-align:center;">ARMS</span><div class="progress-bar" style="flex: 1;"><div class="progress-fill" style="width: 80%; background: var(--arms);"></div></div><span>4</span></div>
+        <div style="display: flex; align-items: center; gap: 8px;"><span class="pill pill-core" style="width: 80px; text-align:center;">CORE</span><div class="progress-bar" style="flex: 1;"><div class="progress-fill" style="width: 80%; background: var(--core);"></div></div><span>4</span></div>
+        <div style="display: flex; align-items: center; gap: 8px;"><span class="pill pill-legs" style="width: 80px; text-align:center;">LEGS</span><div class="progress-bar" style="flex: 1;"><div class="progress-fill" style="width: 40%; background: var(--legs);"></div></div><span>2</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ OPTION D — Calendar-centric ============ -->
+<div class="section">
+  <div class="section-title">
+    <span class="badge">옵션 D</span>
+    <h2>Calendar-centric — 주간 루틴 시각화</h2>
+    <span class="desc">7일 캘린더가 중심, 각 일자 클릭 시 상세</span>
+  </div>
+
+  <!-- Week calendar -->
+  <div class="card" style="margin-bottom: 12px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+      <div class="label-mono">📅 THIS WEEK</div>
+      <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted);">May 4 – May 10, 2026</div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px;">
+      <div style="background: var(--surface-2); border-radius: 8px; padding: 12px 8px; text-align: center; border: 1px solid var(--border);">
+        <div style="font-size: 10px; color: var(--muted); font-family: 'JetBrains Mono', monospace;">MON 5/4</div>
+        <div style="margin: 8px 0;"><span class="pill pill-chest">CHEST</span></div>
+        <div style="font-size: 10px; color: var(--muted);">24 sets</div>
+      </div>
+      <div style="background: var(--surface-2); border-radius: 8px; padding: 12px 8px; text-align: center; border: 1px solid var(--border);">
+        <div style="font-size: 10px; color: var(--muted); font-family: 'JetBrains Mono', monospace;">TUE 5/5</div>
+        <div style="margin: 8px 0;"><span class="pill pill-back">BACK</span></div>
+        <div style="font-size: 10px; color: var(--muted);">22 sets</div>
+        <div style="font-size: 9px; color: var(--run); margin-top: 4px;">+ 4.9km</div>
+      </div>
+      <div style="background: var(--surface-2); border-radius: 8px; padding: 12px 8px; text-align: center; border: 1px solid var(--border);">
+        <div style="font-size: 10px; color: var(--muted); font-family: 'JetBrains Mono', monospace;">WED 5/6</div>
+        <div style="margin: 8px 0;"><span class="pill pill-chest">CHEST</span></div>
+        <div style="font-size: 10px; color: var(--muted);">24 sets</div>
+      </div>
+      <div style="background: var(--surface-2); border-radius: 8px; padding: 12px 8px; text-align: center; border: 1px solid var(--border);">
+        <div style="font-size: 10px; color: var(--muted); font-family: 'JetBrains Mono', monospace;">THU 5/7</div>
+        <div style="margin: 8px 0;"><span class="pill pill-arms">ARMS</span></div>
+        <div style="font-size: 10px; color: var(--muted);">26 sets</div>
+      </div>
+      <div style="background: var(--surface-2); border-radius: 8px; padding: 12px 8px; text-align: center; border: 1px solid var(--border);">
+        <div style="font-size: 10px; color: var(--muted); font-family: 'JetBrains Mono', monospace;">FRI 5/8</div>
+        <div style="margin: 8px 0;"><span class="pill pill-legs">LEGS</span></div>
+        <div style="font-size: 10px; color: var(--muted);">8 sets</div>
+        <div style="font-size: 9px; color: var(--run); margin-top: 4px;">+ 5.4km</div>
+      </div>
+      <div style="background: var(--surface); border-radius: 8px; padding: 12px 8px; text-align: center; border: 1px solid var(--border);">
+        <div style="font-size: 10px; color: var(--muted); font-family: 'JetBrains Mono', monospace;">SAT 5/9</div>
+        <div style="margin: 8px 0; color: var(--muted); font-size: 11px;">rest</div>
+        <div style="font-size: 9px; color: var(--run);">+ 2.5km</div>
+      </div>
+      <div style="background: var(--surface); border-radius: 8px; padding: 12px 8px; text-align: center; border: 2px solid var(--shoulders); position: relative;">
+        <div style="position: absolute; top: -8px; left: 50%; transform: translateX(-50%); background: var(--shoulders); color: #000; padding: 1px 6px; border-radius: 4px; font-size: 8px; font-family: 'JetBrains Mono', monospace;">TODAY</div>
+        <div style="font-size: 10px; color: var(--shoulders); font-family: 'JetBrains Mono', monospace; margin-top: 4px;">SUN 5/10</div>
+        <div style="margin: 8px 0;"><span class="pill pill-shoulders">SHOULDERS</span></div>
+        <div style="font-size: 10px; color: var(--shoulders);">recommended</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Today's workout (expanded) -->
+  <div class="card" style="background: linear-gradient(135deg, rgba(245,158,11,0.06), transparent); border-color: rgba(245,158,11,0.3); margin-bottom: 12px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+      <div>
+        <div class="label-mono" style="color: var(--shoulders);">SHOULDERS WORKOUT — recommended</div>
+        <div style="font-size: 13px; color: var(--muted); margin-top: 2px;">~15 sets · 50min · 4 days since last</div>
+      </div>
+      <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px;">⭐⭐⭐⭐⭐ priority</div>
+    </div>
+    <div class="grid grid-3">
+      <div class="card" style="background: var(--surface-2); border: none;">
+        <div class="stat-label">EX 1</div>
+        <div style="font-size: 12px; margin: 4px 0;">Machine Shoulder Press</div>
+        <div class="mono" style="color: var(--shoulders); font-size: 14px;">40kg × 12</div>
+        <div class="stat-label">3 sets · last PR 50kg</div>
+      </div>
+      <div class="card" style="background: var(--surface-2); border: none;">
+        <div class="stat-label">EX 2</div>
+        <div style="font-size: 12px; margin: 4px 0;">DB Lateral Raise</div>
+        <div class="mono" style="color: var(--shoulders); font-size: 14px;">5kg × 20</div>
+        <div class="stat-label">4 sets · burnout</div>
+      </div>
+      <div class="card" style="background: var(--surface-2); border: none;">
+        <div class="stat-label">EX 3</div>
+        <div style="font-size: 12px; margin: 4px 0;">BB Upright Row</div>
+        <div class="mono" style="color: var(--shoulders); font-size: 14px;">15kg × 15</div>
+        <div class="stat-label">3 sets</div>
+      </div>
+      <div class="card" style="background: var(--surface-2); border: none;">
+        <div class="stat-label">EX 4</div>
+        <div style="font-size: 12px; margin: 4px 0;">Cable Face Pull</div>
+        <div class="mono" style="color: var(--shoulders); font-size: 14px;">55kg × 12</div>
+        <div class="stat-label">3 sets</div>
+      </div>
+      <div class="card" style="background: var(--surface-2); border: none;">
+        <div class="stat-label">EX 5</div>
+        <div style="font-size: 12px; margin: 4px 0;">Machine Reverse Fly</div>
+        <div class="mono" style="color: var(--shoulders); font-size: 14px;">49kg × 15</div>
+        <div class="stat-label">2 sets</div>
+      </div>
+      <div class="card" style="background: rgba(6,182,212,0.05); border: 1px solid rgba(6,182,212,0.2);">
+        <div class="stat-label" style="color: var(--run);">CARDIO (optional)</div>
+        <div style="font-size: 12px; margin: 4px 0;">Easy Zone 2 run</div>
+        <div class="mono" style="color: var(--run); font-size: 14px;">3km · 25min</div>
+        <div class="stat-label">recovery pace</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Goal compact -->
+  <div class="grid grid-2">
+    <div class="card" style="background: linear-gradient(135deg, rgba(251,191,36,0.04), transparent); border-color: rgba(251,191,36,0.2);">
+      <div class="label-mono" style="color: var(--gold);">🎯 PHYSIQUE PROGRESS</div>
+      <div style="margin: 12px 0; font-family: 'JetBrains Mono', monospace; font-size: 12px;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+          <span>SMM <span style="color: var(--text);">38.6</span> → <span style="color: var(--gold);">40.0 kg</span></span>
+          <span style="color: var(--gold);">70%</span>
+        </div>
+        <div class="progress-bar" style="margin-bottom: 8px;"><div class="progress-fill" style="width: 70%; background: var(--gold);"></div></div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+          <span>BF <span style="color: var(--text);">13.5</span> → <span style="color: var(--gold);">10.0%</span></span>
+          <span style="color: var(--gold);">33%</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" style="width: 33%; background: var(--gold);"></div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="label-mono">⚠️ ATTENTION</div>
+      <div style="font-size: 11px; line-height: 1.8; margin-top: 8px;">
+        <div style="color: var(--red);">⚠ SHOULDERS — 4 days untrained (priority 5)</div>
+        <div style="color: var(--red);">⚠ CORE — 7 days untrained (priority 4)</div>
+        <div style="color: var(--orange);">↗ Body fat trend +0.7%p last 30 days</div>
+        <div style="color: var(--green);">✓ Run frequency on track (3/week)</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top: 60px; padding: 24px; background: var(--surface); border-radius: 12px; color: var(--muted); font-size: 13px; text-align: center;">
+  👉 옵션 A / B / C / D 중 선호하는 거 알려주세요. 또는 조합 (예: "B의 hero + D의 calendar")도 OK.
+</div>
+</body>
+</html>
