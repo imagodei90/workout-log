@@ -627,7 +627,27 @@ function renderHeatmap(agg) {
           primary = data.sets ? `${data.sets} ${t("setsUnit")}` : t("noLift");
           secondary = val > 0 ? `${num(data.volume, 0)} ${t("kgVolume")}` : "";
         }
-        const payload = JSON.stringify({date: `${iso} (${wd})`, primary, secondary}).replace(/"/g, "&quot;");
+        // Compute body part breakdown for lift cells (used by tooltip + click modal)
+        let bodyParts = null;
+        if (kind === "lift" && val > 0) {
+          const dayLifts = (DATA.lifts || []).filter(l => dateOnly(l.date) === iso);
+          const bpMap = new Map();
+          for (const l of dayLifts) {
+            const bp = bodyPart(l.exercise || "");
+            const sub = subBodyPart(l.exercise || "", bp);
+            if (!bpMap.has(bp)) bpMap.set(bp, {sets: 0, subs: new Map()});
+            const e = bpMap.get(bp);
+            e.sets++;
+            if (sub) e.subs.set(sub, (e.subs.get(sub) || 0) + 1);
+          }
+          bodyParts = [...bpMap.entries()].sort((a,b) => b[1].sets - a[1].sets).map(([bp, info]) => ({
+            bp, sets: info.sets,
+            subs: [...info.subs.entries()].sort((a,b) => b[1]-a[1]).map(([s,c]) => ({sub:s, sets:c})),
+          }));
+        }
+        const payloadObj = {date: `${iso} (${wd})`, primary, secondary};
+        if (bodyParts) payloadObj.bodyParts = bodyParts;
+        const payload = JSON.stringify(payloadObj).replace(/"/g, "&quot;");
         const liftAttr = (kind === "lift" && val > 0) ? ` data-lift-date="${iso}"` : "";
         rects.push(`<rect x="${labelW + c*(cell+gap)}" y="${r*(cell+gap)+16}" width="${cell}" height="${cell}" rx="3" fill="${fillColor}" opacity="${opacity.toFixed(2)}" class="hcell" data-payload="${payload}"${liftAttr}></rect>`);
         cur = addDays(cur, 1);
@@ -2720,6 +2740,18 @@ function bindTooltips() {
         let html = `<div style="font-weight:600; margin-bottom:2px;">${data.date}</div>`;
         if (data.primary) html += `<div style="color:#a3e635;">${data.primary}</div>`;
         if (data.secondary) html += `<div style="color:#7a8499; font-size:11px; margin-top:2px;">${data.secondary}</div>`;
+        if (data.bodyParts && data.bodyParts.length > 0) {
+          if (data.bodyParts.length >= 4) {
+            html += `<div style="color:var(--muted); font-size:10px; margin-top:3px; font-family:'JetBrains Mono', monospace;">MIXED · ${data.bodyParts.length} parts</div>`;
+          } else {
+            const bpLine = data.bodyParts.map(b => {
+              const c = BP_COLORS[b.bp] || "var(--muted)";
+              const subStr = b.subs && b.subs.length > 0 ? ` (${b.subs.map(s => s.sub).join('/')})` : '';
+              return `<span style="color:${c};">${b.bp}${subStr}</span>`;
+            }).join('<span style="color:var(--muted);"> + </span>');
+            html += `<div style="font-size:10px; margin-top:3px; font-family:'JetBrains Mono', monospace;">${bpLine}</div>`;
+          }
+        }
         tip.innerHTML = html;
         tip.style.opacity = "1";
       } catch (err) {}
@@ -2763,12 +2795,43 @@ function showLiftModal(date) {
   }
   const dt = parseDateOnly(date);
   const wd = WEEKDAYS[dt.getDay() === 0 ? 6 : dt.getDay() - 1];
+  // Body part summary
+  const bpMap = new Map();
+  for (const l of dayLifts) {
+    const bp = bodyPart(l.exercise || "");
+    const sub = subBodyPart(l.exercise || "", bp);
+    if (!bpMap.has(bp)) bpMap.set(bp, {sets: 0, volume: 0, subs: new Map()});
+    const e = bpMap.get(bp);
+    e.sets++;
+    e.volume += (l.weight || 0) * (l.reps || 0);
+    if (sub) {
+      if (!e.subs.has(sub)) e.subs.set(sub, {sets: 0});
+      e.subs.get(sub).sets++;
+    }
+  }
+  const bpSorted = [...bpMap.entries()].sort((a, b) => b[1].sets - a[1].sets);
+  const bpCardsHtml = bpSorted.map(([bp, info]) => {
+    const c = BP_COLORS[bp] || "var(--muted)";
+    const subPart = info.subs.size > 0
+      ? [...info.subs.entries()].sort((a, b) => b[1].sets - a[1].sets).map(([s, si]) => {
+          const sc = SUB_COLORS[bp + "/" + s] || c;
+          return `<span style="color:${sc};">${s} ${si.sets}</span>`;
+        }).join('<span style="color:var(--muted);"> · </span>')
+      : '';
+    return `<div style="background:${c}1a; border:1px solid ${c}40; border-radius:8px; padding:8px 12px; min-width:120px;">
+      <div style="font-family:'JetBrains Mono', monospace; font-size:10px; color:${c}; letter-spacing:0.1em;">${bp}</div>
+      <div style="font-family:'JetBrains Mono', monospace; font-size:14px; color:var(--text); margin-top:2px;">${info.sets} sets</div>
+      <div style="font-family:'JetBrains Mono', monospace; font-size:9px; color:var(--muted); margin-top:2px;">${num(info.volume, 0)} kg vol</div>
+      ${subPart ? `<div style="font-family:'JetBrains Mono', monospace; font-size:9px; margin-top:4px;">${subPart}</div>` : ''}
+    </div>`;
+  }).join("");
   let html = `
     <div class="modal-header">
       <div><span class="pill-lift">LIFTING</span><h2>${date} (${wd})</h2></div>
       <button class="modal-close" onclick="closeLiftModal()">×</button>
     </div>
-    <div class="modal-stats">${byExercise.size} exercises · ${totalSets} sets · ${num(totalVolume, 0)} kg volume</div>`;
+    <div class="modal-stats">${byExercise.size} exercises · ${totalSets} sets · ${num(totalVolume, 0)} kg volume</div>
+    ${bpCardsHtml ? `<div style="display:flex; gap:8px; flex-wrap:wrap; margin:12px 0 16px; padding-bottom:12px; border-bottom:1px solid var(--border);">${bpCardsHtml}</div>` : ''}`;
   for (const [ex, sets] of byExercise) {
     html += `<div class="exercise-block"><div class="exercise-name">${ex}</div><ul class="set-list">`;
     for (const s of sets) {
