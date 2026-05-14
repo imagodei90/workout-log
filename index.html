@@ -819,18 +819,27 @@ function renderStrava(agg) {
 }
 
 // === View: Hevy ===
-// Body part inference
+// Body part inference (order matters — first match wins)
 const BODY_PART_RULES = [
-  [/squat|lunge|leg curl|leg extension|hamstring|hip thrust|hip abductor|hip adductor|calf|deadlift/i, "LEGS"],
-  [/tricep|bicep|hammer curl|kickback|preacher/i, "ARMS"],
-  [/lateral raise|rear delt|overhead press|behind neck|y-raise|y raise|arnold|upright row|shoulder press/i, "SHOULDERS"],
-  [/bench press|push up|chest|fly|crossover|decline press|incline.*press|chest.*press/i, "CHEST"],
-  [/pull up|chin up|pulldown|^row|row$| row | row,|lat |t-bar/i, "BACK"],
+  // CORE first (so "leg raise" / "hip raise" don't get caught by LEGS)
+  [/plank|wheel rollout|knee touch|heel touch|mountain climb|hollow hold|crunch|dead bug|hanging leg raise|captain.?s chair|lying leg hip raise|^abs|bicycle/i, "CORE"],
+  // LEGS
+  [/squat|lunge|leg curl|leg extension|hamstring|hip thrust|hip abductor|hip adductor|thigh adductor|thigh abductor|calf|^deadlift|leg press|^lunge/i, "LEGS"],
+  // BACK — shrug/RMPT/rack pull explicit + traditional back
+  [/shrug|rmpt|rack pull/i, "BACK"],
+  [/pull.?up|chin.?up|pulldown|^row|row$| row | row,|lat |t.?bar|deadlift/i, "BACK"],
+  // SHOULDERS (added face pull, front raise, external rotation)
+  [/lateral raise|rear delt|overhead press|behind neck|y.?raise|arnold|upright row|shoulder press|face pull|front raise|external rotation|reverse fly/i, "SHOULDERS"],
+  // ARMS (added pushdown for Reverse Grip Pushdown)
+  [/tricep|bicep|hammer curl|kickback|preacher|pushdown/i, "ARMS"],
+  // CHEST (added dips, cable squeeze, all fly variants)
+  [/bench press|push up|chest|\bfly\b|crossover|decline press|incline.*press|chest.*press|^dip|^dips|cable dip|machine.*dip|assisted.*dip|cable squeeze|pullover/i, "CHEST"],
+  // Fallback
   [/curl|extension/i, "ARMS"],
 ];
 const BP_COLORS = {
   CHEST: "#FF1A8C", BACK: "#22d3ee", ARMS: "#a855f7",
-  SHOULDERS: "#f59e0b", LEGS: "#84cc16", OTHER: "#71717a",
+  SHOULDERS: "#f59e0b", LEGS: "#84cc16", CORE: "#ec4899", OTHER: "#71717a",
 };
 function bodyPart(name) {
   if (!name) return "OTHER";
@@ -956,7 +965,7 @@ function renderHevy(agg) {
 
   // Body part summary
   const bpSummary = {};
-  for (const bp of ["CHEST","BACK","ARMS","SHOULDERS","LEGS","OTHER"]) bpSummary[bp] = {sessions: new Set(), sets: 0, volume: 0, exercises: 0};
+  for (const bp of ["CHEST","BACK","ARMS","SHOULDERS","LEGS","CORE","OTHER"]) bpSummary[bp] = {sessions: new Set(), sets: 0, volume: 0, exercises: 0};
   for (const [ex, info] of exStats) {
     const s = bpSummary[info.bp];
     s.exercises++;
@@ -967,7 +976,7 @@ function renderHevy(agg) {
   for (const bp of Object.values(bpSummary)) bp.sessions = bp.sessions.size;
 
   // Body part summary cards
-  const bpOrder = ["CHEST","BACK","ARMS","SHOULDERS","LEGS","OTHER"];
+  const bpOrder = ["CHEST","BACK","ARMS","SHOULDERS","LEGS","CORE","OTHER"];
   const visibleBps = bpOrder.filter(bp => bpSummary[bp].sets > 0);
   const bpCards = visibleBps.map(bp => {
     const s = bpSummary[bp];
@@ -1156,14 +1165,14 @@ function renderPR(agg) {
 
   // Body part summary
   const bpSummary = {};
-  for (const bp of ["CHEST","BACK","ARMS","SHOULDERS","LEGS","OTHER"]) bpSummary[bp] = {sessions:new Set(), sets:0, volume:0, exercises:0};
+  for (const bp of ["CHEST","BACK","ARMS","SHOULDERS","LEGS","CORE","OTHER"]) bpSummary[bp] = {sessions:new Set(), sets:0, volume:0, exercises:0};
   for (const [, info] of exStats) {
     const s = bpSummary[info.bp];
     s.exercises++; s.sets += info.sets; s.volume += info.volume;
   }
   for (const l of allLifts) bpSummary[bodyPart(l.exercise || "")].sessions.add(dateOnly(l.date));
   for (const bp of Object.values(bpSummary)) bp.sessions = bp.sessions.size;
-  const bpOrder = ["CHEST","BACK","ARMS","SHOULDERS","LEGS","OTHER"];
+  const bpOrder = ["CHEST","BACK","ARMS","SHOULDERS","LEGS","CORE","OTHER"];
   const visibleBps = bpOrder.filter(bp => bpSummary[bp].sets > 0);
   const bpCards = visibleBps.map(bp => {
     const s = bpSummary[bp];
@@ -1623,7 +1632,7 @@ function renderTrends(agg) {
     const allLifts = liftBpFilter === 'ALL' ? allLiftsRaw : allLiftsRaw.filter(l => bodyPart(l.exercise || "") === liftBpFilter);
 
     // Filter UI (BP)
-    const bpOptions = ["ALL","CHEST","BACK","ARMS","SHOULDERS","LEGS","OTHER"];
+    const bpOptions = ["ALL","CHEST","BACK","ARMS","SHOULDERS","LEGS","CORE","OTHER"];
     const bpFilterHtml = `
       <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px; flex-wrap:wrap;">
         <span class="label-mono">FILTER:</span>
@@ -1693,7 +1702,7 @@ function renderTrends(agg) {
     })() : `<div style="color:var(--muted); padding:20px;">${t("noData")}</div>`;
 
     // C. Body part stacked monthly volume (only when ALL filter)
-    const bpStackOrder = ["CHEST","BACK","ARMS","SHOULDERS","LEGS","OTHER"];
+    const bpStackOrder = ["CHEST","BACK","ARMS","SHOULDERS","LEGS","CORE","OTHER"];
     const bpStacks = {};
     for (const m of monthsL) bpStacks[m] = {};
     for (const l of allLiftsRaw) {  // use raw, ignore bp filter
