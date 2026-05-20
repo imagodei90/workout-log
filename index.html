@@ -418,6 +418,8 @@ function num(n, decimals=0) {
 function computeRange(rangeKey) {
   const today = new Date();
   today.setHours(23,59,59,999);
+  // Helper: returns start-of-day version (00:00:00) of a date
+  const sod = (d) => { const r = new Date(d); r.setHours(0,0,0,0); return r; };
   switch(rangeKey) {
     case "all": {
       // View-aware "all time": earliest is current view's earliest data,
@@ -438,12 +440,12 @@ function computeRange(rangeKey) {
         if (d < earliest) earliest = d;
       }
       if (earliest < FLOOR) earliest = FLOOR;
-      return [earliest, today];
+      return [sod(earliest), today];
     }
-    case "1y": return [addDays(today, -365), today];
-    case "3m": return [addDays(today, -90), today];
-    case "1m": return [addDays(today, -30), today];
-    case "1w": return [addDays(today, -7), today];
+    case "1y": return [sod(addDays(today, -365)), today];
+    case "3m": return [sod(addDays(today, -90)), today];
+    case "1m": return [sod(addDays(today, -30)), today];
+    case "1w": return [sod(addDays(today, -7)), today];
     case "custom": {
       const f = document.getElementById("customFrom").value;
       const t = document.getElementById("customTo").value;
