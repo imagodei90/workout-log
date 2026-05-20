@@ -279,11 +279,17 @@ details.conventions-toggle[open] > .conv-body { margin-top: 16px; }
 </style>
 </head>
 <body>
-<div style="display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:8px;">
+<div style="display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:8px; gap:8px; flex-wrap:wrap;">
   <h1 data-i18n="title">운동 대시보드</h1>
-  <div class="lang-toggle">
-    <button class="lang-btn" data-lang="ko">KO</button>
-    <button class="lang-btn" data-lang="en">EN</button>
+  <div style="display:flex; align-items:center; gap:8px;">
+    <div style="display:inline-flex; gap:4px; background:var(--surface-2,#161616); border:1px solid var(--border); border-radius:8px; padding:2px;">
+      <a href="./" style="padding:6px 12px; font-size:11px; font-family:'JetBrains Mono', monospace; letter-spacing:0.05em; color:var(--text); background:var(--surface,#111); border-radius:6px; text-decoration:none;">WORKOUT</a>
+      <a href="routines.html" style="padding:6px 12px; font-size:11px; font-family:'JetBrains Mono', monospace; letter-spacing:0.05em; color:var(--muted); text-decoration:none;">ROUTINES</a>
+    </div>
+    <div class="lang-toggle">
+      <button class="lang-btn" data-lang="ko">KO</button>
+      <button class="lang-btn" data-lang="en">EN</button>
+    </div>
   </div>
 </div>
 <p class="subtitle">136 runs · 9856 lift sets · 2026-05-20</p>
