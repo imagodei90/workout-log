@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Routines">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>Routines Log</title>
+<title>Routine Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -22,46 +22,48 @@
     --text: #fafafa;
     --muted: #71717a;
     --accent: #FF1A8C;
-    --gold: #fbbf24;
     --green: #84cc16;
-    --silver: #cbd5e1;
-    --section-morning: #fbbf24;
-    --section-focus: #06b6d4;
-    --section-workout: #FF1A8C;
-    --section-discipline: #a855f7;
+    --gold: #fbbf24;
+    --sec-morning: #fbbf24;
+    --sec-focus: #06b6d4;
+    --sec-workout: #FF1A8C;
+    --sec-discipline: #a855f7;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   [hidden] { display: none !important; }
   body {
     background: var(--bg); color: var(--text);
     font-family: "Inter", -apple-system, "SF Pro Display", "Pretendard", sans-serif;
-    padding: 16px; max-width: 600px; margin: 0 auto;
+    padding: 16px; max-width: 640px; margin: 0 auto;
     min-height: 100vh; padding-bottom: 80px;
   }
   @media (max-width: 480px) { body { padding: 12px; } }
+
+  /* Top nav */
   .nav-top {
     display: flex; justify-content: space-between; align-items: center;
     padding: 8px 0 16px; border-bottom: 1px solid var(--border); margin-bottom: 16px;
   }
+  h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
   .nav-links { display: flex; gap: 4px; background: var(--surface-2); border-radius: 8px; padding: 2px; }
   .nav-link {
-    padding: 6px 12px; font-size: 12px; font-family: 'JetBrains Mono', monospace;
+    padding: 6px 12px; font-size: 11px; font-family: 'JetBrains Mono', monospace;
     color: var(--muted); text-decoration: none; border-radius: 6px;
     letter-spacing: 0.05em;
   }
   .nav-link.active { background: var(--surface); color: var(--text); }
+
   .label-mono { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; }
-  h1 { font-size: 22px; font-weight: 600; }
   .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
 
   /* Date navigation */
-  .date-nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+  .date-nav { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
   .date-btn {
     background: var(--surface-2); color: var(--text); border: 1px solid var(--border);
-    width: 40px; height: 40px; border-radius: 8px; font-size: 16px; cursor: pointer;
+    width: 38px; height: 38px; border-radius: 8px; font-size: 14px; cursor: pointer;
   }
   .date-display {
-    flex: 1; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 14px;
+    flex: 1; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 13px;
     color: var(--text);
   }
   .date-display .dow { color: var(--muted); margin-left: 4px; }
@@ -72,7 +74,7 @@
   }
   .today-btn[disabled] { opacity: 0.4; cursor: default; }
 
-  /* Progress + streak */
+  /* Stats row */
   .stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
   .stat-card {
     background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
@@ -83,54 +85,91 @@
   .progress-bar-bg { background: var(--surface-2); height: 6px; border-radius: 3px; overflow: hidden; margin-top: 6px; }
   .progress-bar-fill { background: var(--accent); height: 100%; border-radius: 3px; transition: width 0.3s; }
 
-  /* Sections */
+  /* Section header */
   .section-header {
-    display: flex; align-items: center; gap: 8px;
-    margin: 16px 0 8px; padding-left: 4px;
-  }
-  .section-header .section-icon { font-size: 16px; }
-  .section-header h3 {
-    font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.1em;
-    color: var(--muted); font-weight: 500;
+    font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted);
+    letter-spacing: 0.12em; margin: 16px 0 6px; padding-left: 4px;
   }
 
-  /* Checkbox items */
+  /* Option D rows */
   .item {
-    display: flex; align-items: center; gap: 12px; padding: 14px;
-    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
-    margin-bottom: 6px; cursor: pointer; transition: all 0.15s;
-    user-select: none; -webkit-tap-highlight-color: transparent;
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 4px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent;
+    transition: background 0.12s;
   }
-  .item:active { transform: scale(0.99); }
-  .item.checked {
-    background: rgba(132, 204, 22, 0.06);
-    border-color: rgba(132, 204, 22, 0.3);
+  .item:active { background: var(--surface-2); }
+  .item.checked { opacity: 1; }
+  .item-dot {
+    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
   }
-  .checkbox {
-    width: 24px; height: 24px; border: 2px solid var(--border);
-    border-radius: 6px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
-    transition: all 0.15s;
-  }
-  .item.checked .checkbox {
-    background: var(--green); border-color: var(--green);
-  }
-  .item.checked .checkbox::after {
-    content: "✓"; color: #000; font-weight: 700; font-size: 16px;
-  }
+  .item-dot.morning { background: var(--sec-morning); }
+  .item-dot.focus { background: var(--sec-focus); }
+  .item-dot.workout { background: var(--sec-workout); }
+  .item-dot.discipline { background: var(--sec-discipline); }
   .item-label {
-    flex: 1; font-size: 15px; color: var(--text);
+    flex: 1; font-size: 14px; color: var(--text);
   }
   .item.checked .item-label {
     color: var(--muted); text-decoration: line-through;
   }
   .item-note {
     font-size: 10px; color: var(--muted); font-family: 'JetBrains Mono', monospace;
+    margin-top: 2px;
+  }
+  .item-check {
+    width: 22px; height: 22px; border: 1.5px solid var(--border);
+    border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .item.checked .item-check {
+    background: var(--green); border-color: var(--green);
+  }
+  .item.checked .item-check::after {
+    content: "✓"; color: #000; font-weight: 700; font-size: 12px;
   }
   .auto-badge {
     background: rgba(255,26,140,0.15); color: var(--accent);
     padding: 2px 6px; border-radius: 4px;
     font-family: 'JetBrains Mono', monospace; font-size: 8px; letter-spacing: 0.1em;
+    margin-right: 4px;
   }
+
+  /* Heatmap (workout dashboard style) */
+  .heatmap-card { padding: 16px; }
+  .heatmap-card h2 { font-size: 14px; font-weight: 500; margin-bottom: 4px; }
+  .heatmap-meta {
+    color: var(--muted); font-size: 11px; font-family: 'JetBrains Mono', monospace;
+    margin-bottom: 12px;
+  }
+  .heatmap-svg-wrap {
+    overflow-x: auto; padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .heatmap-svg-wrap::-webkit-scrollbar { height: 6px; }
+  .heatmap-svg-wrap::-webkit-scrollbar-thumb { background: var(--surface-2); border-radius: 3px; }
+  .heatmap-legend {
+    display: flex; align-items: center; gap: 6px; margin-top: 10px;
+    font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted);
+    letter-spacing: 0.08em;
+  }
+  .heatmap-legend .legend-cell {
+    width: 11px; height: 11px; border-radius: 3px;
+  }
+  .heatmap-tooltip {
+    position: fixed; pointer-events: none; z-index: 300;
+    background: var(--surface); border: 1px solid var(--border);
+    padding: 8px 10px; border-radius: 6px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    opacity: 0; transition: opacity 0.15s;
+  }
+  .heatmap-tooltip.show { opacity: 1; }
+  .heatmap-tooltip .tt-date { color: var(--muted); font-size: 10px; margin-bottom: 4px; }
+  .heatmap-tooltip .tt-pct { color: var(--accent); font-size: 13px; }
+  .heatmap-tooltip .tt-line { color: var(--text); font-size: 10px; margin-top: 2px; }
 
   /* Login screen */
   .login-screen {
@@ -175,18 +214,12 @@
     min-height: 60vh; display: flex; align-items: center; justify-content: center;
     color: var(--muted);
   }
-
-  /* Section color accents */
-  [data-section="Morning"] { border-left: 3px solid var(--section-morning); }
-  [data-section="Focus"] { border-left: 3px solid var(--section-focus); }
-  [data-section="Workout"] { border-left: 3px solid var(--section-workout); }
-  [data-section="Discipline"] { border-left: 3px solid var(--section-discipline); }
 </style>
 </head>
 <body>
 
 <nav class="nav-top">
-  <h1>Routines</h1>
+  <h1>Routine Dashboard</h1>
   <div class="nav-links">
     <a href="./" class="nav-link">WORKOUT</a>
     <a href="routines.html" class="nav-link active">ROUTINES</a>
@@ -196,8 +229,8 @@
 <div id="loading" class="loading-screen">Loading...</div>
 
 <div id="login-screen" class="login-screen" hidden>
-  <h2>Routines Log</h2>
-  <p>매일 루틴 체크. Google 계정으로 로그인하면 폰/PC 어디서나 동기화됩니다.</p>
+  <h2>Routine Dashboard</h2>
+  <p>Daily check-in. Sign in with Google to sync across devices.</p>
   <button class="signin-btn" id="signin-btn">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
     Sign in with Google
@@ -222,14 +255,30 @@
       <div class="progress-bar-bg"><div class="progress-bar-fill" id="progress-bar" style="width:0%"></div></div>
     </div>
     <div class="stat-card">
-      <div class="label-mono">🔥 STREAK</div>
+      <div class="label-mono">STREAK</div>
       <div class="stat-value" id="streak-count">0</div>
-      <div class="stat-label">consecutive days</div>
+      <div class="stat-label">consecutive days (≥70%)</div>
     </div>
   </div>
 
   <!-- Sections of items -->
   <div id="sections-container"></div>
+
+  <!-- Adherence Heatmap -->
+  <div class="card heatmap-card">
+    <h2>Adherence Heatmap <span style="color:var(--muted); font-weight:400; font-size:11px; font-family:'JetBrains Mono', monospace; margin-left:6px;" id="heatmap-days">90 days</span></h2>
+    <div class="heatmap-meta" id="heatmap-meta">avg adherence: —</div>
+    <div class="heatmap-svg-wrap" id="heatmap-svg-wrap"></div>
+    <div class="heatmap-legend">
+      <span>LESS</span>
+      <span class="legend-cell" style="background: rgba(255,255,255,0.04);"></span>
+      <span class="legend-cell" style="background: #84cc16; opacity: 0.3;"></span>
+      <span class="legend-cell" style="background: #84cc16; opacity: 0.5;"></span>
+      <span class="legend-cell" style="background: #84cc16; opacity: 0.75;"></span>
+      <span class="legend-cell" style="background: #84cc16; opacity: 1;"></span>
+      <span>MORE</span>
+    </div>
+  </div>
 </div>
 
 <div class="user-bar" id="user-bar" hidden>
@@ -238,6 +287,7 @@
 </div>
 
 <div class="toast" id="toast"></div>
+<div class="heatmap-tooltip" id="heatmap-tooltip"></div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
@@ -264,48 +314,70 @@ const provider = new GoogleAuthProvider();
 
 const SCHEMA = {
   items: [
-    {id: "wake_up", label: "기상", section: "Morning", note: "5:30 since 5/11, 5:45 before"},
-    {id: "meditation", label: "명상", section: "Morning"},
+    // Morning
+    {id: "wake_up", label: "Wake Up", section: "Morning", note: "5:30 since 5/11, 5:45 before"},
+    {id: "meditation", label: "Meditation", section: "Morning"},
     {id: "stretching", label: "Stretching", section: "Morning"},
     {id: "cold_shower", label: "Cold Shower", section: "Morning"},
-    {id: "self_photo", label: "자기 사진", section: "Morning", note: "smiling self-encouragement"},
-    {id: "supplements", label: "영양제", section: "Morning"},
-    {id: "reading", label: "독서", section: "Focus"},
+    {id: "self_photo", label: "Self Photo", section: "Morning", note: "smiling self-encouragement"},
+    // Focus
+    {id: "reading", label: "Reading", section: "Focus"},
     {id: "morning_briefing", label: "Morning Briefing", section: "Focus"},
     {id: "english_vocab", label: "English Vocab", section: "Focus"},
     {id: "english_speech", label: "English Speech", section: "Focus"},
-    {id: "running", label: "러닝", section: "Workout"},
-    {id: "lifting", label: "리프팅", section: "Workout"},
-    {id: "swimming", label: "수영", section: "Workout"},
-    {id: "golf", label: "골프", section: "Workout"},
-    {id: "tennis", label: "테니스", section: "Workout"},
+    // Workout
+    {id: "lifting", label: "Lifting", section: "Workout"},
+    {id: "running", label: "Running", section: "Workout"},
+    {id: "swimming", label: "Swimming", section: "Workout"},
+    {id: "golf", label: "Golf", section: "Workout"},
+    {id: "tennis", label: "Tennis", section: "Workout"},
+    // Discipline (Supplements grouped here with workout-red dot per user)
+    {id: "supplements", label: "Supplements", section: "Discipline", dotColor: "workout"},
     {id: "no_porn", label: "No Porn", section: "Discipline"},
     {id: "no_smoking", label: "No Smoking", section: "Discipline"},
   ],
   sections: [
-    {key: "Morning", icon: "🌅", label: "Morning"},
-    {key: "Focus", icon: "📖", label: "Focus"},
-    {key: "Workout", icon: "💪", label: "Workout"},
-    {key: "Discipline", icon: "🌙", label: "Discipline"},
+    {key: "Morning", label: "Morning"},
+    {key: "Focus", label: "Focus"},
+    {key: "Workout", label: "Workout"},
+    {key: "Discipline", label: "Discipline"},
   ],
 };
 
-const WEEKDAYS_KO = ["월","화","수","목","금","토","일"];
+const SECTION_DOT_CLASS = {
+  Morning: "morning",
+  Focus: "focus",
+  Workout: "workout",
+  Discipline: "discipline",
+};
+
+const WEEKDAYS_EN = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+const MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const HEATMAP_DAYS = 90;
+const STREAK_THRESHOLD = 0.7;
 
 // State
 let currentUser = null;
 let currentDate = isoToday();
-let currentChecks = {};  // {itemId: bool}
+let currentChecks = {};
 let saveTimer = null;
+let heatmapCache = {}; // {iso: pct}
 
 function isoToday() {
   const d = new Date();
-  return d.toISOString().slice(0, 10);
+  d.setHours(0,0,0,0);
+  return isoDate(d);
 }
-function isoDate(d) { return d.toISOString().slice(0, 10); }
+function isoDate(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,"0");
+  const dd = String(d.getDate()).padStart(2,"0");
+  return `${y}-${m}-${dd}`;
+}
 function parseDate(iso) { return new Date(iso + "T12:00:00"); }
-function dowKo(iso) { const d = parseDate(iso); return WEEKDAYS_KO[d.getDay() === 0 ? 6 : d.getDay() - 1]; }
+function dowEn(iso) { const d = parseDate(iso); return WEEKDAYS_EN[d.getDay() === 0 ? 6 : d.getDay() - 1]; }
 function addDays(iso, n) { const d = parseDate(iso); d.setDate(d.getDate() + n); return isoDate(d); }
+function addDaysToDate(d, n) { const r = new Date(d); r.setDate(r.getDate() + n); return r; }
 
 function showToast(msg, type = "") {
   const t = document.getElementById("toast");
@@ -333,7 +405,7 @@ onAuthStateChanged(auth, async (user) => {
     document.getElementById("user-bar").hidden = false;
     document.getElementById("user-email").textContent = user.email;
     await loadDate(currentDate);
-    await refreshStreak();
+    await refreshStreakAndHeatmap();
   } else {
     currentUser = null;
     document.getElementById("login-screen").hidden = false;
@@ -342,7 +414,7 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 
-// === Render ===
+// === Render checklist ===
 function renderSections() {
   const container = document.getElementById("sections-container");
   const itemsBySection = {};
@@ -353,13 +425,15 @@ function renderSections() {
   for (const sec of SCHEMA.sections) {
     const items = itemsBySection[sec.key] || [];
     if (items.length === 0) continue;
-    html += `<div class="section-header"><span class="section-icon">${sec.icon}</span><h3>${sec.label}</h3></div>`;
+    html += `<div class="section-header">${sec.label.toUpperCase()}</div>`;
     for (const it of items) {
       const checked = currentChecks[it.id] === true;
+      const dotClass = it.dotColor || SECTION_DOT_CLASS[it.section];
       const noteHtml = it.note ? `<div class="item-note">${it.note}</div>` : "";
-      html += `<div class="item${checked ? ' checked' : ''}" data-section="${sec.key}" data-id="${it.id}" onclick="window.toggleItem('${it.id}')">
-        <div class="checkbox"></div>
-        <div class="item-label">${it.label}${it.note ? `<div class="item-note">${it.note}</div>` : ''}</div>
+      html += `<div class="item${checked ? ' checked' : ''}" data-id="${it.id}" onclick="window.toggleItem('${it.id}')">
+        <div class="item-dot ${dotClass}"></div>
+        <div class="item-label">${it.label}${noteHtml}</div>
+        <div class="item-check"></div>
       </div>`;
     }
   }
@@ -378,18 +452,16 @@ function updateProgress() {
 
 function updateDateDisplay() {
   const today = isoToday();
-  const dow = dowKo(currentDate);
+  const dow = dowEn(currentDate);
   document.getElementById("date-display").innerHTML = `${currentDate} <span class="dow">(${dow})</span>`;
   document.getElementById("today-btn").disabled = (currentDate === today);
 }
 
 window.toggleItem = async (itemId) => {
   currentChecks[itemId] = !currentChecks[itemId];
-  // Visual update
   const el = document.querySelector(`.item[data-id="${itemId}"]`);
   if (el) el.classList.toggle("checked", currentChecks[itemId]);
   updateProgress();
-  // Debounced save
   if (saveTimer) clearTimeout(saveTimer);
   saveTimer = setTimeout(saveChecks, 400);
 };
@@ -419,45 +491,150 @@ async function saveChecks() {
       items: currentChecks,
       updatedAt: serverTimestamp(),
     }, { merge: true });
-    await refreshStreak();
+    // Update local heatmap cache
+    const total = SCHEMA.items.length;
+    const done = Object.values(currentChecks).filter(v => v === true).length;
+    heatmapCache[currentDate] = total > 0 ? done / total : 0;
+    renderHeatmap();
+    await refreshStreakAndHeatmap(false);
   } catch (err) {
     showToast("Save failed: " + err.message, "error");
   }
 }
 
-async function refreshStreak() {
+async function refreshStreakAndHeatmap(rebuild = true) {
   if (!currentUser) return;
-  // Streak: count consecutive days backward from today with progress >= 70%
   const today = isoToday();
+  if (rebuild) {
+    // Load HEATMAP_DAYS worth of past data
+    heatmapCache = {};
+    const promises = [];
+    for (let i = 0; i < HEATMAP_DAYS; i++) {
+      const d = addDays(today, -i);
+      promises.push(
+        getDoc(doc(db, "users", currentUser.uid, "routines", d))
+          .then(snap => {
+            if (snap.exists()) {
+              const items = snap.data().items || {};
+              const total = SCHEMA.items.length;
+              const done = Object.values(items).filter(v => v === true).length;
+              heatmapCache[d] = total > 0 ? done / total : 0;
+            }
+          })
+          .catch(() => {})
+      );
+    }
+    await Promise.all(promises);
+  }
+  // Streak
   let streak = 0;
-  const THRESHOLD = 0.7;
   for (let i = 0; i < 365; i++) {
     const d = addDays(today, -i);
-    try {
-      const snap = await getDoc(doc(db, "users", currentUser.uid, "routines", d));
-      if (!snap.exists()) {
-        if (i === 0) continue;  // today might not be done yet
-        break;
-      }
-      const items = snap.data().items || {};
-      const done = Object.values(items).filter(v => v === true).length;
-      const total = SCHEMA.items.length;
-      if (done / total >= THRESHOLD) {
-        streak++;
-      } else {
-        if (i === 0) continue;  // today incomplete = don't break streak
-        break;
-      }
-    } catch { break; }
+    const pct = heatmapCache[d];
+    if (pct === undefined) {
+      if (i === 0) continue;
+      break;
+    }
+    if (pct >= STREAK_THRESHOLD) {
+      streak++;
+    } else {
+      if (i === 0) continue;
+      break;
+    }
   }
   document.getElementById("streak-count").textContent = streak;
+  renderHeatmap();
+}
+
+// === Heatmap (workout dashboard style) ===
+function renderHeatmap() {
+  const today = isoToday();
+  const todayDate = parseDate(today);
+  const endDate = todayDate;
+  const startDate = addDaysToDate(endDate, -(HEATMAP_DAYS - 1));
+
+  const cell = 13, gap = 3;
+  // Find Monday on/before startDate
+  let s = new Date(startDate);
+  while (s.getDay() !== 1) s = addDaysToDate(s, -1);
+  const cols = Math.ceil(((endDate - s) / 86400000 + 1) / 7);
+  const labelW = 18;
+  const w = labelW + cols * (cell + gap);
+  const h = 7 * (cell + gap) + 20;
+
+  // Weekday labels
+  const wdChars = ["M","","W","","F","",""];
+  const wdayLabels = wdChars.map((ch, idx) =>
+    `<text x="0" y="${idx*(cell+gap)+16+cell*0.75}" fill="#71717a" font-size="9" font-family="JetBrains Mono, SF Mono, monospace">${ch}</text>`
+  ).join("");
+
+  const rects = [];
+  const monthLabels = [];
+  let cur = new Date(s);
+  let lastMonth = -1;
+  let totalPct = 0, countDays = 0;
+  for (let c = 0; c < cols; c++) {
+    for (let r = 0; r < 7; r++) {
+      const inRange = (cur >= startDate && cur <= endDate);
+      if (!inRange) { cur = addDaysToDate(cur, 1); continue; }
+      const iso = isoDate(cur);
+      const pct = heatmapCache[iso];
+      let fillColor = "rgba(255,255,255,0.04)";
+      let opacity = 1;
+      if (pct !== undefined && pct > 0) {
+        fillColor = "#84cc16";
+        opacity = 0.3 + 0.7 * Math.min(pct, 1);
+        totalPct += pct; countDays++;
+      } else if (pct === 0) {
+        fillColor = "rgba(255,255,255,0.04)";
+        countDays++;
+      }
+      const wd = WEEKDAYS_EN[cur.getDay() === 0 ? 6 : cur.getDay()-1];
+      const pctStr = pct !== undefined ? `${Math.round(pct*100)}%` : "no data";
+      const total = SCHEMA.items.length;
+      const done = pct !== undefined ? Math.round(pct * total) : 0;
+      const payload = JSON.stringify({date: `${iso} (${wd})`, pct: pctStr, detail: pct !== undefined ? `${done} / ${total} items` : ""}).replace(/"/g, "&quot;");
+      rects.push(`<rect x="${labelW + c*(cell+gap)}" y="${r*(cell+gap)+16}" width="${cell}" height="${cell}" rx="2" fill="${fillColor}" opacity="${opacity.toFixed(2)}" class="hcell" data-payload="${payload}" style="cursor:pointer;"></rect>`);
+      cur = addDaysToDate(cur, 1);
+    }
+    if (cur <= endDate && cur.getMonth() !== lastMonth && cur.getDate() <= 7) {
+      monthLabels.push(`<text x="${labelW + c*(cell+gap)}" y="12" fill="#71717a" font-size="10" font-family="JetBrains Mono, monospace">${MONTH_NAMES[cur.getMonth()]}</text>`);
+      lastMonth = cur.getMonth();
+    }
+  }
+  const svg = `<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg">${wdayLabels}${monthLabels.join("")}${rects.join("")}</svg>`;
+  document.getElementById("heatmap-svg-wrap").innerHTML = svg;
+  const avgPct = countDays > 0 ? Math.round((totalPct / countDays) * 100) : 0;
+  document.getElementById("heatmap-meta").innerHTML = `avg adherence: <span style="color:var(--accent);">${avgPct}%</span> · ${countDays} days logged`;
+  document.getElementById("heatmap-days").textContent = `${HEATMAP_DAYS} days`;
+  bindHeatmapTooltips();
+}
+
+function bindHeatmapTooltips() {
+  const tt = document.getElementById("heatmap-tooltip");
+  document.querySelectorAll(".hcell").forEach(cell => {
+    cell.addEventListener("mouseenter", (e) => {
+      const data = JSON.parse(cell.getAttribute("data-payload").replace(/&quot;/g, '"'));
+      tt.innerHTML = `<div class="tt-date">${data.date}</div><div class="tt-pct">${data.pct}</div>${data.detail ? `<div class="tt-line">${data.detail}</div>` : ""}`;
+      const r = cell.getBoundingClientRect();
+      tt.style.left = (r.left + r.width/2 - 60) + "px";
+      tt.style.top = (r.top - 60) + "px";
+      tt.classList.add("show");
+    });
+    cell.addEventListener("mouseleave", () => tt.classList.remove("show"));
+    cell.addEventListener("click", (e) => {
+      const data = JSON.parse(cell.getAttribute("data-payload").replace(/&quot;/g, '"'));
+      const iso = data.date.split(" ")[0];
+      loadDate(iso);
+    });
+  });
 }
 
 // === Date navigation ===
 document.getElementById("prev-day").onclick = () => loadDate(addDays(currentDate, -1));
 document.getElementById("next-day").onclick = () => {
   const next = addDays(currentDate, 1);
-  if (next > isoToday()) return;  // no future
+  if (next > isoToday()) return;
   loadDate(next);
 };
 document.getElementById("today-btn").onclick = () => loadDate(isoToday());
