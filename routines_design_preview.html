@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>Routine Dashboard — Design Options</title>
+<style>
+  :root {
+    --bg: #0a0a0a; --surface: #111; --surface-2: #161616;
+    --border: #1f1f23; --text: #fafafa; --muted: #71717a;
+    --accent: #FF1A8C; --green: #84cc16; --gold: #fbbf24;
+    --sec-morning: #fbbf24; --sec-focus: #06b6d4;
+    --sec-workout: #FF1A8C; --sec-discipline: #a855f7;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: "Inter", -apple-system, sans-serif;
+    padding: 24px; max-width: 1400px; margin: 0 auto;
+  }
+  h1 { font-size: 22px; margin-bottom: 8px; font-weight: 600; }
+  h2 { font-size: 16px; margin: 32px 0 12px; font-weight: 500; }
+  .label-mono { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+  .desc { color: var(--muted); font-size: 13px; margin-bottom: 16px; }
+
+  .options-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px;
+    margin-top: 24px;
+  }
+  @media (max-width: 900px) { .options-grid { grid-template-columns: 1fr; } }
+  .option {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 20px;
+  }
+  .option-title { display: flex; align-items: baseline; gap: 12px; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px dashed var(--border); }
+  .badge { background: var(--accent); color: #fff; padding: 3px 10px; border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.1em; }
+  .option h3 { font-size: 14px; }
+  .option-desc { color: var(--muted); font-size: 11px; }
+
+  /* OPTION A: Ultra-minimal list */
+  .opt-a-row {
+    display: flex; align-items: center; gap: 10px; padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .opt-a-row:last-child { border-bottom: none; }
+  .opt-a-check {
+    width: 18px; height: 18px; border: 1.5px solid var(--border); border-radius: 4px;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .opt-a-row.checked .opt-a-check { background: var(--green); border-color: var(--green); }
+  .opt-a-row.checked .opt-a-check::after { content: "✓"; color: #000; font-size: 13px; font-weight: 700; }
+  .opt-a-row.checked .opt-a-label { color: var(--muted); text-decoration: line-through; }
+  .opt-a-label { font-size: 14px; }
+  .opt-a-section { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 0.1em; margin: 14px 0 4px; }
+
+  /* OPTION B: Pill cluster */
+  .opt-b-section { margin-bottom: 12px; }
+  .opt-b-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 0.1em; margin-bottom: 6px; }
+  .opt-b-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+  .opt-b-pill {
+    background: var(--surface-2); border: 1px solid var(--border); border-radius: 999px;
+    padding: 6px 12px; font-size: 12px; color: var(--text); cursor: pointer;
+    user-select: none;
+  }
+  .opt-b-pill.checked {
+    background: var(--green); border-color: var(--green); color: #000; font-weight: 500;
+  }
+  .opt-b-pill.checked::before { content: "✓ "; }
+
+  /* OPTION C: 2-column dense grid */
+  .opt-c-section { margin-bottom: 12px; }
+  .opt-c-section-title { display: flex; align-items: center; gap: 6px; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 0.1em; margin-bottom: 4px; padding-left: 4px; }
+  .opt-c-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+  .opt-c-item {
+    display: flex; align-items: center; gap: 8px; padding: 8px;
+    background: var(--surface-2); border-radius: 6px; cursor: pointer; user-select: none;
+    font-size: 12px;
+  }
+  .opt-c-item.checked { background: rgba(132,204,22,0.15); }
+  .opt-c-check {
+    width: 14px; height: 14px; border: 1.5px solid var(--border); border-radius: 3px;
+    flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  }
+  .opt-c-item.checked .opt-c-check { background: var(--green); border-color: var(--green); }
+  .opt-c-item.checked .opt-c-check::after { content: "✓"; color: #000; font-size: 9px; font-weight: 700; }
+  .opt-c-item.checked .opt-c-label { color: var(--muted); }
+
+  /* OPTION D: Compact row with section dot + tiny check */
+  .opt-d-row {
+    display: flex; align-items: center; gap: 10px; padding: 7px 10px;
+    background: var(--surface-2); border-radius: 6px; margin-bottom: 3px;
+    cursor: pointer; user-select: none;
+  }
+  .opt-d-row.checked { background: rgba(132,204,22,0.08); }
+  .opt-d-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .opt-d-dot.morning { background: var(--sec-morning); }
+  .opt-d-dot.focus { background: var(--sec-focus); }
+  .opt-d-dot.workout { background: var(--sec-workout); }
+  .opt-d-dot.discipline { background: var(--sec-discipline); }
+  .opt-d-label { font-size: 13px; flex: 1; }
+  .opt-d-row.checked .opt-d-label { color: var(--muted); text-decoration: line-through; }
+  .opt-d-check {
+    width: 16px; height: 16px; border: 1.5px solid var(--border); border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .opt-d-row.checked .opt-d-check { background: var(--green); border-color: var(--green); }
+  .opt-d-row.checked .opt-d-check::after { content: "✓"; color: #000; font-size: 11px; font-weight: 700; }
+
+  /* Heatmap preview */
+  .heatmap-section {
+    margin-top: 40px; padding: 16px; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 12px;
+  }
+  .heatmap-grid {
+    display: grid; grid-template-columns: repeat(20, 1fr); gap: 3px;
+    margin-top: 8px;
+  }
+  .hm-cell {
+    aspect-ratio: 1; border-radius: 2px; background: var(--surface-2);
+  }
+  .hm-cell.l1 { background: rgba(132,204,22,0.2); }
+  .hm-cell.l2 { background: rgba(132,204,22,0.4); }
+  .hm-cell.l3 { background: rgba(132,204,22,0.7); }
+  .hm-cell.l4 { background: var(--green); }
+</style>
+</head>
+<body>
+
+<h1>Routine Dashboard — 4 Minimalist Designs</h1>
+<p class="desc">Same data (17 items, 8 checked = ~47%). Choose one. Each option shown with English labels.</p>
+
+<div class="options-grid">
+
+<!-- OPTION A -->
+<div class="option">
+  <div class="option-title">
+    <span class="badge">Option A</span>
+    <h3>Ultra-Minimal List</h3>
+  </div>
+  <div class="option-desc">No backgrounds, just rows. Section headers as small uppercase labels. Maximum density.</div>
+
+  <div class="opt-a-section">Morning</div>
+  <div class="opt-a-row checked"><div class="opt-a-check"></div><div class="opt-a-label">Wake Up</div></div>
+  <div class="opt-a-row checked"><div class="opt-a-check"></div><div class="opt-a-label">Meditation</div></div>
+  <div class="opt-a-row checked"><div class="opt-a-check"></div><div class="opt-a-label">Stretching</div></div>
+  <div class="opt-a-row"><div class="opt-a-check"></div><div class="opt-a-label">Cold Shower</div></div>
+  <div class="opt-a-row checked"><div class="opt-a-check"></div><div class="opt-a-label">Self Photo</div></div>
+  <div class="opt-a-row checked"><div class="opt-a-check"></div><div class="opt-a-label">Supplements</div></div>
+
+  <div class="opt-a-section">Focus</div>
+  <div class="opt-a-row"><div class="opt-a-check"></div><div class="opt-a-label">Reading</div></div>
+  <div class="opt-a-row checked"><div class="opt-a-check"></div><div class="opt-a-label">Morning Briefing</div></div>
+  <div class="opt-a-row"><div class="opt-a-check"></div><div class="opt-a-label">English Vocab</div></div>
+  <div class="opt-a-row"><div class="opt-a-check"></div><div class="opt-a-label">English Speech</div></div>
+
+  <div class="opt-a-section">Workout</div>
+  <div class="opt-a-row checked"><div class="opt-a-check"></div><div class="opt-a-label">Lifting</div></div>
+  <div class="opt-a-row"><div class="opt-a-check"></div><div class="opt-a-label">Running</div></div>
+  <div class="opt-a-row"><div class="opt-a-check"></div><div class="opt-a-label">Swimming</div></div>
+  <div class="opt-a-row"><div class="opt-a-check"></div><div class="opt-a-label">Golf</div></div>
+  <div class="opt-a-row"><div class="opt-a-check"></div><div class="opt-a-label">Tennis</div></div>
+
+  <div class="opt-a-section">Discipline</div>
+  <div class="opt-a-row checked"><div class="opt-a-check"></div><div class="opt-a-label">No Porn</div></div>
+  <div class="opt-a-row"><div class="opt-a-check"></div><div class="opt-a-label">No Smoking</div></div>
+</div>
+
+<!-- OPTION B -->
+<div class="option">
+  <div class="option-title">
+    <span class="badge">Option B</span>
+    <h3>Pill Cluster</h3>
+  </div>
+  <div class="option-desc">Items as horizontal pills wrapping by section. Most compact. One tap toggles. Less hierarchy.</div>
+
+  <div class="opt-b-section">
+    <div class="opt-b-label">🌅 Morning</div>
+    <div class="opt-b-pills">
+      <span class="opt-b-pill checked">Wake Up</span>
+      <span class="opt-b-pill checked">Meditation</span>
+      <span class="opt-b-pill checked">Stretching</span>
+      <span class="opt-b-pill">Cold Shower</span>
+      <span class="opt-b-pill checked">Self Photo</span>
+      <span class="opt-b-pill checked">Supplements</span>
+    </div>
+  </div>
+  <div class="opt-b-section">
+    <div class="opt-b-label">📖 Focus</div>
+    <div class="opt-b-pills">
+      <span class="opt-b-pill">Reading</span>
+      <span class="opt-b-pill checked">Morning Briefing</span>
+      <span class="opt-b-pill">English Vocab</span>
+      <span class="opt-b-pill">English Speech</span>
+    </div>
+  </div>
+  <div class="opt-b-section">
+    <div class="opt-b-label">💪 Workout</div>
+    <div class="opt-b-pills">
+      <span class="opt-b-pill checked">Lifting</span>
+      <span class="opt-b-pill">Running</span>
+      <span class="opt-b-pill">Swimming</span>
+      <span class="opt-b-pill">Golf</span>
+      <span class="opt-b-pill">Tennis</span>
+    </div>
+  </div>
+  <div class="opt-b-section">
+    <div class="opt-b-label">🌙 Discipline</div>
+    <div class="opt-b-pills">
+      <span class="opt-b-pill checked">No Porn</span>
+      <span class="opt-b-pill">No Smoking</span>
+    </div>
+  </div>
+</div>
+
+<!-- OPTION C -->
+<div class="option">
+  <div class="option-title">
+    <span class="badge">Option C</span>
+    <h3>2-Column Dense Grid</h3>
+  </div>
+  <div class="option-desc">Items in 2 columns per section. Compact backgrounds. Scrollable in less vertical space.</div>
+
+  <div class="opt-c-section">
+    <div class="opt-c-section-title">🌅 MORNING</div>
+    <div class="opt-c-grid">
+      <div class="opt-c-item checked"><div class="opt-c-check"></div><span class="opt-c-label">Wake Up</span></div>
+      <div class="opt-c-item checked"><div class="opt-c-check"></div><span class="opt-c-label">Meditation</span></div>
+      <div class="opt-c-item checked"><div class="opt-c-check"></div><span class="opt-c-label">Stretching</span></div>
+      <div class="opt-c-item"><div class="opt-c-check"></div><span class="opt-c-label">Cold Shower</span></div>
+      <div class="opt-c-item checked"><div class="opt-c-check"></div><span class="opt-c-label">Self Photo</span></div>
+      <div class="opt-c-item checked"><div class="opt-c-check"></div><span class="opt-c-label">Supplements</span></div>
+    </div>
+  </div>
+  <div class="opt-c-section">
+    <div class="opt-c-section-title">📖 FOCUS</div>
+    <div class="opt-c-grid">
+      <div class="opt-c-item"><div class="opt-c-check"></div><span class="opt-c-label">Reading</span></div>
+      <div class="opt-c-item checked"><div class="opt-c-check"></div><span class="opt-c-label">Morning Briefing</span></div>
+      <div class="opt-c-item"><div class="opt-c-check"></div><span class="opt-c-label">English Vocab</span></div>
+      <div class="opt-c-item"><div class="opt-c-check"></div><span class="opt-c-label">English Speech</span></div>
+    </div>
+  </div>
+  <div class="opt-c-section">
+    <div class="opt-c-section-title">💪 WORKOUT</div>
+    <div class="opt-c-grid">
+      <div class="opt-c-item checked"><div class="opt-c-check"></div><span class="opt-c-label">Lifting</span></div>
+      <div class="opt-c-item"><div class="opt-c-check"></div><span class="opt-c-label">Running</span></div>
+      <div class="opt-c-item"><div class="opt-c-check"></div><span class="opt-c-label">Swimming</span></div>
+      <div class="opt-c-item"><div class="opt-c-check"></div><span class="opt-c-label">Golf</span></div>
+      <div class="opt-c-item"><div class="opt-c-check"></div><span class="opt-c-label">Tennis</span></div>
+    </div>
+  </div>
+  <div class="opt-c-section">
+    <div class="opt-c-section-title">🌙 DISCIPLINE</div>
+    <div class="opt-c-grid">
+      <div class="opt-c-item checked"><div class="opt-c-check"></div><span class="opt-c-label">No Porn</span></div>
+      <div class="opt-c-item"><div class="opt-c-check"></div><span class="opt-c-label">No Smoking</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- OPTION D -->
+<div class="option">
+  <div class="option-title">
+    <span class="badge">Option D</span>
+    <h3>Dot + Single Row</h3>
+  </div>
+  <div class="option-desc">Each item: section-color dot + label + round check. No section headers, color-coded inline.</div>
+
+  <div class="opt-d-row checked"><div class="opt-d-dot morning"></div><div class="opt-d-label">Wake Up</div><div class="opt-d-check"></div></div>
+  <div class="opt-d-row checked"><div class="opt-d-dot morning"></div><div class="opt-d-label">Meditation</div><div class="opt-d-check"></div></div>
+  <div class="opt-d-row checked"><div class="opt-d-dot morning"></div><div class="opt-d-label">Stretching</div><div class="opt-d-check"></div></div>
+  <div class="opt-d-row"><div class="opt-d-dot morning"></div><div class="opt-d-label">Cold Shower</div><div class="opt-d-check"></div></div>
+  <div class="opt-d-row checked"><div class="opt-d-dot morning"></div><div class="opt-d-label">Self Photo</div><div class="opt-d-check"></div></div>
+  <div class="opt-d-row checked"><div class="opt-d-dot morning"></div><div class="opt-d-label">Supplements</div><div class="opt-d-check"></div></div>
+  <div class="opt-d-row"><div class="opt-d-dot focus"></div><div class="opt-d-label">Reading</div><div class="opt-d-check"></div></div>
+  <div class="opt-d-row checked"><div class="opt-d-dot focus"></div><div class="opt-d-label">Morning Briefing</div><div class="opt-d-check"></div></div>
+  <div class="opt-d-row"><div class="opt-d-dot focus"></div><div class="opt-d-label">English Vocab</div><div class="opt-d-check"></div></div>
+  <div class="opt-d-row"><div class="opt-d-dot focus"></div><div class="opt-d-label">English Speech</div><div class="opt-d-check"></div></div>
+  <div class="opt-d-row checked"><div class="opt-d-dot workout"></div><div class="opt-d-label">Lifting</div><div class="opt-d-check"></div></div>
+  <div class="opt-d-row"><div class="opt-d-dot workout"></div><div class="opt-d-label">Running</div><div class="opt-d-check"></div></div>
+  <div class="opt-d-row"><div class="opt-d-dot workout"></div><div class="opt-d-label">Swimming</div><div class="opt-d-check"></div></div>
+  <div class="opt-d-row"><div class="opt-d-dot workout"></div><div class="opt-d-label">Golf</div><div class="opt-d-check"></div></div>
+  <div class="opt-d-row"><div class="opt-d-dot workout"></div><div class="opt-d-label">Tennis</div><div class="opt-d-check"></div></div>
+  <div class="opt-d-row checked"><div class="opt-d-dot discipline"></div><div class="opt-d-label">No Porn</div><div class="opt-d-check"></div></div>
+  <div class="opt-d-row"><div class="opt-d-dot discipline"></div><div class="opt-d-label">No Smoking</div><div class="opt-d-check"></div></div>
+</div>
+
+</div>
+
+<!-- Heatmap preview -->
+<div class="heatmap-section">
+  <h2>📊 History Heatmap (bottom of page, all options)</h2>
+  <p class="desc">Past 60 days, each cell = one day. Color intensity = % completion. Click cell → see that day's items.</p>
+  <div class="label-mono" style="margin-top:12px;">LAST 60 DAYS · 73% AVG</div>
+  <div class="heatmap-grid" id="hm">
+    <!-- 60 cells with random levels -->
+  </div>
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px; font-size:11px; color:var(--muted);">
+    <span>STREAK 🔥 12 days · WEEKLY 5/7 · MONTHLY 24/31</span>
+    <div style="display:flex; align-items:center; gap:4px;">
+      <span>less</span>
+      <div style="width:10px; height:10px; background:var(--surface-2); border-radius:2px;"></div>
+      <div style="width:10px; height:10px; background:rgba(132,204,22,0.2); border-radius:2px;"></div>
+      <div style="width:10px; height:10px; background:rgba(132,204,22,0.4); border-radius:2px;"></div>
+      <div style="width:10px; height:10px; background:rgba(132,204,22,0.7); border-radius:2px;"></div>
+      <div style="width:10px; height:10px; background:var(--green); border-radius:2px;"></div>
+      <span>more</span>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top:48px; padding:24px; background:var(--surface); border-radius:12px; text-align:center; color:var(--muted); font-size:14px;">
+  👉 Option A / B / C / D 중 선호하는 것 알려주세요. 또는 조합 (예: "C 구조 + D 색상")도 OK.
+</div>
+
+<script>
+  // Fill heatmap with random levels
+  const grid = document.getElementById('hm');
+  for (let i=0; i<60; i++) {
+    const lvl = Math.random();
+    const cls = lvl > 0.85 ? 'l4' : lvl > 0.65 ? 'l3' : lvl > 0.45 ? 'l2' : lvl > 0.2 ? 'l1' : '';
+    const div = document.createElement('div');
+    div.className = 'hm-cell ' + cls;
+    grid.appendChild(div);
+  }
+</script>
+
+</body>
+</html>
