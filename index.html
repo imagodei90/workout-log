@@ -2231,30 +2231,33 @@ function renderPlan(agg) {
           ${calCells[0].monthNum}/${calCells[0].dayNum} – ${calCells[6].monthNum}/${calCells[6].dayNum}, ${todayStart.getFullYear()}
         </div>
       </div>
-      <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:8px;">
-        ${calCells.map(c => {
-          const c2 = c.primaryBP ? bpColor(c.primaryBP) : 'var(--surface-2)';
-          const todayStyle = c.isToday
-            ? `border: 2px solid ${bpColor(todayPicks[0]?.body_part || 'OTHER')}; position:relative; background: var(--surface);`
-            : `border: 1px solid var(--border); background: var(--surface-2);`;
-          const todayBadge = c.isToday
-            ? `<div style="position:absolute; top:-8px; left:50%; transform:translateX(-50%); background:${bpColor(todayPicks[0]?.body_part || 'OTHER')}; color:#000; padding:1px 6px; border-radius:4px; font-size:8px; font-family:'JetBrains Mono', monospace;">TODAY</div>`
-            : '';
-          const bpHtml = c.primaryBP
-            ? `<span style="background:${c2}30; color:${c2}; padding:2px 6px; border-radius:6px; font-size:9px; font-family:'JetBrains Mono', monospace; letter-spacing:0.05em;">${bpLabel(c.primaryBP)}</span>`
-            : (c.isToday
-                ? `<span style="background:${bpColor(todayPicks[0]?.body_part || 'OTHER')}30; color:${bpColor(todayPicks[0]?.body_part || 'OTHER')}; padding:2px 6px; border-radius:6px; font-size:9px; font-family:'JetBrains Mono', monospace;">${todayLabel}</span>`
-                : `<span style="color:var(--muted); font-size:11px;">rest</span>`);
-          const cardioHtml = c.km > 0 ? `<div style="font-size:9px; color:var(--run); margin-top:4px;">+ ${c.km.toFixed(1)}km</div>` : '';
-          const setsHtml = c.sets > 0 ? `<div style="font-size:10px; color:var(--muted); margin-top:4px;">${c.sets} sets</div>` : '';
-          const todayLabelHtml = c.isToday ? `<div style="font-size:10px; color:${bpColor(todayPicks[0]?.body_part || 'OTHER')}; margin-top:4px;">recommended</div>` : '';
-          return `<div style="border-radius:8px; padding:14px 8px; text-align:center; ${todayStyle}">
-            ${todayBadge}
-            <div style="font-size:10px; color:var(--muted); font-family:'JetBrains Mono', monospace;">${c.dayOfWeek} ${c.monthNum}/${c.dayNum}</div>
-            <div style="margin:8px 0;">${bpHtml}</div>
-            ${setsHtml}${cardioHtml}${todayLabelHtml}
-          </div>`;
-        }).join('')}
+      <div id="this-week-scroll" style="overflow-x:auto; -webkit-overflow-scrolling:touch; padding-top:10px;">
+        <div style="display:grid; grid-template-columns:repeat(7, minmax(96px, 1fr)); gap:8px; min-width:100%;">
+          ${calCells.map(c => {
+            const c2 = c.primaryBP ? bpColor(c.primaryBP) : 'var(--surface-2)';
+            const todayStyle = c.isToday
+              ? `border: 2px solid ${bpColor(todayPicks[0]?.body_part || 'OTHER')}; position:relative; background: var(--surface);`
+              : `border: 1px solid var(--border); background: var(--surface-2);`;
+            const todayBadge = c.isToday
+              ? `<div style="position:absolute; top:-8px; left:50%; transform:translateX(-50%); background:${bpColor(todayPicks[0]?.body_part || 'OTHER')}; color:#000; padding:1px 6px; border-radius:4px; font-size:8px; font-family:'JetBrains Mono', monospace;">TODAY</div>`
+              : '';
+            const bpHtml = c.primaryBP
+              ? `<span style="background:${c2}30; color:${c2}; padding:2px 6px; border-radius:6px; font-size:9px; font-family:'JetBrains Mono', monospace; letter-spacing:0.05em;">${bpLabel(c.primaryBP)}</span>`
+              : (c.isToday
+                  ? `<span style="background:${bpColor(todayPicks[0]?.body_part || 'OTHER')}30; color:${bpColor(todayPicks[0]?.body_part || 'OTHER')}; padding:2px 6px; border-radius:6px; font-size:9px; font-family:'JetBrains Mono', monospace;">${todayLabel}</span>`
+                  : `<span style="color:var(--muted); font-size:11px;">rest</span>`);
+            const cardioHtml = c.km > 0 ? `<div style="font-size:9px; color:var(--run); margin-top:4px;">+ ${c.km.toFixed(1)}km</div>` : '';
+            const setsHtml = c.sets > 0 ? `<div style="font-size:10px; color:var(--muted); margin-top:4px;">${c.sets} sets</div>` : '';
+            const todayLabelHtml = c.isToday ? `<div style="font-size:10px; color:${bpColor(todayPicks[0]?.body_part || 'OTHER')}; margin-top:4px;">recommended</div>` : '';
+            const todayAttr = c.isToday ? ' data-today-cell="1"' : '';
+            return `<div${todayAttr} style="border-radius:8px; padding:14px 8px; text-align:center; ${todayStyle}">
+              ${todayBadge}
+              <div style="font-size:10px; color:var(--muted); font-family:'JetBrains Mono', monospace;">${c.dayOfWeek} ${c.monthNum}/${c.dayNum}</div>
+              <div style="margin:8px 0;">${bpHtml}</div>
+              ${setsHtml}${cardioHtml}${todayLabelHtml}
+            </div>`;
+          }).join('')}
+        </div>
       </div>
     </div>
   `;
@@ -2757,42 +2760,99 @@ const VIEWS = IS_V3
 
 function bindTooltips() {
   const tip = document.getElementById("hovertip");
+  const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints || 0) > 0;
+
+  function buildTooltipHTML(data, hasLiftDetails) {
+    let html = `<div style="font-weight:600; margin-bottom:2px;">${data.date}</div>`;
+    if (data.primary) html += `<div style="color:#a3e635;">${data.primary}</div>`;
+    if (data.secondary) html += `<div style="color:#7a8499; font-size:11px; margin-top:2px;">${data.secondary}</div>`;
+    if (data.bodyParts && data.bodyParts.length > 0) {
+      if (data.bodyParts.length >= 4) {
+        html += `<div style="color:var(--muted); font-size:10px; margin-top:3px; font-family:'JetBrains Mono', monospace;">MIXED · ${data.bodyParts.length} parts</div>`;
+      } else {
+        const bpLine = data.bodyParts.map(b => {
+          const c = BP_COLORS[b.bp] || "var(--muted)";
+          const subStr = b.subs && b.subs.length > 0 ? ` (${b.subs.map(s => s.sub).join('/')})` : '';
+          return `<span style="color:${c};">${b.bp}${subStr}</span>`;
+        }).join('<span style="color:var(--muted);"> + </span>');
+        html += `<div style="font-size:10px; margin-top:3px; font-family:'JetBrains Mono', monospace;">${bpLine}</div>`;
+      }
+    }
+    if (isTouch && hasLiftDetails) {
+      html += `<div style="margin-top:6px; padding-top:6px; border-top:1px dashed var(--border); font-size:10px; color:var(--accent); font-family:'JetBrains Mono', monospace;">Tap again for details &rsaquo;</div>`;
+    }
+    return html;
+  }
+
+  function positionTip(targetEl, clientX, clientY) {
+    const rect = targetEl.getBoundingClientRect();
+    let x = clientX !== undefined ? clientX + 14 : rect.left + rect.width / 2;
+    let y = clientY !== undefined ? clientY - 10 : rect.bottom + 8;
+    // Clamp to viewport (small margin)
+    const tipW = tip.offsetWidth || 220;
+    const tipH = tip.offsetHeight || 80;
+    x = Math.max(8, Math.min(window.innerWidth - tipW - 8, x));
+    y = Math.max(8, Math.min(window.innerHeight - tipH - 8, y));
+    tip.style.left = x + "px";
+    tip.style.top = y + "px";
+  }
+
+  let activeCell = null;
+  function showTip(el, clientX, clientY) {
+    try {
+      const data = JSON.parse(el.getAttribute("data-payload"));
+      tip.innerHTML = buildTooltipHTML(data, el.hasAttribute("data-lift-date"));
+      tip.style.opacity = "1";
+      positionTip(el, clientX, clientY);
+    } catch (err) {}
+  }
+  function hideTip() {
+    tip.style.opacity = "0";
+    activeCell = null;
+  }
+
   document.querySelectorAll("[data-payload]").forEach(el => {
-    el.addEventListener("mouseenter", e => {
-      try {
-        const data = JSON.parse(e.currentTarget.getAttribute("data-payload"));
-        let html = `<div style="font-weight:600; margin-bottom:2px;">${data.date}</div>`;
-        if (data.primary) html += `<div style="color:#a3e635;">${data.primary}</div>`;
-        if (data.secondary) html += `<div style="color:#7a8499; font-size:11px; margin-top:2px;">${data.secondary}</div>`;
-        if (data.bodyParts && data.bodyParts.length > 0) {
-          if (data.bodyParts.length >= 4) {
-            html += `<div style="color:var(--muted); font-size:10px; margin-top:3px; font-family:'JetBrains Mono', monospace;">MIXED · ${data.bodyParts.length} parts</div>`;
-          } else {
-            const bpLine = data.bodyParts.map(b => {
-              const c = BP_COLORS[b.bp] || "var(--muted)";
-              const subStr = b.subs && b.subs.length > 0 ? ` (${b.subs.map(s => s.sub).join('/')})` : '';
-              return `<span style="color:${c};">${b.bp}${subStr}</span>`;
-            }).join('<span style="color:var(--muted);"> + </span>');
-            html += `<div style="font-size:10px; margin-top:3px; font-family:'JetBrains Mono', monospace;">${bpLine}</div>`;
-          }
+    if (isTouch) {
+      el.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const isLift = el.hasAttribute("data-lift-date");
+        if (isLift && activeCell === el) {
+          // Second tap on a lift cell → open modal
+          hideTip();
+          showLiftModal(el.getAttribute("data-lift-date"));
+          return;
         }
-        tip.innerHTML = html;
-        tip.style.opacity = "1";
-      } catch (err) {}
-    });
-    el.addEventListener("mousemove", e => {
-      tip.style.left = (e.clientX + 14) + "px";
-      tip.style.top = (e.clientY - 10) + "px";
-    });
-    el.addEventListener("mouseleave", () => { tip.style.opacity = "0"; });
+        activeCell = el;
+        showTip(el);
+      });
+    } else {
+      el.addEventListener("mouseenter", (e) => showTip(el, e.clientX, e.clientY));
+      el.addEventListener("mousemove", (e) => {
+        tip.style.left = (e.clientX + 14) + "px";
+        tip.style.top = (e.clientY - 10) + "px";
+      });
+      el.addEventListener("mouseleave", hideTip);
+    }
   });
-  document.querySelectorAll("[data-lift-date]").forEach(el => {
-    el.style.cursor = "pointer";
-    el.addEventListener("click", () => {
-      tip.style.opacity = "0";
-      showLiftModal(el.getAttribute("data-lift-date"));
+
+  // Desktop lift cells: direct click opens modal (existing behavior)
+  if (!isTouch) {
+    document.querySelectorAll("[data-lift-date]").forEach(el => {
+      el.style.cursor = "pointer";
+      el.addEventListener("click", () => {
+        hideTip();
+        showLiftModal(el.getAttribute("data-lift-date"));
+      });
     });
-  });
+  } else {
+    document.querySelectorAll("[data-lift-date]").forEach(el => { el.style.cursor = "pointer"; });
+    // Tap outside any cell or tooltip dismisses tooltip
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest("[data-payload]") && !e.target.closest("#hovertip")) {
+        hideTip();
+      }
+    });
+  }
 }
 
 function showLiftModal(date) {
@@ -3001,6 +3061,16 @@ function refresh() {
   document.getElementById("content").innerHTML = html;
   document.getElementById("conventions").innerHTML = renderConventions();
   bindTooltips();
+
+  // Auto-scroll "This week" calendar to today's recommended cell
+  setTimeout(() => {
+    const wrap = document.getElementById("this-week-scroll");
+    if (!wrap) return;
+    const todayCell = wrap.querySelector('[data-today-cell="1"]');
+    if (!todayCell) return;
+    const target = todayCell.offsetLeft - (wrap.clientWidth - todayCell.offsetWidth) / 2;
+    wrap.scrollTo({ left: Math.max(0, target), behavior: "smooth" });
+  }, 50);
 
   // Update URL state
   const params = new URLSearchParams();
