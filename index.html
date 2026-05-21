@@ -207,14 +207,12 @@ details.conventions-toggle[open] > .conv-body { margin-top: 16px; }
   font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--muted);
   letter-spacing: 0.1em; margin-top: 4px; text-align: center;
 }
+/* Dot grid track width: 1fr (auto-fit) on desktop, fixed 14px on mobile so it forces horizontal scroll */
+:root { --dot-track: 1fr; }
 @media (max-width: 768px) {
   .scroll-hint { display: block; }
-  /* Dashboard dot grid: smaller dots on mobile */
-  .hdot { width: 10px !important; height: 10px !important; }
-  .dot-grid { gap: 2px !important; }
-}
-@media (max-width: 540px) {
-  .hdot { width: 8px !important; height: 8px !important; }
+  :root { --dot-track: 14px; }
+  .dot-grid { width: max-content; }
 }
 
 @keyframes streakWave {
@@ -832,7 +830,8 @@ function renderHeatmap(agg) {
         <span style="display:inline-block;width:10px;height:10px;background:${COLORS.lift};border-radius:50%;margin:0 4px 0 12px;vertical-align:middle;"></span> Lifting
         <span style="display:inline-block;width:10px;height:10px;background:${COLORS.lift};border-radius:50%;box-shadow:0 0 0 2px var(--text);margin:0 4px 0 14px;vertical-align:middle;"></span> Both
       </p>
-      <div class="dot-grid" style="display:grid; grid-template-columns:repeat(${cols}, 1fr); gap:3px;">${dotsHtml.join("")}</div>
+      <div class="hscroll-wrap"><div class="hscroll"><div class="dot-grid" style="display:grid; grid-template-columns:repeat(${cols}, var(--dot-track,1fr)); gap:3px;">${dotsHtml.join("")}</div></div></div>
+      <div class="scroll-hint">&larr; swipe to see more &rarr;</div>
     </div>
 
     <div class="card">
