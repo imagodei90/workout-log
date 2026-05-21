@@ -174,6 +174,49 @@ details.conventions-toggle[open] > .conv-body { margin-top: 16px; }
 .hdot { cursor: pointer; transition: transform 0.1s, box-shadow 0.1s; display: inline-block; }
 .hdot:hover { transform: scale(1.5); box-shadow: 0 0 0 2px var(--text); z-index: 5; position: relative; }
 
+/* Horizontal scroll wrapper with right-edge fade hint */
+.hscroll {
+  position: relative;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent) transparent;
+}
+.hscroll::-webkit-scrollbar { height: 6px; }
+.hscroll::-webkit-scrollbar-track { background: transparent; }
+.hscroll::-webkit-scrollbar-thumb {
+  background: var(--accent); border-radius: 3px; opacity: 0.6;
+}
+.hscroll-wrap {
+  position: relative;
+}
+.hscroll-wrap::after {
+  /* Right-edge fade indicator (only on mobile) */
+  content: "";
+  position: absolute; right: 0; top: 0; bottom: 6px;
+  width: 28px; pointer-events: none;
+  background: linear-gradient(to right, transparent, var(--card));
+  opacity: 0; transition: opacity 0.2s;
+}
+@media (max-width: 768px) {
+  .hscroll-wrap::after { opacity: 1; }
+  .hscroll-wrap.scrolled-end::after { opacity: 0; }
+}
+.scroll-hint {
+  display: none;
+  font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--muted);
+  letter-spacing: 0.1em; margin-top: 4px; text-align: center;
+}
+@media (max-width: 768px) {
+  .scroll-hint { display: block; }
+  /* Dashboard dot grid: smaller dots on mobile */
+  .hdot { width: 10px !important; height: 10px !important; }
+  .dot-grid { gap: 2px !important; }
+}
+@media (max-width: 540px) {
+  .hdot { width: 8px !important; height: 8px !important; }
+}
+
 @keyframes streakWave {
   0%   { box-shadow: 0 0 0 0 rgba(255, 26, 140, 0.55); }
   100% { box-shadow: 0 0 0 14px rgba(255, 26, 140, 0); }
@@ -789,7 +832,7 @@ function renderHeatmap(agg) {
         <span style="display:inline-block;width:10px;height:10px;background:${COLORS.lift};border-radius:50%;margin:0 4px 0 12px;vertical-align:middle;"></span> Lifting
         <span style="display:inline-block;width:10px;height:10px;background:${COLORS.lift};border-radius:50%;box-shadow:0 0 0 2px var(--text);margin:0 4px 0 14px;vertical-align:middle;"></span> Both
       </p>
-      <div style="display:grid; grid-template-columns:repeat(${cols}, 1fr); gap:3px;">${dotsHtml.join("")}</div>
+      <div class="dot-grid" style="display:grid; grid-template-columns:repeat(${cols}, 1fr); gap:3px;">${dotsHtml.join("")}</div>
     </div>
 
     <div class="card">
@@ -800,7 +843,8 @@ function renderHeatmap(agg) {
           <div class="stat-label">${tr.count} ${t("runsUnit")} · ${num(tr.duration, 0)} ${t("minUnit")}</div>
         </div>
       </div>
-      <div style="overflow-x:auto;">${buildHeatmap(agg.runByDay, COLORS.run, "run", "distance", parseDateOnly(RUN_TRACKED_SINCE))}</div>
+      <div class="hscroll-wrap"><div class="hscroll">${buildHeatmap(agg.runByDay, COLORS.run, "run", "distance", parseDateOnly(RUN_TRACKED_SINCE))}</div></div>
+      <div class="scroll-hint">&larr; swipe to see more &rarr;</div>
     </div>
 
     <div class="card">
@@ -811,7 +855,8 @@ function renderHeatmap(agg) {
           <div class="stat-label">${tl.sets} ${t("setsUnit")} · ${num(tl.volume, 0)} kg</div>
         </div>
       </div>
-      <div style="overflow-x:auto;">${buildHeatmap(agg.liftByDay, COLORS.lift, "lift", "sets")}</div>
+      <div class="hscroll-wrap"><div class="hscroll">${buildHeatmap(agg.liftByDay, COLORS.lift, "lift", "sets")}</div></div>
+      <div class="scroll-hint">&larr; swipe to see more &rarr;</div>
     </div>`;
 }
 
