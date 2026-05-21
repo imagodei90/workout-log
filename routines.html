@@ -443,10 +443,33 @@ function renderSections() {
   updateProgress();
 }
 
-function updateProgress() {
-  const total = SCHEMA.items.length;
-  const done = Object.values(currentChecks).filter(v => v === true).length;
+/**
+ * Compute effective progress where the Workout section counts as 1 group:
+ * any one of (Lifting/Running/Swimming/Golf/Tennis) checked → whole Workout group done.
+ * Returns {done, total, pct}.
+ */
+function computeEffectiveProgress(checks) {
+  let done = 0, total = 0;
+  let workoutAny = false, workoutHasItems = false;
+  for (const it of SCHEMA.items) {
+    if (it.section === "Workout") {
+      workoutHasItems = true;
+      if (checks[it.id] === true) workoutAny = true;
+    } else {
+      total++;
+      if (checks[it.id] === true) done++;
+    }
+  }
+  if (workoutHasItems) {
+    total++;
+    if (workoutAny) done++;
+  }
   const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+  return { done, total, pct };
+}
+
+function updateProgress() {
+  const { done, total, pct } = computeEffectiveProgress(currentChecks);
   document.getElementById("progress-pct").textContent = pct + "%";
   document.getElementById("progress-count").textContent = `${done} / ${total}`;
   document.getElementById("progress-bar").style.width = pct + "%";
@@ -493,9 +516,8 @@ async function saveChecks() {
       items: currentChecks,
       updatedAt: serverTimestamp(),
     }, { merge: true });
-    // Update local heatmap cache
-    const total = SCHEMA.items.length;
-    const done = Object.values(currentChecks).filter(v => v === true).length;
+    // Update local heatmap cache (using effective progress: Workout group = 1)
+    const { done, total } = computeEffectiveProgress(currentChecks);
     heatmapCache[currentDate] = total > 0 ? done / total : 0;
     renderHeatmap();
     await refreshStreakAndHeatmap(false);
@@ -518,8 +540,7 @@ async function refreshStreakAndHeatmap(rebuild = true) {
           .then(snap => {
             if (snap.exists()) {
               const items = snap.data().items || {};
-              const total = SCHEMA.items.length;
-              const done = Object.values(items).filter(v => v === true).length;
+              const { done, total } = computeEffectiveProgress(items);
               heatmapCache[d] = total > 0 ? done / total : 0;
             }
           })
@@ -593,7 +614,8 @@ function renderHeatmap() {
       }
       const wd = WEEKDAYS_EN[cur.getDay() === 0 ? 6 : cur.getDay()-1];
       const pctStr = pct !== undefined ? `${Math.round(pct*100)}%` : "no data";
-      const total = SCHEMA.items.length;
+      // Effective total: 17 items but Workout (5) collapses to 1 group → 13
+      const { total } = computeEffectiveProgress({});  // gives effective total = 13
       const done = pct !== undefined ? Math.round(pct * total) : 0;
       const payload = JSON.stringify({date: `${iso} (${wd})`, pct: pctStr, detail: pct !== undefined ? `${done} / ${total} items` : ""}).replace(/"/g, "&quot;");
       rects.push(`<rect x="${labelW + c*(cell+gap)}" y="${r*(cell+gap)+16}" width="${cell}" height="${cell}" rx="2" fill="${fillColor}" opacity="${opacity.toFixed(2)}" class="hcell" data-payload="${payload}" style="cursor:pointer;"></rect>`);
