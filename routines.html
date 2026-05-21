@@ -137,6 +137,13 @@
     font-family: 'JetBrains Mono', monospace; font-size: 8px; letter-spacing: 0.1em;
     margin-right: 4px;
   }
+  .bonus-badge {
+    background: rgba(113,113,122,0.2); color: var(--muted);
+    padding: 1px 5px; border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace; font-size: 8px; letter-spacing: 0.1em;
+    margin-left: 6px; vertical-align: middle;
+  }
+  .item.bonus .item-label { color: var(--muted); }
 
   /* Heatmap (workout dashboard style) */
   .heatmap-card { padding: 16px; }
@@ -432,9 +439,11 @@ function renderSections() {
       const checked = currentChecks[it.id] === true;
       const dotClass = it.dotColor || SECTION_DOT_CLASS[it.section];
       const noteHtml = it.note ? `<div class="item-note">${it.note}</div>` : "";
-      html += `<div class="item${checked ? ' checked' : ''}" data-id="${it.id}" onclick="window.toggleItem('${it.id}')">
+      const isBonus = BONUS_WORKOUT_IDS.includes(it.id);
+      const bonusBadge = isBonus ? `<span class="bonus-badge">BONUS</span>` : "";
+      html += `<div class="item${checked ? ' checked' : ''}${isBonus ? ' bonus' : ''}" data-id="${it.id}" onclick="window.toggleItem('${it.id}')">
         <div class="item-dot ${dotClass}"></div>
-        <div class="item-label">${it.label}${noteHtml}</div>
+        <div class="item-label">${it.label}${bonusBadge}${noteHtml}</div>
         <div class="item-check"></div>
       </div>`;
     }
@@ -444,26 +453,30 @@ function renderSections() {
 }
 
 /**
- * Compute effective progress where the Workout section counts as 1 group:
- * any one of (Lifting/Running/Swimming/Golf/Tennis) checked → whole Workout group done.
+ * Compute effective progress.
+ * Hierarchy in Workout section:
+ *   - CORE: Lifting and Running — together count as 1 group (any one checked → done)
+ *   - BONUS: Swimming, Golf, Tennis — tracked separately, NOT counted in progress
  * Returns {done, total, pct}.
  */
+const CORE_WORKOUT_IDS = ["lifting", "running"];
+const BONUS_WORKOUT_IDS = ["swimming", "golf", "tennis"];
+
 function computeEffectiveProgress(checks) {
   let done = 0, total = 0;
-  let workoutAny = false, workoutHasItems = false;
+  let coreWorkoutAny = false;
   for (const it of SCHEMA.items) {
-    if (it.section === "Workout") {
-      workoutHasItems = true;
-      if (checks[it.id] === true) workoutAny = true;
+    if (BONUS_WORKOUT_IDS.includes(it.id)) continue;  // bonus items: not in progress
+    if (CORE_WORKOUT_IDS.includes(it.id)) {
+      if (checks[it.id] === true) coreWorkoutAny = true;
     } else {
       total++;
       if (checks[it.id] === true) done++;
     }
   }
-  if (workoutHasItems) {
-    total++;
-    if (workoutAny) done++;
-  }
+  // Add core workout as 1 group
+  total++;
+  if (coreWorkoutAny) done++;
   const pct = total > 0 ? Math.round((done / total) * 100) : 0;
   return { done, total, pct };
 }
