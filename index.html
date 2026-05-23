@@ -2199,7 +2199,8 @@ function renderPlan(agg) {
     // Substitute matches: same body_part+sub_part but NOT exact regex match
     let substSameSubRecent7 = 0;
     let substSameBpRecent7 = 0;
-    let lastSubstDate = null;
+    let lastSubstSameSubDate = null;
+    let lastSubstSameBpDate = null;
     const targetBp = ep.body_part, targetSub = ep.sub_part || null;
     const substSeenDates = new Set();
     for (const l of allLifts) {
@@ -2215,21 +2216,24 @@ function renderPlan(agg) {
       const isRecent = dt >= sevenAgo;
       if (isSameSub) {
         if (isRecent) substSameSubRecent7++;
+        if (!lastSubstSameSubDate || d > lastSubstSameSubDate) lastSubstSameSubDate = d;
       } else {
         if (isRecent) substSameBpRecent7++;
+        if (!lastSubstSameBpDate || d > lastSubstSameBpDate) lastSubstSameBpDate = d;
       }
-      if (!lastSubstDate || d > lastSubstDate) lastSubstDate = d;
     }
-    const daysSinceSubst = lastSubstDate ? Math.floor((todayStart - parseDateOnly(lastSubstDate)) / 86400000) : 999;
+    const daysSinceSubstSameSub = lastSubstSameSubDate ? Math.floor((todayStart - parseDateOnly(lastSubstSameSubDate)) / 86400000) : 999;
+    const daysSinceSubstSameBp = lastSubstSameBpDate ? Math.floor((todayStart - parseDateOnly(lastSubstSameBpDate)) / 86400000) : 999;
 
     // Effective freq (weighted): exact + 0.7 × subst_same_sub + 0.3 × subst_same_bp
     const effectiveFreq = exactRecent7
       + SUBST_SAME_SUB * substSameSubRecent7
       + SUBST_SAME_BP * substSameBpRecent7;
 
-    // Effective daysSince: take the most recent of (exact, subst-same-sub, subst-same-bp)
-    // Only sub-level substitutes "reset" the days-since cleanly; bp-level partially.
-    const daysSince = Math.min(daysSinceExact, daysSinceSubst);
+    // Effective daysSince: ONLY same-sub substitutes reset the timer cleanly.
+    // Same-bp partial work (e.g., push-up for Incline Press) does NOT reset daysSince
+    // — prevents the system saying "you did it today" when you only did a different sub-part.
+    const daysSince = Math.min(daysSinceExact, daysSinceSubstSameSub);
 
     const thisWeekFreq = Math.round(effectiveFreq * 10) / 10;  // rounded for display
     const deficit = ep.priority * Math.min(daysSince, 7) * Math.max(ep.target_freq - effectiveFreq, 1);
