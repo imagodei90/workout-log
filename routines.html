@@ -435,13 +435,18 @@ function renderSections() {
     const items = itemsBySection[sec.key] || [];
     if (items.length === 0) continue;
     html += `<div class="section-header">${sec.label.toUpperCase()}</div>`;
+    const optionalToday = getOptionalForDate(currentDate);
     for (const it of items) {
       const checked = currentChecks[it.id] === true;
       const dotClass = it.dotColor || SECTION_DOT_CLASS[it.section];
       const noteHtml = it.note ? `<div class="item-note">${it.note}</div>` : "";
       const isBonus = BONUS_WORKOUT_IDS.includes(it.id);
-      const bonusBadge = isBonus ? `<span class="bonus-badge">BONUS</span>` : "";
-      html += `<div class="item${checked ? ' checked' : ''}${isBonus ? ' bonus' : ''}" data-id="${it.id}" onclick="window.toggleItem('${it.id}')">
+      const isOptionalToday = optionalToday.has(it.id);
+      const bonusBadge = isBonus
+        ? `<span class="bonus-badge">BONUS</span>`
+        : (isOptionalToday ? `<span class="bonus-badge">OPTIONAL</span>` : "");
+      const itemClass = `item${checked ? ' checked' : ''}${(isBonus || isOptionalToday) ? ' bonus' : ''}`;
+      html += `<div class="${itemClass}" data-id="${it.id}" onclick="window.toggleItem('${it.id}')">
         <div class="item-dot ${dotClass}"></div>
         <div class="item-label">${it.label}${bonusBadge}${noteHtml}</div>
         <div class="item-check"></div>
@@ -457,16 +462,30 @@ function renderSections() {
  * Hierarchy in Workout section:
  *   - CORE: Lifting and Running — together count as 1 group (any one checked → done)
  *   - BONUS: Swimming, Golf, Tennis — tracked separately, NOT counted in progress
+ * Day-specific optional items (don't affect progress on those days):
+ *   - Saturday: morning_briefing
  * Returns {done, total, pct}.
  */
 const CORE_WORKOUT_IDS = ["lifting", "running"];
 const BONUS_WORKOUT_IDS = ["swimming", "golf", "tennis"];
+// dow index: 0=Sun, 1=Mon, ..., 6=Sat
+const DAY_OPTIONAL_ITEMS = {
+  6: new Set(["morning_briefing"]),  // Saturday
+};
 
-function computeEffectiveProgress(checks) {
+function getOptionalForDate(dateIso) {
+  if (!dateIso) return new Set();
+  const d = new Date(dateIso + "T12:00:00");
+  return DAY_OPTIONAL_ITEMS[d.getDay()] || new Set();
+}
+
+function computeEffectiveProgress(checks, dateIso) {
+  const optional = getOptionalForDate(dateIso);
   let done = 0, total = 0;
   let coreWorkoutAny = false;
   for (const it of SCHEMA.items) {
-    if (BONUS_WORKOUT_IDS.includes(it.id)) continue;  // bonus items: not in progress
+    if (BONUS_WORKOUT_IDS.includes(it.id)) continue;
+    if (optional.has(it.id)) continue;  // day-specific optional: not in progress
     if (CORE_WORKOUT_IDS.includes(it.id)) {
       if (checks[it.id] === true) coreWorkoutAny = true;
     } else {
@@ -474,7 +493,6 @@ function computeEffectiveProgress(checks) {
       if (checks[it.id] === true) done++;
     }
   }
-  // Add core workout as 1 group
   total++;
   if (coreWorkoutAny) done++;
   const pct = total > 0 ? Math.round((done / total) * 100) : 0;
@@ -482,7 +500,7 @@ function computeEffectiveProgress(checks) {
 }
 
 function updateProgress() {
-  const { done, total, pct } = computeEffectiveProgress(currentChecks);
+  const { done, total, pct } = computeEffectiveProgress(currentChecks, currentDate);
   document.getElementById("progress-pct").textContent = pct + "%";
   document.getElementById("progress-count").textContent = `${done} / ${total}`;
   document.getElementById("progress-bar").style.width = pct + "%";
@@ -530,7 +548,7 @@ async function saveChecks() {
       updatedAt: serverTimestamp(),
     }, { merge: true });
     // Update local heatmap cache (using effective progress: Workout group = 1)
-    const { done, total } = computeEffectiveProgress(currentChecks);
+    const { done, total } = computeEffectiveProgress(currentChecks, currentDate);
     heatmapCache[currentDate] = total > 0 ? done / total : 0;
     renderHeatmap();
     await refreshStreakAndHeatmap(false);
@@ -553,7 +571,7 @@ async function refreshStreakAndHeatmap(rebuild = true) {
           .then(snap => {
             if (snap.exists()) {
               const items = snap.data().items || {};
-              const { done, total } = computeEffectiveProgress(items);
+              const { done, total } = computeEffectiveProgress(items, d);
               heatmapCache[d] = total > 0 ? done / total : 0;
             }
           })
@@ -627,8 +645,8 @@ function renderHeatmap() {
       }
       const wd = WEEKDAYS_EN[cur.getDay() === 0 ? 6 : cur.getDay()-1];
       const pctStr = pct !== undefined ? `${Math.round(pct*100)}%` : "no data";
-      // Effective total: 17 items but Workout (5) collapses to 1 group → 13
-      const { total } = computeEffectiveProgress({});  // gives effective total = 13
+      // Effective total varies by day-of-week (Saturday excludes morning_briefing)
+      const { total } = computeEffectiveProgress({}, iso);
       const done = pct !== undefined ? Math.round(pct * total) : 0;
       const payload = JSON.stringify({date: `${iso} (${wd})`, pct: pctStr, detail: pct !== undefined ? `${done} / ${total} items` : ""}).replace(/"/g, "&quot;");
       rects.push(`<rect x="${labelW + c*(cell+gap)}" y="${r*(cell+gap)+16}" width="${cell}" height="${cell}" rx="2" fill="${fillColor}" opacity="${opacity.toFixed(2)}" class="hcell" data-payload="${payload}" style="cursor:pointer;"></rect>`);
