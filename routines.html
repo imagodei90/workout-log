@@ -144,6 +144,19 @@
     margin-left: 6px; vertical-align: middle;
   }
   .item.bonus .item-label { color: var(--muted); }
+  .item-dropdown {
+    background: var(--surface-2); color: var(--text); border: 1px solid var(--border);
+    border-radius: 6px; padding: 4px 6px; font-size: 12px;
+    font-family: 'JetBrains Mono', monospace; cursor: pointer;
+    margin-right: 4px; -webkit-appearance: none; appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+    background-position: calc(100% - 12px) 50%, calc(100% - 8px) 50%;
+    background-size: 4px 4px;
+    background-repeat: no-repeat;
+    padding-right: 22px;
+    max-width: 110px;
+  }
+  .item-dropdown:focus { outline: none; border-color: var(--accent); }
 
   /* Heatmap (workout dashboard style) */
   .heatmap-card { padding: 16px; }
@@ -324,7 +337,7 @@ const provider = new GoogleAuthProvider();
 const SCHEMA = {
   items: [
     // Morning
-    {id: "wake_up", label: "Wake Up", section: "Morning", note: "5:30 since 5/11, 5:45 before"},
+    {id: "wake_up", label: "Wake Up", section: "Morning", note: "default 5:30", timeOptions: ["5:00","5:30","6:00","6:30","7:00","7:30","8:00","8:30","9:00","9:30","10:00","10:30","11:00","11:30","12:00"], defaultTime: "5:30"},
     {id: "meditation", label: "Meditation", section: "Morning"},
     {id: "stretching", label: "Stretching", section: "Morning"},
     {id: "cold_shower", label: "Cold Shower", section: "Morning"},
@@ -340,6 +353,7 @@ const SCHEMA = {
     {id: "swimming", label: "Swimming", section: "Workout"},
     {id: "golf", label: "Golf", section: "Workout"},
     {id: "tennis", label: "Tennis", section: "Workout"},
+    {id: "other_workout", label: "Other", section: "Workout", typeOptions: ["Hiking"]},
     // Discipline (Supplements grouped here with workout-red dot per user)
     {id: "supplements", label: "Supplements", section: "Discipline", dotColor: "workout"},
     {id: "no_porn", label: "No Porn", section: "Discipline"},
@@ -369,6 +383,7 @@ const STREAK_THRESHOLD = 0.7;
 let currentUser = null;
 let currentDate = isoToday();
 let currentChecks = {};
+let currentMeta = {};  // e.g. { wake_up_time: "07:30", other_workout_type: "Hiking" }
 let saveTimer = null;
 let heatmapCache = {}; // {iso: pct}
 
@@ -446,9 +461,24 @@ function renderSections() {
         ? `<span class="bonus-badge">BONUS</span>`
         : (isOptionalToday ? `<span class="bonus-badge">OPTIONAL</span>` : "");
       const itemClass = `item${checked ? ' checked' : ''}${(isBonus || isOptionalToday) ? ' bonus' : ''}`;
+
+      // Optional inline dropdown(s)
+      let dropdownHtml = "";
+      if (it.timeOptions) {
+        const selectedTime = currentMeta.wake_up_time || it.defaultTime || it.timeOptions[0];
+        const opts = it.timeOptions.map(t => `<option value="${t}"${t === selectedTime ? ' selected' : ''}>${t}</option>`).join("");
+        dropdownHtml = `<select class="item-dropdown" onclick="event.stopPropagation()" onchange="window.setWakeUpTime(event)">${opts}</select>`;
+      }
+      if (it.typeOptions) {
+        const selectedType = currentMeta.other_workout_type || "";
+        const opts = `<option value="">— select —</option>` + it.typeOptions.map(o => `<option value="${o}"${o === selectedType ? ' selected' : ''}>${o}</option>`).join("");
+        dropdownHtml = `<select class="item-dropdown" onclick="event.stopPropagation()" onchange="window.setOtherWorkoutType(event)">${opts}</select>`;
+      }
+
       html += `<div class="${itemClass}" data-id="${it.id}" onclick="window.toggleItem('${it.id}')">
         <div class="item-dot ${dotClass}"></div>
         <div class="item-label">${it.label}${bonusBadge}${noteHtml}</div>
+        ${dropdownHtml}
         <div class="item-check"></div>
       </div>`;
     }
@@ -467,7 +497,7 @@ function renderSections() {
  * Returns {done, total, pct}.
  */
 const CORE_WORKOUT_IDS = ["lifting", "running"];
-const BONUS_WORKOUT_IDS = ["swimming", "golf", "tennis"];
+const BONUS_WORKOUT_IDS = ["swimming", "golf", "tennis", "other_workout"];
 // dow index: 0=Sun, 1=Mon, ..., 6=Sat
 const DAY_OPTIONAL_ITEMS = {
   6: new Set(["morning_briefing"]),  // Saturday
@@ -522,16 +552,44 @@ window.toggleItem = async (itemId) => {
   saveTimer = setTimeout(saveChecks, 400);
 };
 
+window.setWakeUpTime = (e) => {
+  const t = e.target.value;
+  // Save selected time. If user picks the default (5:30), clear the override
+  currentMeta.wake_up_time = t;
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveChecks, 400);
+};
+
+window.setOtherWorkoutType = (e) => {
+  const t = e.target.value;
+  if (t) {
+    currentMeta.other_workout_type = t;
+    currentChecks.other_workout = true;
+  } else {
+    delete currentMeta.other_workout_type;
+    currentChecks.other_workout = false;
+  }
+  // Update visual checked state
+  const el = document.querySelector('.item[data-id="other_workout"]');
+  if (el) el.classList.toggle("checked", !!t);
+  updateProgress();
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveChecks, 400);
+};
+
 async function loadDate(date) {
   currentDate = date;
   updateDateDisplay();
   currentChecks = {};
+  currentMeta = {};
   if (!currentUser) return;
   try {
     const ref = doc(db, "users", currentUser.uid, "routines", date);
     const snap = await getDoc(ref);
     if (snap.exists()) {
-      currentChecks = snap.data().items || {};
+      const data = snap.data();
+      currentChecks = data.items || {};
+      currentMeta = data.meta || {};
     }
   } catch (err) {
     showToast("Load failed: " + err.message, "error");
@@ -545,6 +603,7 @@ async function saveChecks() {
     const ref = doc(db, "users", currentUser.uid, "routines", currentDate);
     await setDoc(ref, {
       items: currentChecks,
+      meta: currentMeta,
       updatedAt: serverTimestamp(),
     }, { merge: true });
     // Update local heatmap cache (using effective progress: Workout group = 1)
