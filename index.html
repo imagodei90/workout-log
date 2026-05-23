@@ -2287,9 +2287,16 @@ function renderPlan(agg) {
     1: { label: 'De-emphasize', emoji: '⚠️' },
   };
 
-  // Use the most overdue Tier 1 exercise for TODAY cell highlight color
-  const todayHighlightBP = (tierGroups[5] && tierGroups[5][0] ? tierGroups[5][0].body_part : 'OTHER');
-  const todayPicks = [];  // legacy var — kept empty so calendar/attention code still works
+  // Quick Pick: top 5 by deficit score (priority >= 3, exclude trained today)
+  // Brings back the "actionable now" answer without losing the full library below
+  const quickEligible = stats.filter(s => s.priority >= 3 && s.daysSince >= 1);
+  quickEligible.sort((a, b) => b.deficit - a.deficit);
+  const quickPicks = quickEligible.slice(0, 5);
+
+  // Use first Quick Pick for TODAY cell highlight color (fallback to most overdue Tier 1)
+  const todayHighlightBP = (quickPicks[0]?.body_part
+    || (tierGroups[5] && tierGroups[5][0] ? tierGroups[5][0].body_part : 'OTHER'));
+  const todayPicks = quickPicks;  // for legacy references (attention block, calendar)
 
   // 7-day calendar
   const calCells = [];
@@ -2407,6 +2414,60 @@ function renderPlan(agg) {
     </div>`;
   }
 
+  // Quick Pick HTML — top 5 deficit-driven picks at the top for fast decisions
+  const quickPicksEstMin = quickPicks.length * 8;
+  const quickPicksBPs = [...new Set(quickPicks.map(p => p.body_part))];
+  const quickPicksHtml = quickPicks.length > 0 ? `
+    <div class="card" style="background:linear-gradient(135deg, rgba(245,158,11,0.08), rgba(255,26,140,0.04)); border-color:rgba(245,158,11,0.30); margin-bottom:12px;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:12px; flex-wrap:wrap;">
+        <div style="flex:1; min-width:200px;">
+          <div class="label-mono" style="color:#fbbf24;">🎯 QUICK PICK — deficit-driven</div>
+          <div style="font-size:11px; color:var(--muted); margin-top:4px;">
+            ${quickPicksBPs.map(bp => {
+              const c = bpColor(bp);
+              return `<span style="background:${c}20; color:${c}; padding:1px 6px; border-radius:5px; font-size:9px; font-family:'JetBrains Mono', monospace; margin-right:4px;">${bp}</span>`;
+            }).join('')}
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <div class="stat-label">EST. TIME</div>
+          <div style="font-family:'JetBrains Mono', monospace; font-size:16px;">~${quickPicksEstMin}min</div>
+        </div>
+      </div>
+      ${quickPicks.map((p, i) => {
+        const c = bpColor(p.body_part);
+        let prescription;
+        if (p.isTime) {
+          const mm = Math.floor(p.suggDuration / 60);
+          const ss = p.suggDuration % 60;
+          prescription = `${mm}:${ss.toString().padStart(2,'0')} × ${p.suggSets}`;
+        } else if (p.suggWeight > 0) {
+          prescription = `${p.suggWeight}kg × ${p.suggReps} (${p.suggSets} sets)`;
+        } else {
+          prescription = `BW × ${p.suggReps} (${p.suggSets} sets)`;
+        }
+        const subColorPlan = p.sub_part ? (SUB_COLORS[p.body_part + "/" + p.sub_part] || c) : c;
+        const subBadge = p.sub_part
+          ? `<span style="background:${subColorPlan}20; color:${subColorPlan}; padding:1px 5px; border-radius:5px; font-size:8px; font-family:'JetBrains Mono', monospace;">${p.sub_part}</span>`
+          : '';
+        return `<div style="display:flex; gap:10px; align-items:center; padding:8px 0; border-top:1px dashed var(--border);">
+          <div style="font-family:'JetBrains Mono', monospace; color:var(--muted); font-size:10px; width:18px;">${i+1}.</div>
+          <div style="flex:1; min-width:0;">
+            <div style="display:flex; gap:4px; align-items:center; flex-wrap:wrap;">
+              <span style="background:${c}25; color:${c}; padding:1px 5px; border-radius:4px; font-size:8px; font-family:'JetBrains Mono', monospace;">${p.body_part}</span>
+              ${subBadge}
+              <span style="font-size:13px;">${p.name}</span>
+            </div>
+            <div style="font-family:'JetBrains Mono', monospace; color:var(--muted); font-size:10px; margin-top:2px;">${prescription} · ${p.daysSince}d ago</div>
+          </div>
+        </div>`;
+      }).join('')}
+      <div style="margin-top:10px; padding-top:8px; border-top:1px solid var(--border); font-size:10px; color:var(--muted); text-align:center; font-family:'JetBrains Mono', monospace;">
+        ↓ or pick your own from the library below
+      </div>
+    </div>
+  ` : '';
+
   // Build tier-grouped exercise list (replaces old "Today's Workout — recommended")
   const tiersToShow = [5, 4, 3, 2];
   const tierListHtml = `
@@ -2437,8 +2498,8 @@ function renderPlan(agg) {
       }).join('')}
     </div>
   `;
-  // Keep variable name for compatibility downstream
-  const todayWorkoutHtml = tierListHtml;
+  // Keep variable name for compatibility downstream: Quick Pick + Tier Library
+  const todayWorkoutHtml = quickPicksHtml + tierListHtml;
 
   // Goal + Attention
   const sevenAgoStart = addDays(todayStart, -7);
