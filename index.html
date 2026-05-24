@@ -169,6 +169,88 @@ details.conventions-toggle > summary::after {
 details.conventions-toggle[open] > summary::after { content: "−"; }
 details.conventions-toggle[open] > .conv-body { margin-top: 16px; }
 
+/* === Option A: Body Part Progress Grid === */
+.bp-progress-grid {
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;
+}
+@media (max-width: 540px) { .bp-progress-grid { grid-template-columns: 1fr 1fr; } }
+.bp-progress-card {
+  background: var(--card2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px; cursor: pointer;
+  transition: border-color 0.15s;
+}
+.bp-progress-card:hover, .bp-progress-card:active { border-color: var(--accent); }
+.bp-progress-card .bp-name {
+  font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  letter-spacing: 0.1em; margin-bottom: 4px;
+}
+.bp-progress-card .bp-trend {
+  font-family: 'JetBrains Mono', monospace; font-size: 13px;
+  display: flex; align-items: center; gap: 4px; margin-bottom: 2px;
+}
+.bp-progress-card .bp-meta {
+  color: var(--muted); font-size: 10px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.sparkline {
+  display: inline-flex; align-items: flex-end; gap: 1px; height: 14px;
+}
+.sparkline span { width: 4px; background: currentColor; border-radius: 1px; }
+
+/* === Option C: Stalled PRs === */
+.stalled-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 0; border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+.stalled-row:last-child { border-bottom: none; }
+.stalled-stars { color: #fbbf24; font-size: 10px; min-width: 50px; font-family: 'JetBrains Mono', monospace; }
+.stalled-name { flex: 1; font-weight: 500; }
+.stalled-days {
+  background: rgba(244,63,94,0.15); color: #f43f5e;
+  padding: 2px 6px; border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace; font-size: 10px; white-space: nowrap;
+}
+.stalled-rec {
+  color: var(--muted); font-size: 11px;
+  font-family: 'JetBrains Mono', monospace; white-space: nowrap;
+}
+
+/* === Option D: PR Timeline === */
+.pr-timeline-row { margin-bottom: 16px; }
+.pr-row-name {
+  font-size: 12px; margin-bottom: 6px;
+  display: flex; justify-content: space-between; align-items: center; gap: 6px;
+}
+.pr-timeline-bar {
+  position: relative; height: 22px;
+  background: var(--card2); border-radius: 6px;
+  border: 1px solid var(--border);
+}
+.pr-event {
+  position: absolute; top: 50%; transform: translate(-50%, -50%);
+  width: 9px; height: 9px; border-radius: 50%;
+  background: var(--accent); cursor: pointer;
+  transition: transform 0.15s;
+}
+.pr-event:hover { transform: translate(-50%, -50%) scale(1.5); }
+.pr-axis {
+  display: flex; justify-content: space-between;
+  color: var(--muted); font-size: 9px; padding: 2px 0;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* === Option E: Periodization === */
+.period-bars {
+  display: flex; align-items: flex-end; gap: 3px; height: 80px;
+  padding: 8px 4px 4px;
+}
+.period-bar {
+  flex: 1; background: var(--lift); border-radius: 2px 2px 0 0;
+  opacity: 0.85; position: relative; min-height: 2px;
+}
+.period-bar.deload { background: #fbbf24; opacity: 0.45; }
+
 .hcell { cursor: pointer; transition: stroke 0.1s; }
 .hcell:hover { stroke: var(--text); stroke-width: 1.5; }
 .hbar { cursor: pointer; transition: opacity 0.1s, stroke-width 0.1s; }
@@ -265,7 +347,7 @@ details.conventions-toggle[open] > .conv-body { margin-top: 16px; }
 .pr-card:hover { border-color: var(--accent) !important; }
 
 /* Lift detail modal */
-#lift-modal, #progression-modal {
+#lift-modal, #progression-modal, #bp-modal {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;
   display: none; z-index: 2000;
   background: rgba(0, 0, 0, 0.7);
@@ -273,24 +355,24 @@ details.conventions-toggle[open] > .conv-body { margin-top: 16px; }
   align-items: flex-start; justify-content: center;
   padding: 60px 20px 20px 20px; overflow-y: auto;
 }
-#lift-modal.open, #progression-modal.open { display: flex; }
-#lift-modal .modal-card, #progression-modal .modal-card {
+#lift-modal.open, #progression-modal.open, #bp-modal.open { display: flex; }
+#lift-modal .modal-card, #progression-modal .modal-card, #bp-modal .modal-card {
   background: var(--card); border: 1px solid var(--border);
   border-radius: 12px; max-width: 560px; width: 100%;
   padding: 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.5);
 }
-#lift-modal .modal-header, #progression-modal .modal-header {
+#lift-modal .modal-header, #progression-modal .modal-header, #bp-modal .modal-header {
   display: flex; justify-content: space-between; align-items: flex-start;
   margin-bottom: 4px;
 }
-#lift-modal h2, #progression-modal h2 { margin-top: 6px; font-size: 20px; }
-#lift-modal .modal-close, #progression-modal .modal-close {
+#lift-modal h2, #progression-modal h2, #bp-modal h2 { margin-top: 6px; font-size: 20px; }
+#lift-modal .modal-close, #progression-modal .modal-close, #bp-modal .modal-close {
   background: transparent; border: 1px solid var(--border); color: var(--muted);
   font-size: 18px; cursor: pointer; width: 36px; height: 36px;
   border-radius: 6px; display: flex; align-items: center; justify-content: center;
   transition: all 0.1s;
 }
-#lift-modal .modal-close, #progression-modal .modal-close:hover { color: var(--text); border-color: var(--accent); }
+#lift-modal .modal-close, #progression-modal .modal-close, #bp-modal .modal-close:hover { color: var(--text); border-color: var(--accent); }
 #lift-modal .modal-nav-btn, #progression-modal .modal-nav-btn {
   background: transparent; border: 1px solid var(--border); color: var(--text);
   font-size: 22px; cursor: pointer; width: 36px; height: 36px; flex-shrink: 0;
@@ -299,7 +381,7 @@ details.conventions-toggle[open] > .conv-body { margin-top: 16px; }
 }
 #lift-modal .modal-nav-btn, #progression-modal .modal-nav-btn:hover { border-color: var(--accent); color: var(--accent); }
 #lift-modal .modal-nav-btn, #progression-modal .modal-nav-btn.disabled { opacity: 0.3; cursor: default; }
-#lift-modal .modal-stats, #progression-modal .modal-stats {
+#lift-modal .modal-stats, #progression-modal .modal-stats, #bp-modal .modal-stats {
   color: var(--muted); font-size: 12px; padding: 8px 0 14px 0;
   border-bottom: 1px solid var(--border); margin-bottom: 16px;
   font-family: 'JetBrains Mono', monospace; letter-spacing: 0.05em;
@@ -393,6 +475,7 @@ details.conventions-toggle[open] > .conv-body { margin-top: 16px; }
 <div id="hovertip"></div>
 <div id="lift-modal"><div class="modal-card" id="lift-modal-content"></div></div>
 <div id="progression-modal"><div class="modal-card" id="progression-modal-content"></div></div>
+<div id="bp-modal"><div class="modal-card" id="bp-modal-content"></div></div>
 <div class="footer">
   <span data-i18n="autoRefresh">매일 자동 갱신</span> · 2026-05-24
   <span style="margin-left:12px; padding:2px 8px; background:rgba(255,26,140,0.15); color:var(--accent); border-radius:4px; font-family:'JetBrains Mono', monospace; font-size:10px; letter-spacing:0.1em;">V2 PREVIEW</span>
@@ -1178,7 +1261,119 @@ function renderHevy(agg) {
   const tr = agg.totalsRun;
   const days = Math.floor((agg.rangeEnd - agg.rangeStart) / 86400000) + 1;
 
+  // === Options A, C, D: enhanced PR sections ===
+  const today = new Date(); today.setHours(0,0,0,0);
+  const priorities = (DATA.exercise_priorities || {}).exercises || [];
+  const bpProgress = computeBodyPartProgress(DATA.lifts || [], today, 12);
+  const stalled = findStalledPRs(DATA.lifts || [], priorities, today, 60);
+  const prTimelines = priorities
+    .filter(ep => (ep.priority || 0) >= 4)
+    .map(ep => buildPRTimeline(DATA.lifts || [], ep, today))
+    .filter(t => t && t.events.length >= 2)
+    .sort((a, b) => {
+      // stalled first, then by event count desc
+      if (a.stalled !== b.stalled) return a.stalled ? -1 : 1;
+      return b.events.length - a.events.length;
+    });
+
+  // Option A: Body Part Progress Grid
+  const bpProgressHtml = (() => {
+    const cards = ['SHOULDERS','BACK','CHEST','ARMS','LEGS','CORE'].map(bp => {
+      const s = bpProgress[bp];
+      if (!s) return '';
+      const c = BP_COLORS[bp] || 'var(--muted)';
+      const deltaPct = s.deltaPct;
+      let deltaIcon = '➡', deltaColor = 'var(--muted)';
+      let deltaLabel = `${deltaPct >= 0 ? '+' : ''}${deltaPct.toFixed(0)}%`;
+      if (deltaPct >= 10) { deltaIcon = '↑'; deltaColor = '#84cc16'; }
+      else if (deltaPct >= 3) { deltaIcon = '↗'; deltaColor = '#84cc16'; }
+      else if (deltaPct <= -5) { deltaIcon = '↓'; deltaColor = '#f43f5e'; }
+      else if (Math.abs(deltaPct) < 3 && s.recentVol > 0) { deltaIcon = '⏸'; deltaColor = '#fbbf24'; deltaLabel = 'flat'; }
+      const maxSpark = Math.max(...s.sparkline, 1);
+      const sparkBars = s.sparkline.map(v => `<span style="height:${Math.max(2, (v / maxSpark) * 14).toFixed(0)}px"></span>`).join('');
+      const sessionWarn = s.sessionsPerWk < 1.5 && s.recentVol > 0 ? ' ⚠' : '';
+      const warnBorder = (deltaPct < -3 || (s.recentPRs === 0 && s.sessionsPerWk >= 1)) ? 'border-color: rgba(244,63,94,0.35);' : '';
+      return `<div class="bp-progress-card" style="${warnBorder}" onclick="window.showBodyPartDrilldown('${bp}')">
+        <div class="bp-name" style="color:${c};">${bp}</div>
+        <div class="bp-trend" style="color:${deltaColor};">${deltaIcon} ${deltaLabel}
+          <span class="sparkline" style="color:${deltaColor}; margin-left:4px;">${sparkBars}</span>
+        </div>
+        <div class="bp-meta">${s.recentPRs} PR${s.recentPRs !== 1 ? 's' : ''} · ${s.sessionsPerWk.toFixed(1)}/wk${sessionWarn}</div>
+      </div>`;
+    }).join('');
+    return `<div class="card">
+      <div class="label-mono" style="margin-bottom:10px;">📊 BODY PART PROGRESS — last 12 weeks</div>
+      <div class="bp-progress-grid">${cards}</div>
+      <div style="color:var(--muted); font-size:10px; margin-top:8px; font-family:'JetBrains Mono', monospace;">Tap a card → drilldown</div>
+    </div>`;
+  })();
+
+  // Option C: Stalled PRs panel
+  const stalledHtml = stalled.length > 0 ? (() => {
+    const rows = stalled.slice(0, 10).map(s => {
+      const subBadge = s.sub_part ? `<span style="background:rgba(113,113,122,0.2); color:var(--muted); padding:1px 5px; border-radius:4px; font-size:8px; font-family:'JetBrains Mono', monospace; margin-left:4px;">${s.sub_part}</span>` : '';
+      return `<div class="stalled-row">
+        <span class="stalled-stars">${'★'.repeat(s.priority)}</span>
+        <span class="stalled-name">${s.name}${subBadge}</span>
+        <span class="stalled-rec">${s.maxW > 0 ? s.maxW.toFixed(1)+'kg' : 'BW'} × ${s.maxWReps}</span>
+        <span class="stalled-days">${s.daysSincePR}d</span>
+      </div>`;
+    }).join('');
+    return `<div class="card" style="border-color: rgba(251,191,36,0.30); background: rgba(251,191,36,0.04);">
+      <div class="label-mono" style="color:#fbbf24; margin-bottom:10px;">⏸ STALLED PRs — 60+ days no new PR</div>
+      ${rows}
+      <div style="color:#fbbf24; font-size:11px; margin-top:10px; padding-top:8px; border-top:1px dashed rgba(251,191,36,0.3); font-family:'JetBrains Mono', monospace;">
+        → Variation 시도 (Cable / 1.5 rep / drop set / deload)
+      </div>
+    </div>`;
+  })() : '';
+
+  // Option D: PR Timeline (per priority exercise, last 12 months scale)
+  const oneYrAgo = new Date(today); oneYrAgo.setFullYear(oneYrAgo.getFullYear() - 1);
+  const timelineHtml = prTimelines.length > 0 ? (() => {
+    const yrSpan = today.getTime() - oneYrAgo.getTime();
+    const rows = prTimelines.slice(0, 8).map(t => {
+      const c = BP_COLORS[t.bp] || '#FF1A8C';
+      // Position each event horizontally based on date (% of last year)
+      const dots = t.events.map(e => {
+        const dt = parseDateOnly(e.date);
+        const pos = Math.max(0, Math.min(100, (dt - oneYrAgo) / yrSpan * 100));
+        const isLast = e === t.events[t.events.length - 1];
+        const dotColor = isLast && t.stalled ? '#fbbf24' : (isLast ? '#84cc16' : c);
+        return `<div class="pr-event" style="left:${pos.toFixed(1)}%; background:${dotColor};" title="${e.date} — ${e.weight}kg × ${e.reps}"></div>`;
+      }).join('');
+      const lastEvent = t.events[t.events.length - 1];
+      const statusBadge = t.stalled
+        ? `<span style="color:#fbbf24; font-size:10px;">⏸ ${t.daysSinceLast}d</span>`
+        : `<span style="color:#84cc16; font-size:10px;">↑ ${t.daysSinceLast}d</span>`;
+      return `<div class="pr-timeline-row">
+        <div class="pr-row-name">
+          <span style="display:flex; align-items:center; gap:5px;">
+            <span class="bp-chip" style="background:${c}25; color:${c};">${t.bp}</span>
+            <span>${t.name}</span>
+          </span>
+          ${statusBadge}
+        </div>
+        <div class="pr-timeline-bar">${dots}</div>
+        <div class="pr-axis">
+          <span>1 yr ago</span>
+          <span>6 mo</span>
+          <span>3 mo</span>
+          <span>now (${lastEvent.weight}kg×${lastEvent.reps})</span>
+        </div>
+      </div>`;
+    }).join('');
+    return `<div class="card">
+      <div class="label-mono" style="margin-bottom:10px;">📈 PR TIMELINE — priority exercises (last 1 year)</div>
+      ${rows}
+    </div>`;
+  })() : '';
+
   return `
+    ${bpProgressHtml}
+    ${stalledHtml}
+    ${timelineHtml}
+
     <h2><span class="pill-lift">LIFTING</span> Body Part Summary</h2>
     <div class="grid grid-3">${bpCards}</div>
 
@@ -1213,6 +1408,142 @@ const BIG7_PATTERNS = [
   {key: "PULL-UP", regex: /\b(pull.?up|chin.?up)\b/i},
   {key: "DIP",     regex: /\b(^dip|^dips|weighted\s*dip|parallel\s*dip)\b/i, exclude: /tricep dip/i},
 ];
+// === PR/Trends enhancement helpers (Options A, C, D, E) ===
+
+// Option A: per-body-part 12-week progress stats
+function computeBodyPartProgress(lifts, today, weeks = 12) {
+  const bps = ['SHOULDERS', 'BACK', 'CHEST', 'ARMS', 'LEGS', 'CORE'];
+  const weeksAgo = (n) => { const d = new Date(today); d.setDate(d.getDate() - n*7); return d; };
+  const cutoffRecent = weeksAgo(weeks);
+  const cutoffPrior = weeksAgo(weeks*2);
+  const out = {};
+  for (const bp of bps) {
+    const all = lifts.filter(l => bodyPart(l.exercise || '') === bp);
+    const recent = all.filter(l => parseDateOnly(dateOnly(l.date)) >= cutoffRecent);
+    const prior = all.filter(l => {
+      const d = parseDateOnly(dateOnly(l.date));
+      return d >= cutoffPrior && d < cutoffRecent;
+    });
+    const recentVol = recent.reduce((s,l) => s + (l.weight||0)*(l.reps||0), 0);
+    const priorVol = prior.reduce((s,l) => s + (l.weight||0)*(l.reps||0), 0);
+    const deltaPct = priorVol > 0 ? ((recentVol - priorVol) / priorVol * 100) : (recentVol > 0 ? 100 : 0);
+    const recentSessions = new Set(recent.map(l => dateOnly(l.date))).size;
+    const sessionsPerWk = recentSessions / weeks;
+
+    // PRs in last 12wk (new max weight by exercise)
+    const byEx = new Map();
+    for (const l of all) {
+      const ex = l.exercise || '(unnamed)';
+      if (!byEx.has(ex)) byEx.set(ex, []);
+      byEx.get(ex).push(l);
+    }
+    let recentPRs = 0;
+    for (const [ex, sets] of byEx) {
+      sets.sort((a,b) => a.date.localeCompare(b.date));
+      let runMax = 0;
+      for (const s of sets) {
+        const w = s.weight || 0;
+        if (w > runMax) {
+          runMax = w;
+          if (parseDateOnly(dateOnly(s.date)) >= cutoffRecent) recentPRs++;
+        }
+      }
+    }
+
+    // Sparkline: weekly volume last 8 weeks
+    const sparkline = [];
+    for (let i = 7; i >= 0; i--) {
+      const wkStart = weeksAgo(i+1);
+      const wkEnd = weeksAgo(i);
+      const wkLifts = all.filter(l => {
+        const d = parseDateOnly(dateOnly(l.date));
+        return d >= wkStart && d < wkEnd;
+      });
+      sparkline.push(wkLifts.reduce((s,l) => s + (l.weight||0)*(l.reps||0), 0));
+    }
+
+    out[bp] = { recentVol, priorVol, deltaPct, sessions: recentSessions, sessionsPerWk, recentPRs, sparkline };
+  }
+  return out;
+}
+
+// Option C: priority exercises with no new PR in N+ days
+function findStalledPRs(lifts, priorities, today, daysThreshold = 60) {
+  const out = [];
+  for (const ep of priorities) {
+    if ((ep.priority || 0) < 3) continue;
+    const matches = lifts.filter(l => matchAnyJS(l.exercise || '', ep.patterns || []));
+    if (matches.length === 0) continue;
+    let maxW = 0, maxWReps = 0, maxWDate = null;
+    for (const l of matches) {
+      const w = l.weight || 0, r = l.reps || 0;
+      if (w > maxW || (w === maxW && r > maxWReps)) {
+        maxW = w; maxWReps = r; maxWDate = dateOnly(l.date);
+      }
+    }
+    if (!maxWDate) continue;
+    const daysSincePR = Math.floor((today - parseDateOnly(maxWDate)) / 86400000);
+    if (daysSincePR >= daysThreshold) {
+      out.push({ name: ep.name, priority: ep.priority, bp: ep.body_part, sub_part: ep.sub_part || null, maxW, maxWReps, daysSincePR });
+    }
+  }
+  out.sort((a, b) => b.priority - a.priority || b.daysSincePR - a.daysSincePR);
+  return out;
+}
+
+// Option D: PR-setting events per priority exercise, for timeline visual
+function buildPRTimeline(lifts, ep, today) {
+  const matches = lifts.filter(l => matchAnyJS(l.exercise || '', ep.patterns || []));
+  if (matches.length === 0) return null;
+  matches.sort((a,b) => a.date.localeCompare(b.date));
+  const events = [];
+  let runMax = 0;
+  for (const l of matches) {
+    const w = l.weight || 0;
+    if (w > runMax) {
+      runMax = w;
+      events.push({ date: dateOnly(l.date), weight: w, reps: l.reps || 0 });
+    }
+  }
+  if (events.length === 0) return null;
+  const lastEvent = events[events.length - 1];
+  const daysSinceLast = Math.floor((today - parseDateOnly(lastEvent.date)) / 86400000);
+  return { name: ep.name, bp: ep.body_part, sub_part: ep.sub_part || null, events, daysSinceLast, stalled: daysSinceLast >= 60 };
+}
+
+// Option E: weekly total volume + deload pattern detection
+function computeWeeklyVolume(lifts, today, weeks = 16) {
+  const out = [];
+  const weeksAgo = (n) => { const d = new Date(today); d.setDate(d.getDate() - n*7); return d; };
+  for (let i = weeks-1; i >= 0; i--) {
+    const wkStart = weeksAgo(i+1);
+    const wkEnd = weeksAgo(i);
+    const wk = lifts.filter(l => {
+      const d = parseDateOnly(dateOnly(l.date));
+      return d >= wkStart && d < wkEnd;
+    });
+    const vol = wk.reduce((s,l) => s + (l.weight||0)*(l.reps||0), 0);
+    out.push({ weekIdx: weeks - i, vol, isDeload: false });
+  }
+  // Detect deloads: weeks where volume < 70% of previous week
+  for (let i = 1; i < out.length; i++) {
+    if (out[i-1].vol > 1000 && out[i].vol < out[i-1].vol * 0.7) {
+      out[i].isDeload = true;
+    }
+  }
+  return out;
+}
+
+function matchAnyJS(name, patterns) {
+  if (!name) return false;
+  for (const p of patterns) {
+    try { if (new RegExp(p, 'i').test(name)) return true; } catch (e) {}
+  }
+  return false;
+}
+
+// === Big 3 / Big 7 patterns (v3) ===
+
 function findBigMatch(name, patterns) {
   if (!name) return null;
   for (const p of patterns) {
@@ -1490,6 +1821,39 @@ function renderTrends(agg) {
   const days = Math.floor((agg.rangeEnd - agg.rangeStart) / 86400000) + 1;
   const liftBpFilter = window.TRENDS_LIFT_BP || 'ALL';
   const liftDrillEx = window.TRENDS_LIFT_DRILL || '';
+
+  // Option E: Periodization Indicator — weekly volume + deload pattern
+  const periodToday = new Date(); periodToday.setHours(0,0,0,0);
+  const weekly = computeWeeklyVolume(DATA.lifts || [], periodToday, 16);
+  const maxVol = Math.max(...weekly.map(w => w.vol), 1);
+  const buildPct = weekly.filter(w => !w.isDeload && w.vol > 0).map(w => w.vol);
+  const deloadCount = weekly.filter(w => w.isDeload).length;
+  // Cross-cycle progression: are recent build-week peaks higher than older ones?
+  let progressNote = '';
+  if (buildPct.length >= 6) {
+    const earlyAvg = buildPct.slice(0, Math.floor(buildPct.length/3)).reduce((s,v)=>s+v,0) / Math.floor(buildPct.length/3);
+    const lateAvg = buildPct.slice(-Math.floor(buildPct.length/3)).reduce((s,v)=>s+v,0) / Math.floor(buildPct.length/3);
+    const change = earlyAvg > 0 ? ((lateAvg - earlyAvg) / earlyAvg * 100) : 0;
+    if (change >= 8) progressNote = `<span style="color:#84cc16;">✓ Build peaks progressing</span> — late mesocycle peaks +${change.toFixed(0)}% vs early`;
+    else if (change <= -5) progressNote = `<span style="color:#f43f5e;">↓ Build peaks regressing</span> ${change.toFixed(0)}%`;
+    else progressNote = `<span style="color:#fbbf24;">⏸ Volume plateau across cycles</span> — Δ${change >= 0 ? '+' : ''}${change.toFixed(0)}%`;
+  }
+  const bars = weekly.map(w => {
+    const h = w.vol > 0 ? Math.max(4, (w.vol / maxVol) * 70) : 2;
+    const cls = w.isDeload ? 'period-bar deload' : 'period-bar';
+    return `<div class="${cls}" style="height:${h.toFixed(0)}%;" title="W${w.weekIdx}: ${num(w.vol, 0)} kg"></div>`;
+  }).join('');
+  const periodHtml = `<div class="card">
+    <div class="label-mono" style="margin-bottom:6px;">📊 TOTAL WEEKLY VOLUME — last 16 weeks</div>
+    <div class="period-bars">${bars}</div>
+    <div style="font-family:'JetBrains Mono', monospace; font-size:10px; color:var(--muted); margin-top:18px;">
+      <span style="display:inline-block; width:10px; height:10px; background:var(--lift); margin-right:4px; vertical-align:middle;"></span>build &nbsp;
+      <span style="display:inline-block; width:10px; height:10px; background:#fbbf24; opacity:0.5; margin:0 4px 0 8px; vertical-align:middle;"></span>deload (auto-detected: vol < 70% prior wk)
+    </div>
+    ${progressNote ? `<div style="background:rgba(132,204,22,0.06); border:1px solid rgba(132,204,22,0.2); padding:8px 10px; border-radius:6px; margin-top:10px; font-size:11px; font-family:'JetBrains Mono', monospace;">
+      ${deloadCount > 0 ? `<span style="color:#a3e635;">✓ ${deloadCount} deload week${deloadCount > 1 ? 's' : ''} detected</span> · ` : ''}${progressNote}
+    </div>` : ''}
+  </div>`;
 
   // === Running Best Efforts ===
   function runBestEfforts() {
@@ -2159,8 +2523,12 @@ function renderTrends(agg) {
   else if (mode === 'lift') body = renderLiftMode();
   else body = renderCompareMode();
 
+  // Show periodization at top only in lift mode (or compare)
+  const periodSection = (mode === 'lift' || mode === 'compare') ? periodHtml : '';
+
   return `
     ${toggleHtml}
+    ${periodSection}
     ${body}
   `;
 }
@@ -3354,8 +3722,115 @@ function closeProgressionModal() {
   document.getElementById("progression-modal").classList.remove("open");
 }
 
+// === Option B: Body Part Drilldown modal ===
+window.showBodyPartDrilldown = function(bp) {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const weeksAgo = (n) => { const d = new Date(today); d.setDate(d.getDate() - n*7); return d; };
+  const cutoff12 = weeksAgo(12);
+  const cutoff24 = weeksAgo(24);
+  const allLifts = DATA.lifts || [];
+
+  const lifts = allLifts.filter(l => bodyPart(l.exercise || '') === bp);
+  const recent = lifts.filter(l => parseDateOnly(dateOnly(l.date)) >= cutoff12);
+  const prior = lifts.filter(l => {
+    const d = parseDateOnly(dateOnly(l.date));
+    return d >= cutoff24 && d < cutoff12;
+  });
+  const recentVol = recent.reduce((s,l) => s + (l.weight||0)*(l.reps||0), 0);
+  const priorVol = prior.reduce((s,l) => s + (l.weight||0)*(l.reps||0), 0);
+  const deltaPct = priorVol > 0 ? ((recentVol - priorVol) / priorVol * 100) : 0;
+  const sessions = new Set(recent.map(l => dateOnly(l.date))).size;
+  const sessionsPerWk = sessions / 12;
+
+  // Per-exercise breakdown
+  const byEx = new Map();
+  for (const l of recent) {
+    const ex = l.exercise || '(unnamed)';
+    if (!byEx.has(ex)) byEx.set(ex, []);
+    byEx.get(ex).push(l);
+  }
+  // PR tracking per exercise (last PR date)
+  const exStats = [];
+  for (const [ex, sets] of byEx) {
+    sets.sort((a,b) => a.date.localeCompare(b.date));
+    let runMax = 0, lastPRdate = null, lastPRreps = 0;
+    // Also check all-time max including prior to determine if recent PR
+    const allSets = lifts.filter(l => (l.exercise || '') === ex).sort((a,b) => a.date.localeCompare(b.date));
+    let allTimeMax = 0;
+    for (const s of allSets) {
+      const w = s.weight || 0;
+      if (w > allTimeMax) { allTimeMax = w; lastPRdate = dateOnly(s.date); lastPRreps = s.reps || 0; }
+    }
+    const exSessions = new Set(sets.map(l => dateOnly(l.date))).size;
+    const topSetW = sets.reduce((m,l) => Math.max(m, l.weight||0), 0);
+    const topSetReps = sets.reduce((m,l) => ((l.weight||0) === topSetW) ? Math.max(m, l.reps||0) : m, 0);
+    const daysSincePR = lastPRdate ? Math.floor((today - parseDateOnly(lastPRdate)) / 86400000) : 999;
+    exStats.push({ ex, sessions: exSessions, topSetW, topSetReps, daysSincePR, allTimeMax });
+  }
+  exStats.sort((a, b) => b.sessions - a.sessions);
+
+  // Diagnosis
+  const targetSessionsPerWk = (bp === 'CORE') ? 3 : 2.5;  // rough
+  const lowFreq = sessionsPerWk < targetSessionsPerWk;
+  const stagnant = deltaPct >= -3 && deltaPct <= 3 && recentVol > 0;
+  let diag = [];
+  if (lowFreq) diag.push(`<strong style="color:#fbbf24;">⚠ Low frequency</strong> (${sessionsPerWk.toFixed(1)}/wk · target ~${targetSessionsPerWk}/wk)`);
+  if (stagnant) diag.push(`<strong style="color:#fbbf24;">⏸ Volume plateau</strong> — recent 12wk ≈ prior 12wk`);
+  if (deltaPct < -10) diag.push(`<strong style="color:#f43f5e;">↓ Volume regression</strong> (${deltaPct.toFixed(0)}%)`);
+  if (deltaPct > 15) diag.push(`<strong style="color:#84cc16;">↑ Strong progression</strong> (+${deltaPct.toFixed(0)}%)`);
+  if (diag.length === 0) diag.push(`<strong style="color:var(--muted);">Maintenance</strong> — stable training`);
+
+  const bpC = BP_COLORS[bp] || 'var(--accent)';
+  const exRows = exStats.slice(0, 12).map(s => {
+    let prTag;
+    if (s.daysSincePR <= 14) prTag = `<span style="color:#84cc16;">${s.daysSincePR}d ✨</span>`;
+    else if (s.daysSincePR <= 30) prTag = `<span style="color:#a3e635;">${s.daysSincePR}d</span>`;
+    else if (s.daysSincePR <= 60) prTag = `<span style="color:var(--muted);">${s.daysSincePR}d</span>`;
+    else prTag = `<span style="color:#fbbf24;">${s.daysSincePR}d ⏸</span>`;
+    const topSetStr = s.topSetW > 0 ? `${s.topSetW.toFixed(1)}kg×${s.topSetReps}` : `BW×${s.topSetReps}`;
+    return `<div style="display:grid; grid-template-columns:1.6fr 0.5fr 0.9fr 0.6fr; gap:6px; padding:6px 0; font-size:11px; align-items:center; border-bottom:1px solid var(--border);">
+      <div style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${s.ex}</div>
+      <div style="font-family:'JetBrains Mono', monospace; text-align:center;">${s.sessions}</div>
+      <div style="font-family:'JetBrains Mono', monospace;">${topSetStr}</div>
+      <div style="font-family:'JetBrains Mono', monospace; text-align:right;">${prTag}</div>
+    </div>`;
+  }).join('');
+
+  const html = `
+    <div class="modal-header">
+      <div><span class="bp-chip" style="background:${bpC}30; color:${bpC};">${bp}</span><h2 style="margin-top:6px;">12-week analysis</h2></div>
+      <button class="modal-close" onclick="closeBodyPartModal()">×</button>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin:8px 0 14px;">
+      <div style="background:var(--surface-2); padding:8px; border-radius:6px;">
+        <div class="stat-label">VOLUME</div>
+        <div style="font-family:'JetBrains Mono', monospace; font-size:13px;">${num(recentVol, 0)} kg</div>
+        <div style="font-size:10px; color:${deltaPct >= 0 ? '#84cc16' : '#f43f5e'};">${deltaPct >= 0 ? '+' : ''}${deltaPct.toFixed(0)}% vs prior 12wk</div>
+      </div>
+      <div style="background:var(--surface-2); padding:8px; border-radius:6px;">
+        <div class="stat-label">SESSIONS</div>
+        <div style="font-family:'JetBrains Mono', monospace; font-size:13px;">${sessions}</div>
+        <div style="font-size:10px; color:${lowFreq ? '#fbbf24' : 'var(--muted)'};">${sessionsPerWk.toFixed(1)}/wk${lowFreq ? ' ⚠' : ''}</div>
+      </div>
+    </div>
+    <div style="background:rgba(251,191,36,0.06); border:1px solid rgba(251,191,36,0.20); padding:10px; border-radius:8px; margin-bottom:14px; font-size:12px;">
+      ${diag.join('<br>')}
+    </div>
+    <div style="display:grid; grid-template-columns:1.6fr 0.5fr 0.9fr 0.6fr; gap:6px; padding:4px 0; font-size:9px; color:var(--muted); font-family:'JetBrains Mono', monospace; letter-spacing:0.08em; border-bottom:1px solid var(--border);">
+      <div>EXERCISE</div><div style="text-align:center;">SESS</div><div>TOP SET</div><div style="text-align:right;">LAST PR</div>
+    </div>
+    ${exRows || `<div style="color:var(--muted); padding:14px;">No exercises logged in last 12 weeks</div>`}
+  `;
+  document.getElementById("bp-modal-content").innerHTML = html;
+  document.getElementById("bp-modal").classList.add("open");
+};
+
+function closeBodyPartModal() {
+  document.getElementById("bp-modal").classList.remove("open");
+}
+
 document.addEventListener("keydown", e => {
-  if (e.key === "Escape") { closeLiftModal(); closeProgressionModal(); }
+  if (e.key === "Escape") { closeLiftModal(); closeProgressionModal(); closeBodyPartModal(); }
   // Left/Right arrow nav between dates when modal open
   if (window._currentModalDate && document.getElementById("lift-modal")?.classList.contains("open")) {
     if (e.key === "ArrowLeft") {
@@ -3370,6 +3845,7 @@ document.addEventListener("keydown", e => {
 document.addEventListener("click", e => {
   if (e.target.id === "lift-modal") closeLiftModal();
   if (e.target.id === "progression-modal") closeProgressionModal();
+  if (e.target.id === "bp-modal") closeBodyPartModal();
 });
 
 // Touch swipe support on modal content for date nav
