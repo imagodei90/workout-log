@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
+<meta name="theme-color" content="#0a0a0a">
+<title>PR/Trends Design Options</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0a; --card: #111114; --card2: #18181b;
+    --border: #1f1f23; --text: #fafafa; --muted: #71717a;
+    --accent: #FF1A8C; --run: #06b6d4; --lift: #FF1A8C;
+    --green: #84cc16; --gold: #fbbf24; --red: #f43f5e;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: "Inter", -apple-system, sans-serif;
+    padding: 16px; max-width: 640px; margin: 0 auto;
+    padding-bottom: 60px;
+  }
+  h1 { font-size: 22px; margin-bottom: 8px; font-weight: 600; }
+  .subtitle { color: var(--muted); font-size: 12px; margin-bottom: 24px; }
+  .option {
+    margin-bottom: 32px;
+  }
+  .opt-label {
+    display: inline-block; padding: 4px 10px; border-radius: 6px;
+    background: var(--accent); color: #fff; font-size: 11px;
+    font-family: 'JetBrains Mono', monospace; letter-spacing: 0.1em;
+    margin-bottom: 8px;
+  }
+  .opt-title { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+  .opt-desc { color: var(--muted); font-size: 12px; margin-bottom: 14px; }
+
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px; margin-bottom: 12px;
+  }
+  .label-mono {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase;
+  }
+  .bp-chip {
+    display: inline-block; padding: 2px 8px; border-radius: 5px;
+    font-family: 'JetBrains Mono', monospace; font-size: 9px;
+    letter-spacing: 0.08em;
+  }
+  .sparkline {
+    display: inline-flex; align-items: flex-end; gap: 1px; height: 14px;
+  }
+  .sparkline span {
+    width: 4px; background: currentColor; border-radius: 1px;
+  }
+
+  /* ===== OPTION A: Body Part Progress Grid ===== */
+  .bp-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+  }
+  .bp-card {
+    background: var(--card2); border-radius: 8px; padding: 10px;
+    border: 1px solid var(--border); cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  .bp-card:active { border-color: var(--accent); }
+  .bp-card .bp-name {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    letter-spacing: 0.1em; margin-bottom: 4px;
+  }
+  .bp-card .bp-trend {
+    font-family: 'JetBrains Mono', monospace; font-size: 14px;
+    margin-bottom: 2px;
+  }
+  .bp-card .bp-meta {
+    color: var(--muted); font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* ===== OPTION C: Stalled PRs ===== */
+  .stalled-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 0; border-bottom: 1px solid var(--border);
+    font-size: 12px;
+  }
+  .stalled-row:last-child { border-bottom: none; }
+  .stalled-stars { color: var(--gold); font-size: 10px; min-width: 50px; }
+  .stalled-name { flex: 1; font-weight: 500; }
+  .stalled-days {
+    background: rgba(244,63,94,0.15); color: var(--red);
+    padding: 2px 6px; border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  }
+  .stalled-rec {
+    color: var(--muted); font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* ===== OPTION D: PR Timeline ===== */
+  .pr-row {
+    margin-bottom: 16px;
+  }
+  .pr-row-name {
+    font-size: 12px; margin-bottom: 6px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .pr-timeline {
+    display: flex; gap: 1px; height: 22px; align-items: center;
+    background: var(--card2); padding: 4px 6px; border-radius: 6px;
+    position: relative;
+  }
+  .pr-event {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent); position: relative;
+  }
+  .pr-event.stalled { background: var(--gold); }
+  .pr-event .pr-tooltip {
+    position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
+    background: var(--bg); border: 1px solid var(--border);
+    padding: 2px 5px; border-radius: 4px; font-size: 9px;
+    font-family: 'JetBrains Mono', monospace; white-space: nowrap;
+    opacity: 0;
+  }
+  .pr-line { flex: 1; height: 1px; background: var(--border); }
+  .pr-line.recent { background: linear-gradient(to right, var(--accent), var(--accent)); height: 2px; opacity: 0.5; }
+  .pr-axis {
+    display: flex; justify-content: space-between;
+    color: var(--muted); font-size: 9px; padding: 2px 6px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* ===== OPTION E: Periodization ===== */
+  .period-bars {
+    display: flex; align-items: flex-end; gap: 3px; height: 80px;
+    padding: 8px 4px 4px;
+  }
+  .period-bar {
+    flex: 1; background: var(--lift); border-radius: 2px 2px 0 0;
+    opacity: 0.85; position: relative;
+  }
+  .period-bar.deload { background: var(--gold); opacity: 0.4; }
+  .period-bar::after {
+    content: attr(data-w);
+    position: absolute; bottom: -16px; left: 50%; transform: translateX(-50%);
+    font-family: 'JetBrains Mono', monospace; font-size: 8px;
+    color: var(--muted);
+  }
+  .period-legend { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); margin-top: 22px; }
+  .period-detection {
+    background: rgba(132,204,22,0.08); border: 1px solid rgba(132,204,22,0.30);
+    padding: 8px 10px; border-radius: 6px; margin-top: 10px;
+    font-size: 11px; font-family: 'JetBrains Mono', monospace;
+  }
+  .period-detection .warn { color: var(--gold); }
+  .period-detection .ok { color: var(--green); }
+
+  /* ===== OPTION F: Plateau Diagnostic ===== */
+  .diag {
+    background: linear-gradient(135deg, rgba(244,63,94,0.06), rgba(251,191,36,0.04));
+    border: 1px solid rgba(244,63,94,0.25); border-radius: 12px;
+    padding: 14px;
+  }
+  .diag-period { color: var(--muted); font-size: 10px; font-family: 'JetBrains Mono', monospace; margin-bottom: 12px; }
+  .diag-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 12px; }
+  .diag-stat {
+    background: var(--card); padding: 8px; border-radius: 6px;
+  }
+  .diag-stat .lbl { color: var(--muted); font-size: 9px; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.08em; }
+  .diag-stat .val { font-family: 'JetBrains Mono', monospace; font-size: 13px; margin-top: 2px; }
+  .diag-stat .delta { font-size: 9px; margin-top: 1px; font-family: 'JetBrains Mono', monospace; }
+  .diag-conclusion {
+    background: var(--bg); padding: 8px 10px; border-radius: 6px;
+    margin-bottom: 10px; font-size: 12px;
+  }
+  .diag-action {
+    display: flex; gap: 8px; padding: 6px 0;
+    font-size: 12px; border-top: 1px dashed var(--border);
+  }
+  .diag-action:first-of-type { border-top: 1px solid var(--border); margin-top: 6px; }
+  .diag-priority { color: var(--gold); min-width: 40px; }
+
+  /* ===== OPTION B: Drilldown (modal-style preview) ===== */
+  .drill-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 10px;
+  }
+  .drill-stats {
+    color: var(--muted); font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    margin-bottom: 14px; padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .drill-stats .warn { color: var(--gold); }
+  .drill-row {
+    display: grid;
+    grid-template-columns: 1.4fr 0.6fr 0.8fr 0.7fr 0.9fr;
+    gap: 4px; padding: 6px 0;
+    font-size: 11px; align-items: center;
+    border-bottom: 1px solid var(--border);
+  }
+  .drill-row.header { color: var(--muted); font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.08em; padding-bottom: 6px; }
+  .drill-row .new-pr { color: var(--green); }
+  .drill-diag {
+    background: rgba(251,191,36,0.10); border: 1px solid rgba(251,191,36,0.25);
+    padding: 10px; border-radius: 6px; margin-top: 12px;
+    font-size: 11px;
+  }
+  .drill-diag .warn { color: var(--gold); }
+
+  /* Question section */
+  .question-section {
+    background: var(--card); border: 1px solid var(--accent);
+    border-radius: 12px; padding: 14px;
+    margin-top: 24px;
+  }
+  .question-section h3 { color: var(--accent); margin-bottom: 8px; font-size: 14px; }
+  .question-section p { color: var(--muted); font-size: 12px; line-height: 1.5; }
+</style>
+</head>
+<body>
+
+<h1>PR/Trends Design Options</h1>
+<p class="subtitle">Mockup with sample data. Pick which options you want built into the actual dashboard.</p>
+
+<!-- ===== OPTION F (Plateau Diagnostic) — most important first ===== -->
+<div class="option">
+  <span class="opt-label">OPTION F</span>
+  <div class="opt-title">🔍 Plateau Diagnostic</div>
+  <div class="opt-desc">근육량 정체 원인 자동 진단 + actionable suggestions</div>
+
+  <div class="diag">
+    <div class="diag-period">2025-12-01 ~ 2026-05-22 · 24 weeks observed</div>
+    <div class="diag-stats">
+      <div class="diag-stat">
+        <div class="lbl">SMM</div>
+        <div class="val">38.6 kg</div>
+        <div class="delta" style="color:var(--muted);">net +1.1kg (24wk) ➡ flat last 8wk</div>
+      </div>
+      <div class="diag-stat">
+        <div class="lbl">WEIGHT</div>
+        <div class="val">76.0 kg</div>
+        <div class="delta" style="color:var(--muted);">range-bound 75-78</div>
+      </div>
+      <div class="diag-stat">
+        <div class="lbl">BF %</div>
+        <div class="val">13.0%</div>
+        <div class="delta" style="color:var(--muted);">range 12.5-13.5</div>
+      </div>
+      <div class="diag-stat">
+        <div class="lbl">LIFT VOLUME</div>
+        <div class="val">↑ 5% / 24wk</div>
+        <div class="delta" style="color:var(--red);">insufficient progression</div>
+      </div>
+    </div>
+    <div class="diag-conclusion">
+      <strong style="color:var(--gold);">"Maintenance state"</strong> — 강도/변화 부족.
+      Volume 약간 ↑ + SMM 정체 → <strong>자극이 부족</strong>해서 hypertrophy 안 일어나는 상태.
+      칼로리도 maintenance 근접 → <strong>점진 과부하 + 약간의 surplus</strong>로 빠져나와야 함.
+    </div>
+
+    <div class="diag-action">
+      <span class="diag-priority">⭐⭐⭐</span>
+      <span>Top set 무게 +5% 도전 (stalled 운동 8개)</span>
+    </div>
+    <div class="diag-action">
+      <span class="diag-priority">⭐⭐⭐</span>
+      <span>+200 kcal surplus 2-3wk (lean bulk mini-cycle)</span>
+    </div>
+    <div class="diag-action">
+      <span class="diag-priority">⭐⭐</span>
+      <span>Variation: stalled 운동 8개 중 4개 다른 variant로 교체</span>
+    </div>
+    <div class="diag-action">
+      <span class="diag-priority">⭐⭐</span>
+      <span>Mesocycle 도입: 3주 build + 1주 deload 패턴</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== OPTION A (Body Part Progress Grid) ===== -->
+<div class="option">
+  <span class="opt-label">OPTION A</span>
+  <div class="opt-title">📊 Body Part Progress Grid</div>
+  <div class="opt-desc">6개 부위 한 화면에 — 어디가 정체인지 즉시 파악</div>
+
+  <div class="bp-grid">
+    <div class="bp-card">
+      <div class="bp-name" style="color:#e879f9;">SHOULDERS</div>
+      <div class="bp-trend" style="color:var(--green);">↑ +23% <span class="sparkline" style="color:var(--green);"><span style="height:3px"></span><span style="height:5px"></span><span style="height:7px"></span><span style="height:8px"></span><span style="height:7px"></span><span style="height:10px"></span><span style="height:13px"></span></span></div>
+      <div class="bp-meta">3 PRs · 8 sess/wk</div>
+    </div>
+    <div class="bp-card">
+      <div class="bp-name" style="color:#22c55e;">BACK</div>
+      <div class="bp-trend" style="color:var(--muted);">➡ flat <span class="sparkline" style="color:var(--muted);"><span style="height:8px"></span><span style="height:10px"></span><span style="height:11px"></span><span style="height:11px"></span><span style="height:11px"></span><span style="height:11px"></span><span style="height:11px"></span></span></div>
+      <div class="bp-meta">1 PR · 5 sess/wk</div>
+    </div>
+    <div class="bp-card" style="border-color: rgba(244,63,94,0.4);">
+      <div class="bp-name" style="color:#fb923c;">CHEST</div>
+      <div class="bp-trend" style="color:var(--gold);">⏸ no growth <span class="sparkline" style="color:var(--gold);"><span style="height:2px"></span><span style="height:3px"></span><span style="height:3px"></span><span style="height:4px"></span><span style="height:4px"></span><span style="height:3px"></span><span style="height:4px"></span></span></div>
+      <div class="bp-meta" style="color:var(--red);">0 PRs · 2/wk ⚠ low</div>
+    </div>
+    <div class="bp-card">
+      <div class="bp-name" style="color:#06b6d4;">ARMS</div>
+      <div class="bp-trend" style="color:var(--green);">↑ +12% <span class="sparkline" style="color:var(--green);"><span style="height:4px"></span><span style="height:5px"></span><span style="height:5px"></span><span style="height:6px"></span><span style="height:8px"></span><span style="height:7px"></span><span style="height:8px"></span></span></div>
+      <div class="bp-meta">2 PRs · 6 sess/wk</div>
+    </div>
+    <div class="bp-card" style="border-color: rgba(244,63,94,0.4);">
+      <div class="bp-name" style="color:#a855f7;">LEGS</div>
+      <div class="bp-trend" style="color:var(--gold);">⏸ no growth <span class="sparkline" style="color:var(--gold);"><span style="height:2px"></span><span style="height:2px"></span><span style="height:3px"></span><span style="height:4px"></span><span style="height:4px"></span><span style="height:3px"></span><span style="height:4px"></span></span></div>
+      <div class="bp-meta" style="color:var(--red);">0 PRs · 3/wk ⚠</div>
+    </div>
+    <div class="bp-card">
+      <div class="bp-name" style="color:#f59e0b;">CORE</div>
+      <div class="bp-trend" style="color:var(--muted);">➡ +2% <span class="sparkline" style="color:var(--muted);"><span style="height:7px"></span><span style="height:8px"></span><span style="height:10px"></span><span style="height:10px"></span><span style="height:8px"></span><span style="height:8px"></span><span style="height:10px"></span></span></div>
+      <div class="bp-meta">1 PR · 12 sess/wk</div>
+    </div>
+  </div>
+  <p style="color:var(--muted); font-size:11px; margin-top:8px; font-family:'JetBrains Mono', monospace;">
+    Tap a card → drilldown to that body part's exercises (Option B)
+  </p>
+</div>
+
+<!-- ===== OPTION B (Body Part Drilldown) ===== -->
+<div class="option">
+  <span class="opt-label">OPTION B</span>
+  <div class="opt-title">🔬 Body Part Drilldown</div>
+  <div class="opt-desc">Option A의 부위 card 클릭시 열리는 모달 — 운동 단위 분석</div>
+
+  <div class="card">
+    <div class="drill-header">
+      <div>
+        <span class="bp-chip" style="background:rgba(251,146,60,0.25); color:#fb923c;">CHEST</span>
+        <div style="font-size:18px; font-weight:600; margin-top:4px;">12-week analysis</div>
+      </div>
+      <span style="color:var(--gold); font-size:11px; font-family:monospace;">⏸ PLATEAU</span>
+    </div>
+    <div class="drill-stats">
+      Total volume: <strong>4,820 kg</strong> <span class="warn">↓ 8% vs prior 12wk</span><br>
+      Sessions: <strong>24</strong> (2/wk avg) <span class="warn">⚠ target 3/wk</span><br>
+      PRs: <strong>0 new</strong> in last 10 weeks
+    </div>
+    <div class="drill-row header">
+      <div>Exercise</div><div>Sess</div><div>Top Set</div><div>Δ4wk</div><div>Last PR</div>
+    </div>
+    <div class="drill-row">
+      <div>Incline Press</div>
+      <div style="font-family:monospace;">12</div>
+      <div style="font-family:monospace;">60kg×10</div>
+      <div>➡</div>
+      <div style="color:var(--muted);">8 wks</div>
+    </div>
+    <div class="drill-row">
+      <div>Dip</div>
+      <div style="font-family:monospace;">5</div>
+      <div style="font-family:monospace;">BW×12</div>
+      <div class="new-pr">+1 rep</div>
+      <div class="new-pr">3 wks ✨</div>
+    </div>
+    <div class="drill-row">
+      <div>Push-up <span style="color:var(--muted); font-size:9px;">(subst)</span></div>
+      <div style="font-family:monospace;">7</div>
+      <div style="font-family:monospace;">BW×30</div>
+      <div>+5 rep</div>
+      <div style="color:var(--muted);">flat</div>
+    </div>
+    <div class="drill-diag">
+      <strong class="warn">⚠ DIAGNOSIS:</strong> CHEST 빈도 부족 (2/wk vs target 3/wk). Push-up 의존도 ↑.<br>
+      <strong>→ Action:</strong> Incline Press 1→2회/wk, Dip 추가, 무게 점진 +2.5kg
+    </div>
+  </div>
+</div>
+
+<!-- ===== OPTION C (Stalled PRs) ===== -->
+<div class="option">
+  <span class="opt-label">OPTION C</span>
+  <div class="opt-title">⏸ Stalled PR Panel</div>
+  <div class="opt-desc">60일+ PR 없는 운동 자동 모음 — 정체 명단</div>
+
+  <div class="card" style="border-color: rgba(251,191,36,0.3); background: rgba(251,191,36,0.04);">
+    <div class="label-mono" style="color:var(--gold); margin-bottom:10px;">⏸ STALLED PRs — 60+ days</div>
+    <div class="stalled-row">
+      <span class="stalled-stars">★★★★★</span>
+      <span class="stalled-name">Lateral Raise</span>
+      <span class="stalled-rec">6kg × 15</span>
+      <span class="stalled-days">91d</span>
+    </div>
+    <div class="stalled-row">
+      <span class="stalled-stars">★★★★★</span>
+      <span class="stalled-name">Pull-up (Wide)</span>
+      <span class="stalled-rec">BW × 10</span>
+      <span class="stalled-days">78d</span>
+    </div>
+    <div class="stalled-row">
+      <span class="stalled-stars">★★★★★</span>
+      <span class="stalled-name">Incline Press</span>
+      <span class="stalled-rec">60kg × 10</span>
+      <span class="stalled-days">56d</span>
+    </div>
+    <div class="stalled-row">
+      <span class="stalled-stars">★★★★</span>
+      <span class="stalled-name">Tricep Pushdown</span>
+      <span class="stalled-rec">18kg × 12</span>
+      <span class="stalled-days">65d</span>
+    </div>
+    <div class="stalled-row">
+      <span class="stalled-stars">★★★★</span>
+      <span class="stalled-name">Hip Thrust</span>
+      <span class="stalled-rec">80kg × 8</span>
+      <span class="stalled-days">72d</span>
+    </div>
+    <div style="color:var(--gold); font-size:11px; margin-top:10px; padding-top:8px; border-top:1px dashed rgba(251,191,36,0.3); font-family:'JetBrains Mono', monospace;">
+      → Variation 시도 (Cable / 1.5 rep / drop set / deload week)
+    </div>
+  </div>
+</div>
+
+<!-- ===== OPTION D (PR Timeline) ===== -->
+<div class="option">
+  <span class="opt-label">OPTION D</span>
+  <div class="opt-title">📈 PR Timeline</div>
+  <div class="opt-desc">각 운동 PR 갱신 history visual</div>
+
+  <div class="card">
+    <div class="pr-row">
+      <div class="pr-row-name">
+        <span>Lateral Raise (LATERAL)</span>
+        <span style="color:var(--gold); font-size:10px;">⏸ stalled 8mo</span>
+      </div>
+      <div class="pr-timeline">
+        <div class="pr-event" style="margin-left:5%;" title="4.5kg"></div><div class="pr-line" style="flex:0.5;"></div>
+        <div class="pr-event" title="5.0kg"></div><div class="pr-line" style="flex:0.3;"></div>
+        <div class="pr-event" title="5.5kg"></div><div class="pr-line" style="flex:0.4;"></div>
+        <div class="pr-event stalled" title="6.0kg STALLED"></div><div class="pr-line recent" style="flex:1;"></div>
+      </div>
+      <div class="pr-axis"><span>1 yr ago</span><span>6 mo</span><span>3 mo</span><span>now</span></div>
+    </div>
+
+    <div class="pr-row">
+      <div class="pr-row-name">
+        <span>Incline Press (UPPER)</span>
+        <span style="color:var(--gold); font-size:10px;">⏸ stalled 10wk</span>
+      </div>
+      <div class="pr-timeline">
+        <div class="pr-event" style="margin-left:3%;" title="40kg"></div><div class="pr-line" style="flex:0.2;"></div>
+        <div class="pr-event" title="45kg"></div><div class="pr-line" style="flex:0.25;"></div>
+        <div class="pr-event" title="50kg"></div><div class="pr-line" style="flex:0.25;"></div>
+        <div class="pr-event" title="55kg"></div><div class="pr-line" style="flex:0.15;"></div>
+        <div class="pr-event stalled" title="60kg STALLED"></div><div class="pr-line recent" style="flex:0.6;"></div>
+      </div>
+      <div class="pr-axis"><span>1 yr ago</span><span>6 mo</span><span>3 mo</span><span>now</span></div>
+    </div>
+
+    <div class="pr-row">
+      <div class="pr-row-name">
+        <span>Pull-up (WIDTH)</span>
+        <span style="color:var(--green); font-size:10px;">↑ progressing</span>
+      </div>
+      <div class="pr-timeline">
+        <div class="pr-event" style="margin-left:8%;" title="BW×6"></div><div class="pr-line" style="flex:0.5;"></div>
+        <div class="pr-event" title="BW×8"></div><div class="pr-line" style="flex:0.5;"></div>
+        <div class="pr-event" title="BW×10"></div><div class="pr-line" style="flex:0.2;"></div>
+        <div class="pr-event" title="BW×12 ✨" style="background:var(--green);"></div>
+      </div>
+      <div class="pr-axis"><span>1 yr ago</span><span>6 mo</span><span>3 mo</span><span>now</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== OPTION E (Periodization) ===== -->
+<div class="option">
+  <span class="opt-label">OPTION E</span>
+  <div class="opt-title">📊 Periodization Indicator</div>
+  <div class="opt-desc">주별 volume 자동 분석 + deload 패턴 감지</div>
+
+  <div class="card">
+    <div class="label-mono" style="margin-bottom:6px;">TOTAL WEEKLY VOLUME — last 16 weeks</div>
+    <div class="period-bars">
+      <div class="period-bar" data-w="W1" style="height:55%;"></div>
+      <div class="period-bar" data-w="W2" style="height:62%;"></div>
+      <div class="period-bar" data-w="W3" style="height:70%;"></div>
+      <div class="period-bar deload" data-w="W4" style="height:35%;"></div>
+      <div class="period-bar" data-w="W5" style="height:58%;"></div>
+      <div class="period-bar" data-w="W6" style="height:65%;"></div>
+      <div class="period-bar" data-w="W7" style="height:72%;"></div>
+      <div class="period-bar deload" data-w="W8" style="height:38%;"></div>
+      <div class="period-bar" data-w="W9" style="height:60%;"></div>
+      <div class="period-bar" data-w="W10" style="height:68%;"></div>
+      <div class="period-bar" data-w="W11" style="height:75%;"></div>
+      <div class="period-bar deload" data-w="W12" style="height:40%;"></div>
+      <div class="period-bar" data-w="W13" style="height:62%;"></div>
+      <div class="period-bar" data-w="W14" style="height:68%;"></div>
+      <div class="period-bar" data-w="W15" style="height:73%;"></div>
+      <div class="period-bar deload" data-w="W16" style="height:42%;"></div>
+    </div>
+    <div class="period-legend">
+      <span style="display:inline-block; width:10px; height:10px; background:var(--lift); margin-right:4px; vertical-align:middle;"></span> build week &nbsp;
+      <span style="display:inline-block; width:10px; height:10px; background:var(--gold); opacity:0.5; margin:0 4px 0 8px; vertical-align:middle;"></span> deload week
+    </div>
+    <div class="period-detection">
+      <span class="ok">✓ Implicit 4-week mesocycle</span> — 3 build + 1 deload pattern detected<br>
+      <span class="warn">⚠ Volume plateau across cycles</span> — W3 (70%) → W7 (72%) → W11 (75%) → W15 (73%)<br>
+      <span style="color:var(--muted);">→ Next 4wk push volume +10% systematically (W17 build target: 82%)</span>
+    </div>
+  </div>
+</div>
+
+<!-- Decision section -->
+<div class="question-section">
+  <h3>어떤 옵션 빌드할까요?</h3>
+  <p>
+    번호 알려주세요. 추천:<br>
+    • <strong>F + A + B + C</strong> = 정체 진단 + 부위 grid + drilldown + 정체 명단 (~5.5h)<br>
+    • 또는 개별 선택
+  </p>
+</div>
+
+</body>
+</html>
