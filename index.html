@@ -1261,20 +1261,25 @@ function renderHevy(agg) {
   const tr = agg.totalsRun;
   const days = Math.floor((agg.rangeEnd - agg.rangeStart) / 86400000) + 1;
 
-  // === Options A, C, D: enhanced PR sections ===
+  // === Options A, C, D: enhanced PR sections (with safety) ===
   const today = new Date(); today.setHours(0,0,0,0);
   const priorities = (DATA.exercise_priorities || {}).exercises || [];
-  const bpProgress = computeBodyPartProgress(DATA.lifts || [], today, 12);
-  const stalled = findStalledPRs(DATA.lifts || [], priorities, today, 60);
-  const prTimelines = priorities
-    .filter(ep => (ep.priority || 0) >= 4)
-    .map(ep => buildPRTimeline(DATA.lifts || [], ep, today))
-    .filter(t => t && t.events.length >= 2)
-    .sort((a, b) => {
-      // stalled first, then by event count desc
-      if (a.stalled !== b.stalled) return a.stalled ? -1 : 1;
-      return b.events.length - a.events.length;
-    });
+  let bpProgress = {}, stalled = [], prTimelines = [];
+  try { bpProgress = computeBodyPartProgress(DATA.lifts || [], today, 12); }
+  catch (e) { console.error('[renderPR] bpProgress failed:', e); }
+  try { stalled = findStalledPRs(DATA.lifts || [], priorities, today, 60); }
+  catch (e) { console.error('[renderPR] stalled failed:', e); }
+  try {
+    prTimelines = priorities
+      .filter(ep => (ep.priority || 0) >= 4)
+      .map(ep => buildPRTimeline(DATA.lifts || [], ep, today))
+      .filter(t => t && t.events && t.events.length >= 2)
+      .sort((a, b) => {
+        if (a.stalled !== b.stalled) return a.stalled ? -1 : 1;
+        return b.events.length - a.events.length;
+      });
+  } catch (e) { console.error('[renderPR] timelines failed:', e); }
+  console.log('[renderPR] sections:', {bpCount: Object.keys(bpProgress).length, stalled: stalled.length, timelines: prTimelines.length});
 
   // Option A: Body Part Progress Grid
   const bpProgressHtml = (() => {
