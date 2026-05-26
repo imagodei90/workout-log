@@ -2895,8 +2895,8 @@ function renderPlan(agg) {
       ? `<span style="background:${subColorPlan}20; color:${subColorPlan}; padding:1px 5px; border-radius:5px; font-size:8px; font-family:'JetBrains Mono', monospace; letter-spacing:0.08em;">${p.sub_part}</span>`
       : '';
 
-    // Find index in priorities array for reliable lookup (no string escaping)
-    const priIdx = priorities.indexOf(p);
+    // Find index in priorities array by name (p is a spread copy from stats, not same identity)
+    const priIdx = priorities.findIndex(e => e.name === p.name);
     return `<div class="exercise-row" data-pri-idx="${priIdx}" onclick="window.showProgressionByIdx(${priIdx})" style="display:flex; align-items:center; gap:10px; padding:10px 4px; border-bottom:1px solid var(--border); cursor:pointer; -webkit-tap-highlight-color: rgba(255,26,140,0.2);">
       <div style="flex:1; min-width:0;">
         <div style="display:flex; gap:5px; align-items:center; flex-wrap:wrap; margin-bottom:3px;">
