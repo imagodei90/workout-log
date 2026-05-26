@@ -2895,8 +2895,8 @@ function renderPlan(agg) {
       ? `<span style="background:${subColorPlan}20; color:${subColorPlan}; padding:1px 5px; border-radius:5px; font-size:8px; font-family:'JetBrains Mono', monospace; letter-spacing:0.08em;">${p.sub_part}</span>`
       : '';
 
-    const nameEsc = (p.name || '').replace(/"/g, '&quot;');
-    return `<div data-priority-name="${nameEsc}" style="display:flex; align-items:center; gap:10px; padding:10px 4px; border-bottom:1px solid var(--border); cursor:pointer;" onclick="window.showProgressionByName(this.dataset.priorityName)">
+    const nameEsc = (p.name || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+    return `<div class="exercise-row" data-priority-name="${nameEsc}" style="display:flex; align-items:center; gap:10px; padding:10px 4px; border-bottom:1px solid var(--border); cursor:pointer;">
       <div style="flex:1; min-width:0;">
         <div style="display:flex; gap:5px; align-items:center; flex-wrap:wrap; margin-bottom:3px;">
           <span style="background:${c}25; color:${c}; padding:1px 6px; border-radius:5px; font-size:8px; font-family:'JetBrains Mono', monospace; letter-spacing:0.08em;">${p.body_part}</span>
@@ -3655,6 +3655,15 @@ window.showProgressionByName = function(name) {
   if (!ep) { console.warn('priority not found:', name); return; }
   showProgressionModal(ep);
 };
+
+// Event delegation: catch clicks on .exercise-row (Plan view) anywhere in document
+// This is more robust than inline onclick (avoids quoting/escaping issues)
+document.addEventListener("click", (e) => {
+  const row = e.target.closest && e.target.closest(".exercise-row[data-priority-name]");
+  if (!row) return;
+  const name = row.dataset.priorityName;
+  if (name) window.showProgressionByName(name);
+});
 
 function showProgressionModal(ep) {
   const matches = (DATA.lifts || []).filter(l => matchAnyJS(l.exercise || '', ep.patterns || []));
