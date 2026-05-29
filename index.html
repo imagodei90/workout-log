@@ -2957,7 +2957,7 @@ function renderPlan(agg) {
 
     const priIdx = priorities.findIndex(e => e.name === p.name);
     return `<div>
-      <div class="exercise-row" data-pri-idx="${priIdx}" onclick="window.toggleExerciseDetails(${priIdx})" style="display:flex; align-items:center; gap:10px; padding:10px 4px; border-bottom:1px solid var(--border); cursor:pointer; -webkit-tap-highlight-color: rgba(255,26,140,0.2);">
+      <div class="exercise-row" data-pri-idx="${priIdx}" style="display:flex; align-items:center; gap:10px; padding:10px 4px; border-bottom:1px solid var(--border); cursor:pointer; -webkit-tap-highlight-color: rgba(255,26,140,0.2);">
         <div style="flex:1; min-width:0;">
           <div style="display:flex; gap:5px; align-items:center; flex-wrap:wrap; margin-bottom:3px;">
             <span style="background:${c}25; color:${c}; padding:1px 6px; border-radius:5px; font-size:8px; font-family:'JetBrains Mono', monospace; letter-spacing:0.08em;">${p.body_part}</span>
@@ -3010,7 +3010,7 @@ function renderPlan(agg) {
           : '';
         const qIdx = priorities.findIndex(e => e.name === p.name);
         return `<div>
-          <div class="exercise-row" data-pri-idx="${qIdx}" onclick="window.toggleExerciseDetails(${qIdx})" style="display:flex; gap:10px; align-items:center; padding:8px 0; border-top:1px dashed var(--border); cursor:pointer; -webkit-tap-highlight-color: rgba(255,26,140,0.2);">
+          <div class="exercise-row" data-pri-idx="${qIdx}" style="display:flex; gap:10px; align-items:center; padding:8px 0; border-top:1px dashed var(--border); cursor:pointer; -webkit-tap-highlight-color: rgba(255,26,140,0.2);">
             <div style="font-family:'JetBrains Mono', monospace; color:var(--muted); font-size:10px; width:18px;">${i+1}.</div>
             <div style="flex:1; min-width:0;">
               <div style="display:flex; gap:4px; align-items:center; flex-wrap:wrap;">
