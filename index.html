@@ -3855,24 +3855,28 @@ function buildExerciseDetailsHtml(ep) {
     }
   }
 
-  // Mini sparkline (inline SVG) — minimal dependency-free chart of top set weight progression
-  function miniSparkline(pts, color, height) {
+  // Mini sparkline (inline SVG) — proportional scaling, no distortion
+  function miniSparkline(pts, color) {
     if (pts.length < 2) return '';
-    const w = 240, h = height || 50, padL = 4, padR = 4, padT = 4, padB = 4;
+    const w = 800, h = 90, padL = 32, padR = 32, padT = 10, padB = 18;
     const ys = pts.map(p => p.v);
     const yMin = Math.min(...ys), yMax = Math.max(...ys), yRng = (yMax - yMin) || 1;
     const xMin = pts[0].t, xMax = pts[pts.length-1].t, xRng = (xMax - xMin) || 1;
     const sx = t => padL + (t - xMin) / xRng * (w - padL - padR);
     const sy = v => h - padB - (v - yMin) / yRng * (h - padT - padB);
     const path = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${sx(p.t).toFixed(1)},${sy(p.v).toFixed(1)}`).join(' ');
-    const dots = pts.map(p => `<circle cx="${sx(p.t).toFixed(1)}" cy="${sy(p.v).toFixed(1)}" r="2" fill="${color}"/>`).join('');
+    const dots = pts.map(p => `<circle cx="${sx(p.t).toFixed(1)}" cy="${sy(p.v).toFixed(1)}" r="2.5" fill="${color}"/>`).join('');
     const lastV = pts[pts.length-1].v.toFixed(1);
     const firstV = pts[0].v.toFixed(1);
-    return `<svg width="100%" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="${path}" stroke="${color}" stroke-width="1.5" fill="none"/>
+    const midY = sy((yMin + yMax) / 2);
+    return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" style="width:100%; height:auto; max-height:90px; display:block;">
+      <line x1="${padL}" y1="${(h-padB).toFixed(1)}" x2="${(w-padR).toFixed(1)}" y2="${(h-padB).toFixed(1)}" stroke="var(--border)" stroke-width="1"/>
+      <path d="${path}" stroke="${color}" stroke-width="2" fill="none" stroke-linejoin="round"/>
       ${dots}
-      <text x="${padL}" y="${(h-padB+8).toFixed(0)}" fill="var(--muted)" font-size="8" font-family="JetBrains Mono, monospace">${firstV}</text>
-      <text x="${w-padR}" y="${(h-padB+8).toFixed(0)}" fill="${color}" font-size="8" font-family="JetBrains Mono, monospace" text-anchor="end">${lastV}</text>
+      <text x="${padL-4}" y="${(sy(yMax)+3).toFixed(1)}" fill="var(--muted)" font-size="10" font-family="JetBrains Mono, monospace" text-anchor="end">${yMax.toFixed(1)}</text>
+      <text x="${padL-4}" y="${(sy(yMin)+3).toFixed(1)}" fill="var(--muted)" font-size="10" font-family="JetBrains Mono, monospace" text-anchor="end">${yMin.toFixed(1)}</text>
+      <text x="${padL}" y="${(h-2).toFixed(0)}" fill="var(--muted)" font-size="9" font-family="JetBrains Mono, monospace">${firstV}</text>
+      <text x="${(w-padR).toFixed(0)}" y="${(h-2).toFixed(0)}" fill="${color}" font-size="10" font-family="JetBrains Mono, monospace" text-anchor="end" font-weight="600">${lastV}</text>
     </svg>`;
   }
 
@@ -3895,43 +3899,45 @@ function buildExerciseDetailsHtml(ep) {
     </div>`;
 }
 
-window.toggleExerciseDetails = function(idx) {
+// Toggle a SPECIFIC details element (the one immediately after the clicked row only)
+window.toggleExerciseDetailsForRow = function(row) {
   const priorities = (DATA.exercise_priorities || {}).exercises || [];
+  const idx = parseInt(row.dataset.priIdx);
   const ep = priorities[idx];
   if (!ep) return;
-  // Same exercise may appear in BOTH Quick Pick and Library — toggle all instances
-  const allDetails = document.querySelectorAll(`.exercise-details[data-for-idx="${idx}"]`);
-  const allRows = document.querySelectorAll(`.exercise-row[data-pri-idx="${idx}"]`);
-  if (allDetails.length === 0) return;
-  const wasOpen = allDetails[0].classList.contains('open');
-  const willOpen = !wasOpen;
-  const contentHtml = willOpen ? (() => {
-    try { return buildExerciseDetailsHtml(ep); }
-    catch (e) { console.error('details build failed:', e); return '<div style="padding:10px; color:var(--muted);">Error loading details</div>'; }
-  })() : null;
-  allDetails.forEach(details => {
-    if (willOpen) {
-      if (!details.dataset.loaded) {
-        details.innerHTML = contentHtml;
+  const details = row.nextElementSibling;
+  if (!details || !details.classList.contains('exercise-details')) return;
+  const isOpen = details.classList.contains('open');
+  if (isOpen) {
+    details.classList.remove('open');
+  } else {
+    if (!details.dataset.loaded) {
+      try {
+        details.innerHTML = buildExerciseDetailsHtml(ep);
         details.dataset.loaded = '1';
+      } catch (e) {
+        console.error('details build failed:', e);
+        details.innerHTML = '<div style="padding:10px; color:var(--muted);">Error loading details</div>';
       }
-      details.classList.add('open');
-    } else {
-      details.classList.remove('open');
     }
-  });
-  allRows.forEach(row => {
-    const chev = row.querySelector('.exercise-chevron');
-    if (chev) chev.style.transform = willOpen ? 'rotate(180deg)' : '';
-  });
+    details.classList.add('open');
+  }
+  const chev = row.querySelector('.exercise-chevron');
+  if (chev) chev.style.transform = details.classList.contains('open') ? 'rotate(180deg)' : '';
 };
 
-// Event delegation fallback: catch clicks on .exercise-row
+// Legacy idx-based version: opens ALL matching (still used elsewhere if needed). Now redirects to per-row variant.
+window.toggleExerciseDetails = function(idx) {
+  const rows = document.querySelectorAll(`.exercise-row[data-pri-idx="${idx}"]`);
+  if (rows.length > 0) window.toggleExerciseDetailsForRow(rows[0]);
+};
+
+// Event delegation: toggles ONLY the details immediately after the clicked row
+// (so Quick Pick and Library entries open independently even when they share the same exercise)
 document.addEventListener("click", (e) => {
   const row = e.target.closest && e.target.closest(".exercise-row[data-pri-idx]");
   if (!row) return;
-  const idx = parseInt(row.dataset.priIdx);
-  if (!isNaN(idx)) window.toggleExerciseDetails(idx);
+  window.toggleExerciseDetailsForRow(row);
 });
 
 function showProgressionModal(ep) {
