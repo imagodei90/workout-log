@@ -158,17 +158,37 @@
   }
   .item-dropdown:focus { outline: none; border-color: var(--accent); }
   .item-timeinput {
-    background: var(--surface-2); color: var(--text); border: 1px solid var(--border);
-    border-radius: 6px; padding: 4px 6px; font-size: 12px;
-    font-family: 'JetBrains Mono', monospace; cursor: pointer;
-    margin-right: 4px; max-width: 95px; min-height: 28px;
-    -webkit-appearance: none; appearance: none;
+    background: var(--surface-2);
+    color: var(--text);
+    -webkit-text-fill-color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-size: 13px;
+    font-family: 'JetBrains Mono', monospace;
+    cursor: pointer;
+    margin-right: 4px;
+    min-width: 90px;
+    max-width: 110px;
+    min-height: 32px;
+    -webkit-appearance: none;
+    appearance: none;
+    text-align: center;
+    color-scheme: dark;
+    box-shadow: inset 0 0 0 0px transparent;
   }
   .item-timeinput:focus { outline: none; border-color: var(--accent); }
   .item-timeinput::-webkit-calendar-picker-indicator {
     filter: invert(60%) sepia(60%) saturate(8000%) hue-rotate(310deg);
     cursor: pointer;
+    margin-left: 4px;
   }
+  /* iOS: ensure text remains visible against dark bg */
+  .item-timeinput::-webkit-datetime-edit { color: var(--text); }
+  .item-timeinput::-webkit-datetime-edit-fields-wrapper { color: var(--text); }
+  .item-timeinput::-webkit-datetime-edit-hour-field,
+  .item-timeinput::-webkit-datetime-edit-minute-field,
+  .item-timeinput::-webkit-datetime-edit-text { color: var(--text); }
 
   /* Heatmap (workout dashboard style) */
   .heatmap-card { padding: 16px; }
@@ -478,8 +498,9 @@ function renderSections() {
       let dropdownHtml = "";
       if (it.timeInput) {
         // Native time picker — supports minute precision (e.g. 6:05). iOS shows wheel picker.
-        const selectedTime = currentMeta.wake_up_time || "";
-        dropdownHtml = `<input type="time" class="item-timeinput" value="${selectedTime}" step="300" placeholder="${it.defaultTime || ''}" onclick="event.stopPropagation()" onchange="window.setWakeUpTime(event)">`;
+        // Always show a value (defaultTime fallback) so the input is visually obvious on dark mode iOS Chrome.
+        const selectedTime = currentMeta.wake_up_time || it.defaultTime || "05:30";
+        dropdownHtml = `<input type="time" class="item-timeinput" value="${selectedTime}" step="300" onclick="event.stopPropagation()" onchange="window.setWakeUpTime(event)">`;
       } else if (it.timeOptions) {
         const selectedTime = currentMeta.wake_up_time || it.defaultTime || it.timeOptions[0];
         const opts = it.timeOptions.map(t => `<option value="${t}"${t === selectedTime ? ' selected' : ''}>${t}</option>`).join("");
