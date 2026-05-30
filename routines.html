@@ -498,8 +498,12 @@ function renderSections() {
       let dropdownHtml = "";
       if (it.timeInput) {
         // Native time picker — supports minute precision (e.g. 6:05). iOS shows wheel picker.
-        // Always show a value (defaultTime fallback) so the input is visually obvious on dark mode iOS Chrome.
-        const selectedTime = currentMeta.wake_up_time || it.defaultTime || "05:30";
+        // Normalize "5:30" → "05:30" for input[type=time] (browser requires HH:MM)
+        let rawTime = currentMeta.wake_up_time || it.defaultTime || "05:30";
+        const normMatch = rawTime.match(/^(\d{1,2}):(\d{1,2})$/);
+        const selectedTime = normMatch
+          ? `${normMatch[1].padStart(2, '0')}:${normMatch[2].padStart(2, '0')}`
+          : rawTime;
         dropdownHtml = `<input type="time" class="item-timeinput" value="${selectedTime}" step="300" onclick="event.stopPropagation()" onchange="window.setWakeUpTime(event)">`;
       } else if (it.timeOptions) {
         const selectedTime = currentMeta.wake_up_time || it.defaultTime || it.timeOptions[0];
