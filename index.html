@@ -1605,10 +1605,11 @@ function buildPRDetailsHtml(name) {
   const bp = bodyPart(name);
   const c = BP_COLORS[bp] || 'var(--muted)';
   const periodDays = window.PR_PERIOD_DAYS || 90;
+  const isAllTime = periodDays >= 9999;
   const today = new Date(); today.setHours(0,0,0,0);
-  const cutoff = new Date(today); cutoff.setDate(cutoff.getDate() - periodDays);
-  const periodLabel = periodDays === 365 ? '지난 1년' : periodDays === 180 ? '지난 6개월' : `지난 ${periodDays}일`;
-  const liftsInPeriod = lifts.filter(l => parseDateOnly(dateOnly(l.date)) >= cutoff);
+  const cutoff = isAllTime ? new Date(0) : (() => { const c = new Date(today); c.setDate(c.getDate() - periodDays); return c; })();
+  const periodLabel = isAllTime ? '전체 기간' : periodDays === 365 ? '지난 1년' : periodDays === 180 ? '지난 6개월' : `지난 ${periodDays}일`;
+  const liftsInPeriod = isAllTime ? lifts : lifts.filter(l => parseDateOnly(dateOnly(l.date)) >= cutoff);
   const byDate = new Map();
   for (const l of liftsInPeriod) {
     const d = dateOnly(l.date);
@@ -1619,11 +1620,15 @@ function buildPRDetailsHtml(name) {
   if (prog.length >= 2) {
     const w = 800, h = 90, padL = 32, padR = 32, padT = 10, padB = 18;
     const maxV = Math.max(...prog.map(p => p[1]), 1);
-    const tRng = today.getTime() - cutoff.getTime();
-    const xS = t => padL + (t - cutoff.getTime()) / tRng * (w - padL - padR);
+    const firstSessionT = parseDateOnly(prog[0][0]).getTime();
+    const xMin = isAllTime ? firstSessionT : cutoff.getTime();
+    const xMax = today.getTime();
+    const tRng = xMax - xMin || 1;
+    const xS = t => padL + (t - xMin) / tRng * (w - padL - padR);
     const yS = v => h - padB - v / maxV * (h - padT - padB);
     const pts = prog.map(([d, v]) => `${xS(parseDateOnly(d).getTime()).toFixed(1)},${yS(v).toFixed(1)}`).join(' L');
     const dots = prog.map(([d, v]) => `<circle cx="${xS(parseDateOnly(d).getTime()).toFixed(1)}" cy="${yS(v).toFixed(1)}" r="2.5" fill="${c}"/>`).join('');
+    const leftLabel = isAllTime ? prog[0][0] : `${periodDays}d 전`;
     chartHtml = `
       <div style="margin: 6px 0 12px;">
         <div class="label-mono" style="margin-bottom:6px;">PR 진행 (${periodLabel} · max weight per session)</div>
@@ -1632,7 +1637,7 @@ function buildPRDetailsHtml(name) {
           <text x="0" y="${h-padB+4}" fill="var(--muted)" font-size="9" font-family="JetBrains Mono, monospace">0</text>
           <path d="M${pts}" stroke="${c}" stroke-width="1.5" fill="none"/>
           ${dots}
-          <text x="${padL}" y="${h-4}" fill="var(--muted)" font-size="9" font-family="JetBrains Mono, monospace">${periodDays}d 전</text>
+          <text x="${padL}" y="${h-4}" fill="var(--muted)" font-size="9" font-family="JetBrains Mono, monospace">${leftLabel}</text>
           <text x="${w-padR}" y="${h-4}" fill="var(--muted)" font-size="9" text-anchor="end" font-family="JetBrains Mono, monospace">오늘</text>
         </svg>
       </div>`;
@@ -1688,9 +1693,10 @@ window.togglePRDetailsForRow = function(row) {
 
 function renderPRActivity() {
   const periodDays = window.PR_PERIOD_DAYS || 90;
+  const isAllTime = periodDays >= 9999;
   const today = new Date(); today.setHours(0,0,0,0);
-  const cutoff = new Date(today); cutoff.setDate(cutoff.getDate() - periodDays);
-  const lifts = (DATA.lifts || []).filter(l => parseDateOnly(dateOnly(l.date)) >= cutoff);
+  const cutoff = isAllTime ? new Date(0) : (() => { const c = new Date(today); c.setDate(c.getDate() - periodDays); return c; })();
+  const lifts = isAllTime ? (DATA.lifts || []) : (DATA.lifts || []).filter(l => parseDateOnly(dateOnly(l.date)) >= cutoff);
   const exMap = new Map();
   for (const l of lifts) {
     const ex = l.exercise || '(unnamed)';
@@ -1711,7 +1717,7 @@ function renderPRActivity() {
     .sort((a, b) => b.sets - a.sets);
   const visible = window.PR_SHOW_ALL ? list : list.slice(0, 20);
 
-  const periodOpts = [{d:30,l:'30d'},{d:60,l:'60d'},{d:90,l:'90d'},{d:180,l:'6mo'},{d:365,l:'1y'}];
+  const periodOpts = [{d:30,l:'30d'},{d:60,l:'60d'},{d:90,l:'90d'},{d:180,l:'6mo'},{d:365,l:'1y'},{d:9999,l:'All time'}];
   const periodChips = periodOpts.map(o => {
     const active = o.d === periodDays;
     return `<button onclick="window.setPRPeriod(${o.d})" style="background:${active?'var(--lift)':'transparent'}; color:${active?'white':'var(--lift)'}; border:1px solid var(--lift); padding:5px 14px; border-radius:999px; font-family:'JetBrains Mono', monospace; font-size:11px; cursor:pointer; font-weight:${active?'600':'400'};">${o.l}</button>`;
@@ -1757,7 +1763,7 @@ function renderPRActivity() {
       </button>`
     : '';
 
-  const periodLabel = periodDays === 365 ? '지난 1년' : periodDays === 180 ? '지난 6개월' : `지난 ${periodDays}일`;
+  const periodLabel = isAllTime ? '전체 기간' : periodDays === 365 ? '지난 1년' : periodDays === 180 ? '지난 6개월' : `지난 ${periodDays}일`;
   return `
     <h2 style="margin-top:24px;">💪 PR Activity</h2>
     <div style="display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap;">${periodChips}</div>
