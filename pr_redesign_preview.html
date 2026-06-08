@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>PR 탭 리디자인 Preview</title>
+<style>
+:root {
+  --bg: #0a0a0a;
+  --surface: #18181b;
+  --surface-2: #27272a;
+  --text: #fafafa;
+  --muted: #71717a;
+  --border: #27272a;
+  --lift: #FF1A8C;
+  --run: #FF4D00;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  padding: 40px 20px; line-height: 1.5;
+}
+.container { max-width: 1100px; margin: 0 auto; }
+h1 { font-size: 24px; margin-bottom: 8px; }
+h2 { font-size: 18px; margin: 32px 0 16px; color: var(--lift); border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+h3 { font-size: 14px; margin: 16px 0 8px; color: var(--muted); font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; }
+.intro { color: var(--muted); margin-bottom: 32px; font-size: 14px; }
+.mono { font-family: "JetBrains Mono", monospace; }
+
+/* 공통 카드 스타일 */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+.label-mono { font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--muted); letter-spacing: 0.1em; }
+
+/* Period chips */
+.period-row { display: flex; gap: 6px; margin-bottom: 16px; }
+.chip { background: var(--surface-2); color: var(--text); border: 1px solid var(--border); border-radius: 999px; padding: 6px 14px; font-family: "JetBrains Mono", monospace; font-size: 11px; cursor: pointer; }
+.chip.active { background: var(--lift); color: white; border-color: var(--lift); }
+
+/* BP Progress 카드 (Option B/C용) */
+.bp-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+.bp-card { background: var(--surface-2); border-radius: 8px; padding: 10px; text-align: center; }
+.bp-card .bp-name { font-family: "JetBrains Mono", monospace; font-size: 10px; letter-spacing: 0.1em; margin-bottom: 4px; }
+.bp-card .bp-trend { font-family: "JetBrains Mono", monospace; font-size: 13px; }
+
+/* PR Activity 카드 (메인뷰) */
+.pr-card-list { display: flex; flex-direction: column; gap: 8px; }
+.pr-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+  padding: 14px 16px; cursor: pointer; transition: border-color 0.15s;
+}
+.pr-card:hover { border-color: var(--lift); }
+.pr-card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.pr-card-name { font-size: 15px; font-weight: 600; }
+.pr-card-meta { font-family: "JetBrains Mono", monospace; font-size: 10px; color: var(--muted); }
+.pr-card-best {
+  font-family: "JetBrains Mono", monospace; font-size: 13px;
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+}
+.pr-weight { color: var(--lift); font-weight: 600; font-size: 16px; }
+.pr-date { color: var(--muted); font-size: 11px; }
+.pr-stalled { color: #fbbf24; }
+.bp-badge { background: rgba(255,26,140,0.15); color: var(--lift); padding: 2px 8px; border-radius: 6px; font-family: "JetBrains Mono", monospace; font-size: 9px; letter-spacing: 0.1em; }
+.bp-badge.legs { background: rgba(132,204,22,0.15); color: #84cc16; }
+.bp-badge.chest { background: rgba(255,77,0,0.15); color: var(--run); }
+.bp-badge.back { background: rgba(56,189,248,0.15); color: #38bdf8; }
+.bp-badge.shoulders { background: rgba(251,191,36,0.15); color: #fbbf24; }
+.bp-badge.arms { background: rgba(168,85,247,0.15); color: #a855f7; }
+
+/* 인라인 accordion */
+.pr-detail-inline {
+  background: var(--surface-2); border-top: 1px dashed var(--border);
+  margin-top: 10px; padding: 14px 0 4px;
+}
+.session-row { display: flex; justify-content: space-between; padding: 6px 0; font-family: "JetBrains Mono", monospace; font-size: 12px; border-bottom: 1px solid var(--border); }
+.session-row:last-child { border-bottom: none; }
+.session-row .d { color: var(--muted); }
+
+/* 모달 */
+.modal-bg { background: rgba(0,0,0,0.7); padding: 24px; border-radius: 12px; }
+.modal-box { background: var(--surface); border-radius: 12px; padding: 20px; max-width: 600px; margin: 0 auto; }
+
+/* "더보기" 펼침 */
+.show-more {
+  background: transparent; color: var(--muted); border: 1px dashed var(--border);
+  border-radius: 8px; padding: 12px; width: 100%; text-align: center;
+  font-family: "JetBrains Mono", monospace; font-size: 12px; cursor: pointer; margin-top: 8px;
+}
+
+/* Stalled 표시 */
+.pr-card.stalled { border-left: 3px solid #fbbf24; }
+
+/* 옵션 간격 */
+.option-block { margin-bottom: 60px; padding: 20px; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px solid var(--border); }
+.option-tag {
+  display: inline-block; background: var(--lift); color: white; padding: 4px 12px;
+  border-radius: 6px; font-family: "JetBrains Mono", monospace; font-size: 11px;
+  letter-spacing: 0.1em; margin-bottom: 16px;
+}
+
+/* Side by side */
+.side-by-side { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.side-by-side h3 { margin-top: 0; }
+
+/* mini sparkline */
+.spark { display: inline-flex; gap: 1px; align-items: flex-end; height: 14px; margin-left: 6px; }
+.spark span { width: 3px; background: currentColor; }
+
+/* mini PR chart for inline */
+.pr-mini-svg { width: 100%; height: 80px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>PR 탭 리디자인 — Preview</h1>
+<p class="intro">기간 90일 기준, 세트 수 desc 정렬, 상위 20개 + 펼치기. 옵션 3개 + 클릭 동작 2개 비교.</p>
+
+<!-- ============================ -->
+<!-- OPTION A: 메인뷰만 -->
+<!-- ============================ -->
+<div class="option-block">
+  <span class="option-tag">OPTION A — 메인뷰만</span>
+  <p style="color: var(--muted); margin-bottom: 16px; font-size: 13px;">
+    기존 상단 3 섹션 (BP Progress / Stalled / Timeline) 다 제거. PR Activity 카드 리스트 하나만 + Body Part Summary + Running Stats 유지. <strong>가장 깔끔.</strong>
+  </p>
+
+  <div class="period-row">
+    <button class="chip">30d</button>
+    <button class="chip">60d</button>
+    <button class="chip active">90d</button>
+    <button class="chip">6mo</button>
+    <button class="chip">1y</button>
+  </div>
+
+  <div class="label-mono" style="margin-bottom: 8px;">💪 PR ACTIVITY — TOP 20 BY SETS (LAST 90 DAYS)</div>
+
+  <div class="pr-card-list">
+
+    <div class="pr-card">
+      <div class="pr-card-head">
+        <span class="pr-card-name">Squat <span class="bp-badge legs">LEGS</span></span>
+        <span class="pr-card-meta">96 sets · 24 sessions</span>
+      </div>
+      <div class="pr-card-best">
+        <span class="pr-weight">110.0 kg × 5</span>
+        <span class="pr-date">📅 2026-05-15 (24일 전)</span>
+      </div>
+    </div>
+
+    <div class="pr-card">
+      <div class="pr-card-head">
+        <span class="pr-card-name">Bench Press <span class="bp-badge chest">CHEST</span></span>
+        <span class="pr-card-meta">88 sets · 22 sessions</span>
+      </div>
+      <div class="pr-card-best">
+        <span class="pr-weight">80.0 kg × 8</span>
+        <span class="pr-date">📅 2026-04-28 (40일 전)</span>
+      </div>
+    </div>
+
+    <div class="pr-card stalled">
+      <div class="pr-card-head">
+        <span class="pr-card-name">Deadlift <span class="bp-badge back">BACK</span></span>
+        <span class="pr-card-meta">72 sets · 18 sessions</span>
+      </div>
+      <div class="pr-card-best">
+        <span class="pr-weight">140.0 kg × 3</span>
+        <span class="pr-date pr-stalled">⏸ 2026-02-10 (118일 전 — 정체)</span>
+      </div>
+    </div>
+
+    <div class="pr-card">
+      <div class="pr-card-head">
+        <span class="pr-card-name">Lateral Raise <span class="bp-badge shoulders">SHOULDERS</span></span>
+        <span class="pr-card-meta">64 sets · 16 sessions</span>
+      </div>
+      <div class="pr-card-best">
+        <span class="pr-weight">14.0 kg × 12</span>
+        <span class="pr-date">📅 2026-05-28 (11일 전)</span>
+      </div>
+    </div>
+
+    <div class="pr-card">
+      <div class="pr-card-head">
+        <span class="pr-card-name">Pull-up <span class="bp-badge back">BACK</span></span>
+        <span class="pr-card-meta">52 sets · 14 sessions</span>
+      </div>
+      <div class="pr-card-best">
+        <span class="pr-weight">BW × 11</span>
+        <span class="pr-date">📅 2026-06-03 (5일 전)</span>
+      </div>
+    </div>
+
+    <div style="text-align: center; color: var(--muted); padding: 8px; font-size: 12px;">⋮ (15개 더)</div>
+
+  </div>
+
+  <button class="show-more">▼ 전체 47개 운동 펼치기</button>
+</div>
+
+<!-- ============================ -->
+<!-- OPTION B: BP Progress 헤더 + 메인뷰 -->
+<!-- ============================ -->
+<div class="option-block">
+  <span class="option-tag" style="background: #38bdf8;">OPTION B — BP Progress만 헤더 유지</span>
+  <p style="color: var(--muted); margin-bottom: 16px; font-size: 13px;">
+    부위별 progress 6개 카드는 위에 헤더로 남김 (전체적인 부위 균형 한눈에). Stalled/Timeline은 제거 — Stalled는 메인뷰 카드에 노란 좌측 줄로 표시. <strong>밸런스형.</strong>
+  </p>
+
+  <div class="period-row">
+    <button class="chip">30d</button>
+    <button class="chip">60d</button>
+    <button class="chip active">90d</button>
+    <button class="chip">6mo</button>
+    <button class="chip">1y</button>
+  </div>
+
+  <div class="card" style="margin-bottom: 16px;">
+    <div class="label-mono" style="margin-bottom: 10px;">📊 BODY PART PROGRESS</div>
+    <div class="bp-grid">
+      <div class="bp-card">
+        <div class="bp-name" style="color: #fbbf24;">SHOULDERS</div>
+        <div class="bp-trend" style="color: #84cc16;">↗ +12%</div>
+      </div>
+      <div class="bp-card">
+        <div class="bp-name" style="color: #38bdf8;">BACK</div>
+        <div class="bp-trend" style="color: #f43f5e;">↓ -8%</div>
+      </div>
+      <div class="bp-card">
+        <div class="bp-name" style="color: var(--run);">CHEST</div>
+        <div class="bp-trend" style="color: #fbbf24;">⏸ flat</div>
+      </div>
+      <div class="bp-card">
+        <div class="bp-name" style="color: #a855f7;">ARMS</div>
+        <div class="bp-trend" style="color: #84cc16;">↑ +18%</div>
+      </div>
+      <div class="bp-card">
+        <div class="bp-name" style="color: #84cc16;">LEGS</div>
+        <div class="bp-trend" style="color: #84cc16;">↗ +5%</div>
+      </div>
+      <div class="bp-card">
+        <div class="bp-name" style="color: var(--muted);">CORE</div>
+        <div class="bp-trend" style="color: var(--muted);">➡ 0%</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="label-mono" style="margin-bottom: 8px;">💪 PR ACTIVITY — TOP 20 BY SETS</div>
+  <div class="pr-card-list">
+    <div class="pr-card">
+      <div class="pr-card-head">
+        <span class="pr-card-name">Squat <span class="bp-badge legs">LEGS</span></span>
+        <span class="pr-card-meta">96 sets · 24 sessions</span>
+      </div>
+      <div class="pr-card-best">
+        <span class="pr-weight">110.0 kg × 5</span>
+        <span class="pr-date">📅 2026-05-15 (24일 전)</span>
+      </div>
+    </div>
+    <div class="pr-card stalled">
+      <div class="pr-card-head">
+        <span class="pr-card-name">Deadlift <span class="bp-badge back">BACK</span></span>
+        <span class="pr-card-meta">72 sets · 18 sessions</span>
+      </div>
+      <div class="pr-card-best">
+        <span class="pr-weight">140.0 kg × 3</span>
+        <span class="pr-date pr-stalled">⏸ 2026-02-10 (정체)</span>
+      </div>
+    </div>
+    <div style="text-align: center; color: var(--muted); padding: 8px; font-size: 12px;">⋮</div>
+  </div>
+  <button class="show-more">▼ 전체 47개 운동 펼치기</button>
+</div>
+
+<!-- ============================ -->
+<!-- OPTION C: 전부 유지 -->
+<!-- ============================ -->
+<div class="option-block">
+  <span class="option-tag" style="background: #71717a;">OPTION C — 전부 유지 + 메인뷰 추가</span>
+  <p style="color: var(--muted); margin-bottom: 16px; font-size: 13px;">
+    기존 3 섹션 (BP Progress / Stalled / PR Timeline) 그대로 + 새 PR Activity 메인뷰만 추가. <strong>정보량 최대, 스크롤 김.</strong>
+  </p>
+
+  <div class="card" style="margin-bottom: 8px;">
+    <div class="label-mono">📊 BODY PART PROGRESS — last 12 weeks</div>
+    <div style="color: var(--muted); font-size: 12px; padding: 12px 0;">[6 부위 카드, 자체 기간 4w/8w/12w/24w/1y]</div>
+  </div>
+
+  <div class="card" style="margin-bottom: 8px; border-color: rgba(251,191,36,0.30); background: rgba(251,191,36,0.04);">
+    <div class="label-mono" style="color: #fbbf24;">⏸ STALLED PRs — 60+ days no new PR</div>
+    <div style="color: var(--muted); font-size: 12px; padding: 12px 0;">[Stalled 운동 10개 리스트, 자체 기간 30/60/90/120d]</div>
+  </div>
+
+  <div class="card" style="margin-bottom: 8px;">
+    <div class="label-mono">📈 PR TIMELINE — priority exercises (last 1 year)</div>
+    <div style="color: var(--muted); font-size: 12px; padding: 12px 0;">[우선순위 운동 8개의 1년 PR 점 분포]</div>
+  </div>
+
+  <hr style="border: none; border-top: 1px dashed var(--border); margin: 16px 0;">
+
+  <div class="period-row">
+    <button class="chip">30d</button>
+    <button class="chip">60d</button>
+    <button class="chip active">90d</button>
+    <button class="chip">6mo</button>
+    <button class="chip">1y</button>
+  </div>
+
+  <div class="label-mono" style="margin-bottom: 8px;">💪 PR ACTIVITY — TOP 20 BY SETS (NEW)</div>
+  <div class="pr-card-list">
+    <div class="pr-card">
+      <div class="pr-card-head">
+        <span class="pr-card-name">Squat <span class="bp-badge legs">LEGS</span></span>
+        <span class="pr-card-meta">96 sets · 24 sessions</span>
+      </div>
+      <div class="pr-card-best">
+        <span class="pr-weight">110.0 kg × 5</span>
+        <span class="pr-date">📅 2026-05-15 (24일 전)</span>
+      </div>
+    </div>
+    <div style="text-align: center; color: var(--muted); padding: 8px; font-size: 12px;">⋮</div>
+  </div>
+</div>
+
+<!-- ============================ -->
+<!-- 클릭 동작 비교 -->
+<!-- ============================ -->
+<h2 style="margin-top: 60px;">🖱 운동 카드 클릭 시 — 두 방식 비교</h2>
+
+<div class="side-by-side">
+
+  <!-- 인라인 accordion -->
+  <div>
+    <h3>방식 1 — 인라인 펼침</h3>
+    <p style="color: var(--muted); font-size: 12px; margin-bottom: 12px;">
+      카드 바로 밑에 ▾ 형태로 펼쳐짐. 다른 카드들도 옆에 계속 보임. Plan 탭과 동일.
+    </p>
+
+    <div class="pr-card-list">
+      <div class="pr-card">
+        <div class="pr-card-head">
+          <span class="pr-card-name">Bench Press <span class="bp-badge chest">CHEST</span></span>
+          <span class="pr-card-meta">88 sets</span>
+        </div>
+        <div class="pr-card-best">
+          <span class="pr-weight">80.0 kg × 8</span>
+          <span class="pr-date">📅 40일 전</span>
+        </div>
+      </div>
+
+      <!-- 펼쳐진 운동 (Squat) -->
+      <div class="pr-card" style="border-color: var(--lift);">
+        <div class="pr-card-head">
+          <span class="pr-card-name">Squat ▾ <span class="bp-badge legs">LEGS</span></span>
+          <span class="pr-card-meta">96 sets</span>
+        </div>
+        <div class="pr-card-best">
+          <span class="pr-weight">110.0 kg × 5</span>
+          <span class="pr-date">📅 24일 전</span>
+        </div>
+
+        <!-- INLINE DETAIL -->
+        <div class="pr-detail-inline">
+          <div class="label-mono" style="margin-bottom: 8px;">PR 진행 (90일)</div>
+          <svg class="pr-mini-svg" viewBox="0 0 600 80" preserveAspectRatio="none">
+            <path d="M20,60 L100,55 L180,50 L260,40 L340,30 L420,20 L500,15 L580,10" stroke="#FF1A8C" stroke-width="2" fill="none"/>
+            <circle cx="20" cy="60" r="3" fill="#FF1A8C"/>
+            <circle cx="100" cy="55" r="3" fill="#FF1A8C"/>
+            <circle cx="180" cy="50" r="3" fill="#FF1A8C"/>
+            <circle cx="260" cy="40" r="3" fill="#FF1A8C"/>
+            <circle cx="340" cy="30" r="3" fill="#FF1A8C"/>
+            <circle cx="420" cy="20" r="3" fill="#FF1A8C"/>
+            <circle cx="500" cy="15" r="3" fill="#FF1A8C"/>
+            <circle cx="580" cy="10" r="4" fill="#84cc16"/>
+          </svg>
+
+          <div class="label-mono" style="margin: 12px 0 8px;">최근 5 세션</div>
+          <div class="session-row"><span>2026-05-15</span><span class="mono">110kg × 5, 5, 4</span></div>
+          <div class="session-row"><span>2026-05-08</span><span class="mono">105kg × 5, 5, 5</span></div>
+          <div class="session-row"><span>2026-04-30</span><span class="mono">100kg × 5, 6, 5</span></div>
+          <div class="session-row"><span>2026-04-22</span><span class="mono">100kg × 5, 5, 4</span></div>
+          <div class="session-row"><span>2026-04-15</span><span class="mono">95kg × 6, 6, 5</span></div>
+        </div>
+      </div>
+
+      <div class="pr-card">
+        <div class="pr-card-head">
+          <span class="pr-card-name">Deadlift <span class="bp-badge back">BACK</span></span>
+          <span class="pr-card-meta">72 sets</span>
+        </div>
+        <div class="pr-card-best">
+          <span class="pr-weight">140.0 kg × 3</span>
+          <span class="pr-date">📅 118일 전</span>
+        </div>
+      </div>
+    </div>
+
+    <p style="color: var(--muted); font-size: 11px; margin-top: 12px;">
+      ✓ 컨텍스트 안 끊김<br>
+      ✓ 여러 운동 비교하면서 보기 좋음<br>
+      ✗ 펼치면 페이지 길어짐
+    </p>
+  </div>
+
+  <!-- 모달 -->
+  <div>
+    <h3>방식 2 — 모달 팝업</h3>
+    <p style="color: var(--muted); font-size: 12px; margin-bottom: 12px;">
+      화면 가운데 별도 창. 카드 리스트는 뒤로 흐려지고, 운동 하나에 집중.
+    </p>
+
+    <div class="modal-bg">
+      <div class="modal-box">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+          <div>
+            <span class="bp-badge legs">LEGS</span>
+            <h3 style="margin: 6px 0 0; text-transform: none; letter-spacing: 0; color: var(--text); font-size: 18px;">Squat</h3>
+          </div>
+          <button style="background: transparent; border: none; color: var(--muted); font-size: 20px; cursor: pointer;">×</button>
+        </div>
+
+        <div class="mono" style="color: var(--muted); font-size: 12px; margin-bottom: 12px;">
+          24 sessions · 96 sets · 9,840 kg total volume · PR 110.0 kg (2026-05-15)
+        </div>
+
+        <div class="label-mono" style="margin-bottom: 6px;">PR PROGRESSION (90d)</div>
+        <svg class="pr-mini-svg" viewBox="0 0 600 80" preserveAspectRatio="none">
+          <path d="M20,60 L100,55 L180,50 L260,40 L340,30 L420,20 L500,15 L580,10" stroke="#FF1A8C" stroke-width="2" fill="none"/>
+          <circle cx="20" cy="60" r="3" fill="#FF1A8C"/>
+          <circle cx="580" cy="10" r="4" fill="#84cc16"/>
+        </svg>
+
+        <div class="label-mono" style="margin: 12px 0 6px;">RECENT SESSIONS</div>
+        <div class="session-row"><span>2026-05-15</span><span class="mono">110kg × 5, 5, 4</span></div>
+        <div class="session-row"><span>2026-05-08</span><span class="mono">105kg × 5, 5, 5</span></div>
+        <div class="session-row"><span>2026-04-30</span><span class="mono">100kg × 5, 6, 5</span></div>
+      </div>
+    </div>
+
+    <p style="color: var(--muted); font-size: 11px; margin-top: 12px;">
+      ✓ 한 운동에 집중<br>
+      ✓ 페이지 길이 안 변함<br>
+      ✗ 닫고 다시 클릭해서 다른 운동 봐야
+    </p>
+  </div>
+
+</div>
+
+<p style="color: var(--muted); margin-top: 60px; padding-top: 20px; border-top: 1px solid var(--border); font-size: 12px;">
+  📁 C:\tmp\workout\mockups\pr_redesign_preview.html
+</p>
+
+</div>
+</body>
+</html>
