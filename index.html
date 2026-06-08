@@ -1604,8 +1604,13 @@ function buildPRDetailsHtml(name) {
   }
   const bp = bodyPart(name);
   const c = BP_COLORS[bp] || 'var(--muted)';
+  const periodDays = window.PR_PERIOD_DAYS || 90;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const cutoff = new Date(today); cutoff.setDate(cutoff.getDate() - periodDays);
+  const periodLabel = periodDays === 365 ? '지난 1년' : periodDays === 180 ? '지난 6개월' : `지난 ${periodDays}일`;
+  const liftsInPeriod = lifts.filter(l => parseDateOnly(dateOnly(l.date)) >= cutoff);
   const byDate = new Map();
-  for (const l of lifts) {
+  for (const l of liftsInPeriod) {
     const d = dateOnly(l.date);
     if (!byDate.has(d) || (l.weight || 0) > byDate.get(d)) byDate.set(d, l.weight || 0);
   }
@@ -1614,25 +1619,27 @@ function buildPRDetailsHtml(name) {
   if (prog.length >= 2) {
     const w = 800, h = 90, padL = 32, padR = 32, padT = 10, padB = 18;
     const maxV = Math.max(...prog.map(p => p[1]), 1);
-    const minT = parseDateOnly(prog[0][0]).getTime();
-    const maxT = parseDateOnly(prog[prog.length - 1][0]).getTime();
-    const tRng = maxT - minT || 1;
-    const xS = t => padL + (t - minT) / tRng * (w - padL - padR);
+    const tRng = today.getTime() - cutoff.getTime();
+    const xS = t => padL + (t - cutoff.getTime()) / tRng * (w - padL - padR);
     const yS = v => h - padB - v / maxV * (h - padT - padB);
     const pts = prog.map(([d, v]) => `${xS(parseDateOnly(d).getTime()).toFixed(1)},${yS(v).toFixed(1)}`).join(' L');
     const dots = prog.map(([d, v]) => `<circle cx="${xS(parseDateOnly(d).getTime()).toFixed(1)}" cy="${yS(v).toFixed(1)}" r="2.5" fill="${c}"/>`).join('');
     chartHtml = `
       <div style="margin: 6px 0 12px;">
-        <div class="label-mono" style="margin-bottom:6px;">PR 진행 (전체 기간 · max weight per session)</div>
+        <div class="label-mono" style="margin-bottom:6px;">PR 진행 (${periodLabel} · max weight per session)</div>
         <svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" style="width:100%; height:auto; max-height:90px; display:block;">
           <text x="0" y="${padT+4}" fill="var(--muted)" font-size="9" font-family="JetBrains Mono, monospace">${maxV.toFixed(0)}</text>
           <text x="0" y="${h-padB+4}" fill="var(--muted)" font-size="9" font-family="JetBrains Mono, monospace">0</text>
           <path d="M${pts}" stroke="${c}" stroke-width="1.5" fill="none"/>
           ${dots}
-          <text x="${padL}" y="${h-4}" fill="var(--muted)" font-size="9" font-family="JetBrains Mono, monospace">${prog[0][0]}</text>
-          <text x="${w-padR}" y="${h-4}" fill="var(--muted)" font-size="9" text-anchor="end" font-family="JetBrains Mono, monospace">${prog[prog.length-1][0]}</text>
+          <text x="${padL}" y="${h-4}" fill="var(--muted)" font-size="9" font-family="JetBrains Mono, monospace">${periodDays}d 전</text>
+          <text x="${w-padR}" y="${h-4}" fill="var(--muted)" font-size="9" text-anchor="end" font-family="JetBrains Mono, monospace">오늘</text>
         </svg>
       </div>`;
+  } else if (prog.length === 1) {
+    chartHtml = `<div style="margin: 6px 0 12px; color:var(--muted); font-size:11px; font-family:'JetBrains Mono', monospace;">${periodLabel} 내 세션 1개 — 진행 그래프 표시 불가</div>`;
+  } else {
+    chartHtml = `<div style="margin: 6px 0 12px; color:var(--muted); font-size:11px; font-family:'JetBrains Mono', monospace;">${periodLabel} 내 세션 없음</div>`;
   }
   const dates = [...new Set(lifts.map(l => dateOnly(l.date)))].sort().slice(-5).reverse();
   let sessionsHtml = '';
@@ -1751,80 +1758,10 @@ function renderPRActivity() {
     : '';
 
   const periodLabel = periodDays === 365 ? '지난 1년' : periodDays === 180 ? '지난 6개월' : `지난 ${periodDays}일`;
-
-  // === Timeline: top 8 exercises by sets, PR events within period ===
-  const periodSpan = today.getTime() - cutoff.getTime();
-  const timelineRows = list.slice(0, 8).map(e => {
-    const exLifts = (DATA.lifts || [])
-      .filter(l => l.exercise === e.name && parseDateOnly(dateOnly(l.date)) >= cutoff)
-      .sort((a, b) => a.date.localeCompare(b.date));
-    const events = [];
-    let rmW = 0, rmR = 0;
-    for (const l of exLifts) {
-      const w = l.weight || 0, r = l.reps || 0;
-      if (w > rmW || (w === rmW && r > rmR)) {
-        rmW = w; rmR = r;
-        events.push({date: dateOnly(l.date), weight: w, reps: r});
-      }
-    }
-    return {name: e.name, bp: e.bp, sets: e.sets, events};
-  }).filter(t => t.events.length >= 1);
-
-  const timelineHtml = timelineRows.length > 0 ? (() => {
-    const rows = timelineRows.map(t => {
-      const c = BP_COLORS[t.bp] || '#FF1A8C';
-      const last = t.events[t.events.length - 1];
-      const lastDaysSince = Math.floor((today - parseDateOnly(last.date)) / 86400000);
-      const stalled = lastDaysSince >= 60;
-      const dots = t.events.map((ev, i) => {
-        const dt = parseDateOnly(ev.date);
-        const pos = Math.max(0, Math.min(100, (dt.getTime() - cutoff.getTime()) / periodSpan * 100));
-        const isLast = ev === last;
-        const dotColor = isLast && stalled ? '#fbbf24' : (isLast ? '#84cc16' : c);
-        const wStr = ev.weight > 0 ? (ev.weight % 1 === 0 ? ev.weight.toFixed(0) : ev.weight.toFixed(1)) : 'BW';
-        const above = i % 2 === 0;
-        const labelStyle = above
-          ? `bottom: 20px; left: ${pos.toFixed(1)}%; transform: translateX(-50%);`
-          : `top: 20px; left: ${pos.toFixed(1)}%; transform: translateX(-50%);`;
-        return `<div class="pr-event" style="left:${pos.toFixed(1)}%; background:${dotColor};" title="${ev.date} — ${wStr}kg × ${ev.reps}"></div>
-          <div class="pr-event-label" style="${labelStyle} color:${dotColor};">${wStr}×${ev.reps}</div>`;
-      }).join('');
-      const statusBadge = stalled
-        ? `<span style="color:#fbbf24; font-size:10px;">⏸ ${lastDaysSince}d</span>`
-        : `<span style="color:#84cc16; font-size:10px;">↑ ${lastDaysSince}d</span>`;
-      const first = t.events[0];
-      const deltaPct = first.weight > 0 ? ((last.weight - first.weight) / first.weight * 100) : 0;
-      const deltaText = t.events.length >= 2
-        ? `<span style="color:${deltaPct >= 0 ? '#84cc16' : '#f43f5e'}; font-family:'JetBrains Mono', monospace; font-size:10px;">${deltaPct >= 0 ? '+' : ''}${deltaPct.toFixed(0)}% (${t.events.length} PRs)</span>`
-        : `<span style="color:var(--muted); font-family:'JetBrains Mono', monospace; font-size:10px;">${t.events.length} PR</span>`;
-      return `<div class="pr-timeline-row">
-        <div class="pr-row-name">
-          <span style="display:flex; align-items:center; gap:5px;">
-            <span class="bp-chip" style="background:${c}25; color:${c};">${t.bp}</span>
-            <span>${t.name}</span>
-          </span>
-          <span style="display:flex; gap:6px; align-items:center;">${deltaText}${statusBadge}</span>
-        </div>
-        <div class="pr-timeline-bar" style="padding: 24px 0; margin: 8px 0;">${dots}</div>
-        <div class="pr-axis">
-          <span>${periodDays}d 전</span>
-          <span></span>
-          <span></span>
-          <span>오늘</span>
-        </div>
-      </div>`;
-    }).join('');
-    return `<div class="card" style="margin-top:12px; margin-bottom:16px;">
-      <div class="label-mono" style="margin-bottom:14px;">📈 PR TIMELINE — 상위 8 운동 · ${periodLabel}</div>
-      ${rows}
-    </div>`;
-  })() : '';
-
   return `
     <h2 style="margin-top:24px;">💪 PR Activity</h2>
     <div style="display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap;">${periodChips}</div>
     <div class="label-mono" style="margin-bottom:10px;">${periodLabel} · 세트 수 desc · ${visible.length}/${list.length}개 표시</div>
-    ${timelineHtml}
     ${cards}
     ${showMoreBtn}
   `;
