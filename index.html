@@ -1030,7 +1030,7 @@ function renderStrava(agg) {
 // Body part inference (order matters — first match wins)
 const BODY_PART_RULES = [
   // CORE first (so "leg raise" / "hip raise" don't get caught by LEGS)
-  [/plank|wheel rollout|knee touch|heel touch|mountain climb|hollow hold|crunch|dead bug|hanging leg raise|captain.?s chair|lying leg hip raise|^abs|bicycle/i, "CORE"],
+  [/plank|wheel rollout|knee touch|heel touch|knee up|mountain climb|hollow hold|crunch|dead bug|hanging leg raise|captain.?s chair|lying leg hip raise|^abs|bicycle/i, "CORE"],
   // LEGS
   [/squat|lunge|leg curl|leg extension|hamstring|hip thrust|hip abductor|hip adductor|thigh adductor|thigh abductor|calf|^deadlift|leg press|^lunge/i, "LEGS"],
   // BACK — shrug/RMPT/rack pull explicit + traditional back
@@ -1773,7 +1773,7 @@ function renderPRActivity() {
   `;
 }
 
-// === Recent PRs (all-time max weight breakthroughs, top 10 by date desc) ===
+// === Recent PRs (all-time max weight per exercise, top 10 by PR date desc) ===
 function renderRecentPRs(limit) {
   limit = limit || 10;
   const lifts = (DATA.lifts || []);
@@ -1787,22 +1787,29 @@ function renderRecentPRs(limit) {
   const events = [];
   for (const [ex, sets] of byEx) {
     sets.sort((a, b) => a.date.localeCompare(b.date));
-    const maxAllTime = Math.max(...sets.map(s => s.weight || 0));
-    const isBW = maxAllTime === 0;
-    let runMax = 0, prevMax = 0;
+    const maxW = Math.max(...sets.map(s => s.weight || 0));
+    const isBW = maxW === 0;
+    const targetMax = isBW ? Math.max(...sets.map(s => s.reps || 0)) : maxW;
+    if (targetMax === 0) continue;
+    let prSet = null;
     for (const s of sets) {
       const metric = isBW ? (s.reps || 0) : (s.weight || 0);
-      if (metric > runMax) {
-        prevMax = runMax;
-        runMax = metric;
-        events.push({
-          exercise: ex, date: dateOnly(s.date),
-          weight: s.weight || 0, reps: s.reps || 0,
-          delta: metric - prevMax, isBW, isFirst: prevMax === 0,
-          bp: bodyPart(ex),
-        });
-      }
+      if (metric === targetMax) { prSet = s; break; }
     }
+    if (!prSet) continue;
+    const prDate = dateOnly(prSet.date);
+    let prevMax = 0;
+    for (const s of sets) {
+      if (dateOnly(s.date) >= prDate) continue;
+      const metric = isBW ? (s.reps || 0) : (s.weight || 0);
+      if (metric > prevMax) prevMax = metric;
+    }
+    events.push({
+      exercise: ex, date: prDate,
+      weight: prSet.weight || 0, reps: prSet.reps || 0,
+      delta: targetMax - prevMax, isBW, isFirst: prevMax === 0,
+      bp: bodyPart(ex),
+    });
   }
   events.sort((a, b) => b.date.localeCompare(a.date));
   const recent = events.slice(0, limit);
@@ -1812,9 +1819,9 @@ function renderRecentPRs(limit) {
   const agoLabel = (dateStr) => {
     const d = parseDateOnly(dateStr);
     const days = Math.floor((today - d) / 86400000);
-    if (days === 0) return '오늘';
-    if (days === 1) return '어제';
-    return `${days}일 전`;
+    if (days === 0) return 'Today';
+    if (days === 1) return 'Yesterday';
+    return `${days}d ago`;
   };
 
   const rows = recent.map(ev => {
@@ -1823,10 +1830,10 @@ function renderRecentPRs(limit) {
     const dateLabel = ev.date.slice(5);
     const unit = ev.isBW ? ' reps' : 'kg';
     const deltaText = ev.isFirst
-      ? `<span style="color:var(--muted); font-family:'JetBrains Mono', monospace; font-size:10px;">신규</span>`
+      ? `<span style="color:var(--muted); font-family:'JetBrains Mono', monospace; font-size:10px;">new</span>`
       : `<span style="color:#84cc16; font-family:'JetBrains Mono', monospace; font-size:10px;">↑ +${ev.delta % 1 === 0 ? ev.delta.toFixed(0) : ev.delta.toFixed(1)}${unit}</span>`;
     return `<div style="display:flex; align-items:center; gap:14px; padding:10px 12px; border-bottom:1px solid var(--border);">
-      <div style="font-family:'JetBrains Mono', monospace; font-size:10px; color:var(--muted); min-width:74px;">
+      <div style="font-family:'JetBrains Mono', monospace; font-size:10px; color:var(--muted); min-width:80px;">
         <b style="color:var(--text); font-weight:500;">${agoLabel(ev.date)}</b><br>${dateLabel}
       </div>
       <div style="flex:1; font-size:14px; font-weight:500; display:flex; align-items:center; gap:8px; flex-wrap:wrap; min-width:0;">
@@ -1839,7 +1846,7 @@ function renderRecentPRs(limit) {
   }).join('');
 
   return `
-    <h2 style="margin-top:0;">🔥 최근 달성 PR (top ${limit})</h2>
+    <h2 style="margin-top:0;">🔥 RECENT PRs (TOP ${limit})</h2>
     <div class="card" style="padding: 4px 0; margin-bottom:16px;">
       ${rows}
     </div>
