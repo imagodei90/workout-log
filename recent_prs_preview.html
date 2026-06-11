@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>최근 달성 PR 10개 — 디자인 옵션</title>
+<style>
+:root {
+  --bg: #0a0a0a;
+  --surface: #18181b;
+  --surface-2: #27272a;
+  --text: #fafafa;
+  --muted: #71717a;
+  --border: #27272a;
+  --lift: #FF1A8C;
+  --gold: #fbbf24;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  padding: 32px 20px; line-height: 1.5;
+}
+.container { max-width: 1100px; margin: 0 auto; }
+h1 { font-size: 24px; margin-bottom: 6px; }
+h2 { font-size: 16px; margin: 24px 0 14px; color: var(--lift); }
+.intro { color: var(--muted); margin-bottom: 28px; font-size: 13px; }
+.mono { font-family: "JetBrains Mono", monospace; }
+
+/* Body part badges */
+.bp { padding: 2px 8px; border-radius: 6px; font-family: "JetBrains Mono", monospace; font-size: 9px; letter-spacing: 0.1em; white-space: nowrap; }
+.bp.legs { background: rgba(132,204,22,0.15); color: #84cc16; }
+.bp.chest { background: rgba(255,77,0,0.15); color: #FF4D00; }
+.bp.back { background: rgba(56,189,248,0.15); color: #38bdf8; }
+.bp.shoulders { background: rgba(251,191,36,0.15); color: #fbbf24; }
+.bp.arms { background: rgba(168,85,247,0.15); color: #a855f7; }
+.bp.core { background: rgba(244,114,182,0.15); color: #f472b6; }
+
+/* delta */
+.delta-up { color: #84cc16; font-family: "JetBrains Mono", monospace; font-size: 10px; }
+.delta-flat { color: var(--muted); font-family: "JetBrains Mono", monospace; font-size: 10px; }
+
+/* option block */
+.option-block {
+  margin-bottom: 52px; padding: 20px;
+  background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px solid var(--border);
+}
+.option-tag {
+  display: inline-block; background: var(--lift); color: white; padding: 4px 12px;
+  border-radius: 6px; font-family: "JetBrains Mono", monospace; font-size: 11px;
+  letter-spacing: 0.1em; margin-bottom: 12px;
+}
+.option-desc { color: var(--muted); font-size: 13px; margin-bottom: 18px; }
+
+/* ============== OPTION A — Vertical Compact List ============== */
+.list-row {
+  display: flex; align-items: center; gap: 14px;
+  padding: 10px 12px; border-bottom: 1px solid var(--border);
+}
+.list-row:last-child { border-bottom: none; }
+.list-row:hover { background: rgba(255,255,255,0.03); cursor: pointer; }
+.list-date {
+  font-family: "JetBrains Mono", monospace; font-size: 10px;
+  color: var(--muted); min-width: 70px;
+}
+.list-date b { color: var(--text); font-weight: 500; }
+.list-name { flex: 1; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 8px; }
+.list-pr {
+  font-family: "JetBrains Mono", monospace;
+  color: var(--lift); font-weight: 600; font-size: 14px;
+  min-width: 100px; text-align: right;
+}
+.list-delta { min-width: 65px; text-align: right; }
+
+/* ============== OPTION B — Horizontal Strip ============== */
+.strip-row {
+  display: flex; gap: 10px; overflow-x: auto; padding: 4px 0 10px;
+  scroll-snap-type: x mandatory;
+}
+.strip-row::-webkit-scrollbar { height: 6px; }
+.strip-row::-webkit-scrollbar-track { background: var(--surface-2); border-radius: 3px; }
+.strip-row::-webkit-scrollbar-thumb { background: var(--muted); border-radius: 3px; }
+.strip-card {
+  flex: 0 0 180px; scroll-snap-align: start;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+  padding: 12px; cursor: pointer; transition: border-color 0.15s;
+}
+.strip-card:hover { border-color: var(--lift); }
+.strip-card .bp { display: inline-block; margin-bottom: 8px; }
+.strip-card .name { font-size: 13px; font-weight: 600; margin-bottom: 6px; line-height: 1.3; min-height: 34px; }
+.strip-card .pr { font-family: "JetBrains Mono", monospace; color: var(--lift); font-weight: 600; font-size: 15px; margin-bottom: 4px; }
+.strip-card .meta { display: flex; justify-content: space-between; align-items: center; }
+.strip-card .meta .ago { color: var(--muted); font-family: "JetBrains Mono", monospace; font-size: 10px; }
+
+/* ============== OPTION C — Grid Cards 2x5 ============== */
+.grid {
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;
+}
+@media (max-width: 768px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+.grid-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+  padding: 10px; cursor: pointer; transition: border-color 0.15s;
+}
+.grid-card:hover { border-color: var(--lift); }
+.grid-card .row1 { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.grid-card .name { font-size: 12px; font-weight: 600; line-height: 1.25; margin-bottom: 5px; min-height: 30px; }
+.grid-card .pr { font-family: "JetBrains Mono", monospace; color: var(--lift); font-weight: 600; font-size: 13px; }
+.grid-card .ago { color: var(--muted); font-family: "JetBrains Mono", monospace; font-size: 9px; }
+.grid-card .num { color: var(--gold); font-family: "JetBrains Mono", monospace; font-size: 10px; font-weight: 700; }
+
+/* ============== OPTION D — Timeline Strip ============== */
+.timeline-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; }
+.timeline-bar {
+  position: relative; height: 60px; margin: 24px 6px 8px;
+  border-bottom: 1px dashed var(--border);
+}
+.tl-dot {
+  position: absolute; top: 50%;
+  width: 12px; height: 12px; border-radius: 50%;
+  transform: translate(-50%, -50%); cursor: pointer;
+  transition: transform 0.15s;
+}
+.tl-dot:hover { transform: translate(-50%, -50%) scale(1.5); z-index: 5; }
+.tl-label {
+  position: absolute; font-family: "JetBrains Mono", monospace; font-size: 9px;
+  transform: translateX(-50%); white-space: nowrap; pointer-events: none;
+}
+.tl-axis {
+  display: flex; justify-content: space-between;
+  color: var(--muted); font-family: "JetBrains Mono", monospace; font-size: 10px;
+  margin-top: 4px;
+}
+.tl-list {
+  margin-top: 16px; padding-top: 14px; border-top: 1px dashed var(--border);
+  display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px;
+}
+.tl-list-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 4px 0; font-size: 12px;
+  font-family: "JetBrains Mono", monospace;
+}
+.tl-list-row .idx { color: var(--gold); font-weight: 700; min-width: 16px; }
+.tl-list-row .nm { flex: 1; font-family: -apple-system, sans-serif; font-weight: 500; }
+.tl-list-row .pr-val { color: var(--lift); font-weight: 600; }
+.tl-list-row .ag { color: var(--muted); min-width: 50px; text-align: right; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>🔥 최근 달성 PR 10개 — 디자인 옵션</h1>
+<p class="intro">PR = all-time 최고 weight 갱신 순간 · 운동 종류 무관 전체 · 최근 10개</p>
+
+<!-- =============== OPTION A =============== -->
+<div class="option-block">
+  <span class="option-tag">OPTION A — 컴팩트 리스트</span>
+  <p class="option-desc">날짜 → 이름 → PR → delta. 한 행에 다 정리. 빠르게 스캔, 모바일에서도 좋음. <strong>정보밀도 최고.</strong></p>
+
+  <div class="list-row">
+    <div class="list-date"><b>오늘</b><br>06-10</div>
+    <div class="list-name">Squat <span class="bp legs">LEGS</span></div>
+    <div class="list-pr">110.0 kg × 5</div>
+    <div class="list-delta delta-up">↑ +2.5kg</div>
+  </div>
+  <div class="list-row">
+    <div class="list-date"><b>3일 전</b><br>06-07</div>
+    <div class="list-name">Dumbbell Lateral Raise <span class="bp shoulders">SHOULDERS</span></div>
+    <div class="list-pr">14.0 kg × 12</div>
+    <div class="list-delta delta-up">↑ +1kg</div>
+  </div>
+  <div class="list-row">
+    <div class="list-date"><b>5일 전</b><br>06-05</div>
+    <div class="list-name">Bench Press <span class="bp chest">CHEST</span></div>
+    <div class="list-pr">80.0 kg × 8</div>
+    <div class="list-delta delta-up">↑ +5kg</div>
+  </div>
+  <div class="list-row">
+    <div class="list-date"><b>7일 전</b><br>06-03</div>
+    <div class="list-name">Cable Double Bicep Curl <span class="bp arms">ARMS</span></div>
+    <div class="list-pr">20.0 kg × 6</div>
+    <div class="list-delta delta-up">↑ +2.5kg</div>
+  </div>
+  <div class="list-row">
+    <div class="list-date"><b>9일 전</b><br>06-01</div>
+    <div class="list-name">Deadlift <span class="bp back">BACK</span></div>
+    <div class="list-pr">140.0 kg × 5</div>
+    <div class="list-delta delta-up">↑ +5kg</div>
+  </div>
+  <div class="list-row">
+    <div class="list-date"><b>11일 전</b><br>05-30</div>
+    <div class="list-name">Weighted Pull-up <span class="bp back">BACK</span></div>
+    <div class="list-pr">11.0 kg × 5</div>
+    <div class="list-delta delta-up">↑ +2kg</div>
+  </div>
+  <div class="list-row">
+    <div class="list-date"><b>14일 전</b><br>05-27</div>
+    <div class="list-name">Smith Machine OHP <span class="bp shoulders">SHOULDERS</span></div>
+    <div class="list-pr">50.0 kg × 4</div>
+    <div class="list-delta delta-up">↑ +5kg</div>
+  </div>
+  <div class="list-row">
+    <div class="list-date"><b>17일 전</b><br>05-24</div>
+    <div class="list-name">Cable Tricep Extension <span class="bp arms">ARMS</span></div>
+    <div class="list-pr">25.0 kg × 10</div>
+    <div class="list-delta delta-up">↑ +2.5kg</div>
+  </div>
+  <div class="list-row">
+    <div class="list-date"><b>21일 전</b><br>05-20</div>
+    <div class="list-name">Romanian Deadlift <span class="bp legs">LEGS</span></div>
+    <div class="list-pr">100.0 kg × 8</div>
+    <div class="list-delta delta-up">↑ +5kg</div>
+  </div>
+  <div class="list-row">
+    <div class="list-date"><b>24일 전</b><br>05-17</div>
+    <div class="list-name">Machine Chest Press <span class="bp chest">CHEST</span></div>
+    <div class="list-pr">65.0 kg × 10</div>
+    <div class="list-delta delta-up">↑ +5kg</div>
+  </div>
+</div>
+
+<!-- =============== OPTION B =============== -->
+<div class="option-block">
+  <span class="option-tag" style="background: #38bdf8;">OPTION B — 가로 스와이프 카드</span>
+  <p class="option-desc">가로 스크롤 카드 strip. 옆으로 쓸어가며 봄. 모바일 친화적, 시각적 강조 좋음. 단점: 한눈에 다 안 보임.</p>
+
+  <div class="strip-row">
+    <div class="strip-card">
+      <span class="bp legs">LEGS</span>
+      <div class="name">Squat</div>
+      <div class="pr">110 × 5</div>
+      <div class="meta"><span class="ago">오늘</span><span class="delta-up">+2.5</span></div>
+    </div>
+    <div class="strip-card">
+      <span class="bp shoulders">SHOULDERS</span>
+      <div class="name">Dumbbell Lateral Raise</div>
+      <div class="pr">14 × 12</div>
+      <div class="meta"><span class="ago">3d</span><span class="delta-up">+1</span></div>
+    </div>
+    <div class="strip-card">
+      <span class="bp chest">CHEST</span>
+      <div class="name">Bench Press</div>
+      <div class="pr">80 × 8</div>
+      <div class="meta"><span class="ago">5d</span><span class="delta-up">+5</span></div>
+    </div>
+    <div class="strip-card">
+      <span class="bp arms">ARMS</span>
+      <div class="name">Cable Double Bicep Curl</div>
+      <div class="pr">20 × 6</div>
+      <div class="meta"><span class="ago">7d</span><span class="delta-up">+2.5</span></div>
+    </div>
+    <div class="strip-card">
+      <span class="bp back">BACK</span>
+      <div class="name">Deadlift</div>
+      <div class="pr">140 × 5</div>
+      <div class="meta"><span class="ago">9d</span><span class="delta-up">+5</span></div>
+    </div>
+    <div class="strip-card">
+      <span class="bp back">BACK</span>
+      <div class="name">Weighted Pull-up</div>
+      <div class="pr">11 × 5</div>
+      <div class="meta"><span class="ago">11d</span><span class="delta-up">+2</span></div>
+    </div>
+    <div class="strip-card">
+      <span class="bp shoulders">SHOULDERS</span>
+      <div class="name">Smith Machine OHP</div>
+      <div class="pr">50 × 4</div>
+      <div class="meta"><span class="ago">14d</span><span class="delta-up">+5</span></div>
+    </div>
+    <div class="strip-card">
+      <span class="bp arms">ARMS</span>
+      <div class="name">Cable Tricep Ext</div>
+      <div class="pr">25 × 10</div>
+      <div class="meta"><span class="ago">17d</span><span class="delta-up">+2.5</span></div>
+    </div>
+    <div class="strip-card">
+      <span class="bp legs">LEGS</span>
+      <div class="name">Romanian Deadlift</div>
+      <div class="pr">100 × 8</div>
+      <div class="meta"><span class="ago">21d</span><span class="delta-up">+5</span></div>
+    </div>
+    <div class="strip-card">
+      <span class="bp chest">CHEST</span>
+      <div class="name">Machine Chest Press</div>
+      <div class="pr">65 × 10</div>
+      <div class="meta"><span class="ago">24d</span><span class="delta-up">+5</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- =============== OPTION C =============== -->
+<div class="option-block">
+  <span class="option-tag" style="background: #84cc16;">OPTION C — 2×5 그리드</span>
+  <p class="option-desc">5열 (모바일은 2열) 그리드. 한눈에 10개 다 보임. 정사각 카드라 시각적 안정. <strong>전체 grasp 좋음.</strong></p>
+
+  <div class="grid">
+    <div class="grid-card">
+      <div class="row1"><span class="bp legs">LEGS</span><span class="num">#1</span></div>
+      <div class="name">Squat</div>
+      <div class="pr">110 × 5</div>
+      <div class="ago">오늘 · ↑+2.5</div>
+    </div>
+    <div class="grid-card">
+      <div class="row1"><span class="bp shoulders">SHOULDERS</span><span class="num">#2</span></div>
+      <div class="name">Dumbbell Lateral Raise</div>
+      <div class="pr">14 × 12</div>
+      <div class="ago">3d · ↑+1</div>
+    </div>
+    <div class="grid-card">
+      <div class="row1"><span class="bp chest">CHEST</span><span class="num">#3</span></div>
+      <div class="name">Bench Press</div>
+      <div class="pr">80 × 8</div>
+      <div class="ago">5d · ↑+5</div>
+    </div>
+    <div class="grid-card">
+      <div class="row1"><span class="bp arms">ARMS</span><span class="num">#4</span></div>
+      <div class="name">Cable Bicep Curl</div>
+      <div class="pr">20 × 6</div>
+      <div class="ago">7d · ↑+2.5</div>
+    </div>
+    <div class="grid-card">
+      <div class="row1"><span class="bp back">BACK</span><span class="num">#5</span></div>
+      <div class="name">Deadlift</div>
+      <div class="pr">140 × 5</div>
+      <div class="ago">9d · ↑+5</div>
+    </div>
+    <div class="grid-card">
+      <div class="row1"><span class="bp back">BACK</span><span class="num">#6</span></div>
+      <div class="name">Weighted Pull-up</div>
+      <div class="pr">11 × 5</div>
+      <div class="ago">11d · ↑+2</div>
+    </div>
+    <div class="grid-card">
+      <div class="row1"><span class="bp shoulders">SHOULDERS</span><span class="num">#7</span></div>
+      <div class="name">Smith Machine OHP</div>
+      <div class="pr">50 × 4</div>
+      <div class="ago">14d · ↑+5</div>
+    </div>
+    <div class="grid-card">
+      <div class="row1"><span class="bp arms">ARMS</span><span class="num">#8</span></div>
+      <div class="name">Cable Tricep Ext</div>
+      <div class="pr">25 × 10</div>
+      <div class="ago">17d · ↑+2.5</div>
+    </div>
+    <div class="grid-card">
+      <div class="row1"><span class="bp legs">LEGS</span><span class="num">#9</span></div>
+      <div class="name">Romanian Deadlift</div>
+      <div class="pr">100 × 8</div>
+      <div class="ago">21d · ↑+5</div>
+    </div>
+    <div class="grid-card">
+      <div class="row1"><span class="bp chest">CHEST</span><span class="num">#10</span></div>
+      <div class="name">Machine Chest Press</div>
+      <div class="pr">65 × 10</div>
+      <div class="ago">24d · ↑+5</div>
+    </div>
+  </div>
+</div>
+
+<!-- =============== OPTION D =============== -->
+<div class="option-block">
+  <span class="option-tag" style="background: #fbbf24;">OPTION D — 타임라인 시각화 + 리스트</span>
+  <p class="option-desc">위쪽 가로 타임라인에 PR 점, 아래 리스트로 세부. 시각적 멋, hover 상세. <strong>스토리텔링.</strong></p>
+
+  <div class="timeline-wrap">
+    <div class="timeline-bar">
+      <div class="tl-dot" style="left: 100%; background: #84cc16; width: 16px; height: 16px;" title="오늘 — Squat 110×5"></div>
+      <div class="tl-label" style="left: 100%; top: 100%; margin-top: 4px; color: #84cc16;">Squat</div>
+      <div class="tl-dot" style="left: 87.5%; background: #fbbf24;" title="3d — Lateral Raise"></div>
+      <div class="tl-dot" style="left: 79.2%; background: #FF4D00;" title="5d — Bench"></div>
+      <div class="tl-dot" style="left: 70.8%; background: #a855f7;" title="7d — Bicep Curl"></div>
+      <div class="tl-dot" style="left: 62.5%; background: #38bdf8;" title="9d — Deadlift"></div>
+      <div class="tl-dot" style="left: 54.2%; background: #38bdf8;" title="11d — Pull-up"></div>
+      <div class="tl-dot" style="left: 41.7%; background: #fbbf24;" title="14d — OHP"></div>
+      <div class="tl-dot" style="left: 29.2%; background: #a855f7;" title="17d — Tricep Ext"></div>
+      <div class="tl-dot" style="left: 12.5%; background: #84cc16;" title="21d — RDL"></div>
+      <div class="tl-dot" style="left: 0%; background: #FF4D00;" title="24d — Chest Press"></div>
+    </div>
+    <div class="tl-axis">
+      <span>24d 전</span><span>12d</span><span>오늘</span>
+    </div>
+
+    <div class="tl-list">
+      <div class="tl-list-row"><span class="idx">#1</span><span class="nm">Squat</span><span class="pr-val">110×5</span><span class="ag">오늘</span></div>
+      <div class="tl-list-row"><span class="idx">#2</span><span class="nm">Lateral Raise</span><span class="pr-val">14×12</span><span class="ag">3d</span></div>
+      <div class="tl-list-row"><span class="idx">#3</span><span class="nm">Bench Press</span><span class="pr-val">80×8</span><span class="ag">5d</span></div>
+      <div class="tl-list-row"><span class="idx">#4</span><span class="nm">Bicep Curl</span><span class="pr-val">20×6</span><span class="ag">7d</span></div>
+      <div class="tl-list-row"><span class="idx">#5</span><span class="nm">Deadlift</span><span class="pr-val">140×5</span><span class="ag">9d</span></div>
+      <div class="tl-list-row"><span class="idx">#6</span><span class="nm">Pull-up</span><span class="pr-val">11×5</span><span class="ag">11d</span></div>
+      <div class="tl-list-row"><span class="idx">#7</span><span class="nm">Smith OHP</span><span class="pr-val">50×4</span><span class="ag">14d</span></div>
+      <div class="tl-list-row"><span class="idx">#8</span><span class="nm">Tricep Ext</span><span class="pr-val">25×10</span><span class="ag">17d</span></div>
+      <div class="tl-list-row"><span class="idx">#9</span><span class="nm">RDL</span><span class="pr-val">100×8</span><span class="ag">21d</span></div>
+      <div class="tl-list-row"><span class="idx">#10</span><span class="nm">Chest Press</span><span class="pr-val">65×10</span><span class="ag">24d</span></div>
+    </div>
+  </div>
+</div>
+
+<p style="color: var(--muted); margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--border); font-size: 12px;">
+  📁 C:\tmp\workout\mockups\recent_prs_preview.html
+</p>
+
+</div>
+</body>
+</html>
