@@ -1035,7 +1035,7 @@ const BODY_PART_RULES = [
   [/squat|lunge|leg curl|leg extension|hamstring|hip thrust|hip abductor|hip adductor|thigh adductor|thigh abductor|calf|^deadlift|leg press|^lunge/i, "LEGS"],
   // BACK — shrug/RMPT/rack pull explicit + traditional back
   [/shrug|rmpt|rack pull/i, "BACK"],
-  [/pull.?up|chin.?up|pulldown|^row|row$| row | row,|lat |t.?bar|deadlift/i, "BACK"],
+  [/pull.?up|chin.?up|pulldown|^row|row$| row | row,|\blat |t.?bar|deadlift/i, "BACK"],
   // SHOULDERS (added face pull, front raise, external rotation)
   [/lateral raise|rear delt|overhead press|behind neck|y.?raise|arnold|upright row|shoulder press|face pull|front raise|external rotation|reverse fly/i, "SHOULDERS"],
   // ARMS (added pushdown for Reverse Grip Pushdown)
