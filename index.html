@@ -1585,6 +1585,7 @@ function findBigMatch(name, patterns) {
 // === PR Activity (period-based, sets-sorted, inline accordion) ===
 window.PR_PERIOD_DAYS = window.PR_PERIOD_DAYS || 90;
 window.PR_SHOW_ALL = window.PR_SHOW_ALL || false;
+window.PR_BP_FILTER = window.PR_BP_FILTER || 'ALL';
 
 window.setPRPeriod = function(days) {
   window.PR_PERIOD_DAYS = days;
@@ -1593,6 +1594,11 @@ window.setPRPeriod = function(days) {
 };
 window.togglePRShowAll = function() {
   window.PR_SHOW_ALL = !window.PR_SHOW_ALL;
+  refresh();
+};
+window.setPRBPFilter = function(bp) {
+  window.PR_BP_FILTER = bp;
+  window.PR_SHOW_ALL = false;
   refresh();
 };
 
@@ -1713,15 +1719,25 @@ function renderPRActivity() {
       e.bestW = w; e.bestReps = r; e.bestDate = dateOnly(l.date);
     }
   }
-  const list = [...exMap.values()].map(e => ({...e, sessions: e.sessions.size}))
+  const listAll = [...exMap.values()].map(e => ({...e, sessions: e.sessions.size}))
     .sort((a, b) => b.sets - a.sets);
-  const visible = window.PR_SHOW_ALL ? list : list.slice(0, 20);
+  const bpFilter = window.PR_BP_FILTER || 'ALL';
+  const list = bpFilter === 'ALL' ? listAll : listAll.filter(e => e.bp === bpFilter);
+  const cap = bpFilter === 'ALL' ? 20 : 10;
+  const visible = window.PR_SHOW_ALL ? list : list.slice(0, cap);
 
   const periodOpts = [{d:30,l:'30d'},{d:60,l:'60d'},{d:90,l:'90d'},{d:180,l:'6mo'},{d:365,l:'1y'},{d:9999,l:'All time'}];
   const periodChips = periodOpts.map(o => {
     const active = o.d === periodDays;
     return `<button onclick="window.setPRPeriod(${o.d})" style="background:${active?'var(--lift)':'transparent'}; color:${active?'white':'var(--lift)'}; border:1px solid var(--lift); padding:5px 14px; border-radius:999px; font-family:'JetBrains Mono', monospace; font-size:11px; cursor:pointer; font-weight:${active?'600':'400'};">${o.l}</button>`;
   }).join(' ');
+
+  const bpOrder = ['CHEST','BACK','SHOULDERS','ARMS','LEGS','CORE','OTHER'];
+  const bpsPresent = new Set(listAll.map(e => e.bp));
+  const bpOptsForDropdown = ['ALL', ...bpOrder.filter(bp => bpsPresent.has(bp))];
+  const bpDropdown = `<select onchange="window.setPRBPFilter(this.value)" style="background:var(--surface-2); color:var(--text); border:1px solid var(--lift); border-radius:6px; padding:5px 10px; font-family:'JetBrains Mono', monospace; font-size:11px; cursor:pointer;">
+    ${bpOptsForDropdown.map(bp => `<option value="${bp}" ${bp === bpFilter ? 'selected' : ''}>${bp === 'ALL' ? 'BP: All' : `BP: ${bp}`}</option>`).join('')}
+  </select>`;
 
   const cards = visible.length === 0
     ? `<div class="card"><p style="color:var(--muted)">기간 내 데이터 없음</p></div>`
@@ -1757,17 +1773,21 @@ function renderPRActivity() {
         </div>`;
       }).join('');
 
-  const showMoreBtn = list.length > 20
+  const showMoreBtn = list.length > cap
     ? `<button onclick="window.togglePRShowAll()" style="background:transparent; color:var(--muted); border:1px dashed var(--border); border-radius:8px; padding:12px; width:100%; text-align:center; font-family:'JetBrains Mono', monospace; font-size:12px; cursor:pointer; margin-top:8px;">
-        ${window.PR_SHOW_ALL ? `▲ 상위 20개만 보기` : `▼ 전체 ${list.length}개 운동 펼치기`}
+        ${window.PR_SHOW_ALL ? `▲ 상위 ${cap}개만 보기` : `▼ 전체 ${list.length}개 운동 펼치기`}
       </button>`
     : '';
 
   const periodLabel = isAllTime ? '전체 기간' : periodDays === 365 ? '지난 1년' : periodDays === 180 ? '지난 6개월' : `지난 ${periodDays}일`;
+  const filterLabel = bpFilter === 'ALL' ? '' : ` · ${bpFilter}`;
   return `
     <h2 style="margin-top:24px;">💪 PR Activity</h2>
-    <div style="display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap;">${periodChips}</div>
-    <div class="label-mono" style="margin-bottom:10px;">${periodLabel} · 세트 수 desc · ${visible.length}/${list.length}개 표시</div>
+    <div style="display:flex; gap:10px; margin-bottom:10px; flex-wrap:wrap; align-items:center;">
+      <div style="display:flex; gap:6px; flex-wrap:wrap;">${periodChips}</div>
+      ${bpDropdown}
+    </div>
+    <div class="label-mono" style="margin-bottom:10px;">${periodLabel}${filterLabel} · 세트 수 desc · ${visible.length}/${list.length}개 표시</div>
     ${cards}
     ${showMoreBtn}
   `;
