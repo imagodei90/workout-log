@@ -1715,8 +1715,11 @@ function renderPRActivity() {
     e.sessions.add(dateOnly(l.date));
     const w = l.weight || 0;
     const r = l.reps || 0;
-    if (w > e.bestW || (w === e.bestW && r > e.bestReps)) {
-      e.bestW = w; e.bestReps = r; e.bestDate = dateOnly(l.date);
+    const d = dateOnly(l.date);
+    const isBetter = w > e.bestW || (w === e.bestW && r > e.bestReps);
+    const isSameLater = w === e.bestW && r === e.bestReps && d > e.bestDate;
+    if (isBetter || isSameLater) {
+      e.bestW = w; e.bestReps = r; e.bestDate = d;
     }
   }
   const listAll = [...exMap.values()].map(e => ({...e, sessions: e.sessions.size}))
