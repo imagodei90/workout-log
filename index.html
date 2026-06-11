@@ -1031,10 +1031,10 @@ function renderStrava(agg) {
 const BODY_PART_RULES = [
   // CORE first (so "leg raise" / "hip raise" don't get caught by LEGS)
   [/plank|wheel rollout|knee touch|heel touch|knee up|mountain climb|hollow hold|crunch|dead bug|hanging leg raise|captain.?s chair|lying leg hip raise|^abs|bicycle|air bike/i, "CORE"],
-  // LEGS
-  [/squat|lunge|leg curl|leg extension|hamstring|hip thrust|hip abductor|hip adductor|thigh adductor|thigh abductor|calf|^deadlift|leg press|^lunge/i, "LEGS"],
-  // BACK — shrug/RMPT/rack pull explicit + traditional back
-  [/shrug|rmpt|rack pull/i, "BACK"],
+  // LEGS — RDL/stiff-leg variants explicit so they don't fall into BACK via 'deadlift'
+  [/squat|lunge|leg curl|leg extension|hamstring|hip thrust|hip abductor|hip adductor|thigh adductor|thigh abductor|calf|^deadlift|leg press|^lunge|romanian|stiff.?leg/i, "LEGS"],
+  // BACK — shrug/RMPT/rack pull + lower back extension + traditional back
+  [/shrug|rmpt|rack pull|back extension|hyperextension/i, "BACK"],
   [/pull.?up|chin.?up|pulldown|^row|row$| row | row,|\blat |t.?bar|deadlift/i, "BACK"],
   // SHOULDERS (added face pull, front raise, external rotation)
   [/lateral raise|rear delt|overhead press|behind neck|y.?raise|arnold|upright row|shoulder press|face pull|front raise|external rotation|reverse fly/i, "SHOULDERS"],
