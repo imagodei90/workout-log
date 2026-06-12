@@ -1033,8 +1033,8 @@ const BODY_PART_RULES = [
   [/plank|wheel rollout|knee touch|heel touch|knee up|mountain climb|hollow hold|crunch|dead bug|hanging leg raise|captain.?s chair|lying leg hip raise|^abs|bicycle|air bike/i, "CORE"],
   // LEGS — RDL/stiff-leg variants explicit so they don't fall into BACK via 'deadlift'
   [/squat|lunge|leg curl|leg extension|hamstring|hip thrust|hip abductor|hip adductor|thigh adductor|thigh abductor|calf|^deadlift|leg press|^lunge|romanian|stiff.?leg/i, "LEGS"],
-  // SHOULDERS pre-match (must come BEFORE BACK 'row' pattern so 'upright row' → SHOULDERS, not BACK)
-  [/upright row/i, "SHOULDERS"],
+  // SHOULDERS pre-match (must come BEFORE BACK 'row' pattern so rear-delt-style rows → SHOULDERS, not BACK)
+  [/upright row|rear delt/i, "SHOULDERS"],
   // BACK — shrug/RMPT/rack pull + lower back extension + traditional back
   [/shrug|rmpt|rack pull|back extension|hyperextension/i, "BACK"],
   [/pull.?up|chin.?up|pulldown|^row|row$| row | row,|\blat |t.?bar|deadlift/i, "BACK"],
