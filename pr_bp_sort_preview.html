@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>PR Activity — Body Part 정렬 드롭다운 옵션</title>
+<style>
+:root {
+  --bg: #0a0a0a;
+  --surface: #18181b;
+  --surface-2: #27272a;
+  --text: #fafafa;
+  --muted: #71717a;
+  --border: #27272a;
+  --lift: #FF1A8C;
+  --gold: #fbbf24;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  padding: 32px 20px; line-height: 1.5;
+}
+.container { max-width: 1100px; margin: 0 auto; }
+h1 { font-size: 22px; margin-bottom: 6px; }
+h2 { font-size: 18px; margin: 0 0 12px; }
+.intro { color: var(--muted); margin-bottom: 28px; font-size: 13px; }
+.mono { font-family: "JetBrains Mono", monospace; }
+.label-mono { font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--muted); letter-spacing: 0.1em; }
+
+.bp { padding: 2px 8px; border-radius: 6px; font-family: "JetBrains Mono", monospace; font-size: 9px; letter-spacing: 0.1em; white-space: nowrap; }
+.bp.legs { background: rgba(132,204,22,0.15); color: #84cc16; }
+.bp.chest { background: rgba(255,77,0,0.15); color: #FF4D00; }
+.bp.back { background: rgba(56,189,248,0.15); color: #38bdf8; }
+.bp.shoulders { background: rgba(251,191,36,0.15); color: #fbbf24; }
+.bp.arms { background: rgba(168,85,247,0.15); color: #a855f7; }
+.bp.core { background: rgba(236,72,153,0.15); color: #ec4899; }
+
+.chip {
+  background: var(--surface-2); color: var(--text);
+  border: 1px solid var(--border); border-radius: 999px;
+  padding: 5px 14px; font-family: "JetBrains Mono", monospace; font-size: 11px;
+}
+.chip.active { background: var(--lift); color: white; border-color: var(--lift); }
+
+.select-lift {
+  background: var(--surface-2); color: var(--text);
+  border: 1px solid var(--lift); border-radius: 6px;
+  padding: 5px 12px; font-family: "JetBrains Mono", monospace; font-size: 11px;
+  cursor: pointer;
+}
+
+.pra-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+  padding: 12px 14px; cursor: pointer; margin-bottom: 8px;
+}
+.pra-card .row1 { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 5px; }
+.pra-card .name { font-size: 14px; font-weight: 600; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.pra-card .meta { color: var(--muted); font-family: "JetBrains Mono", monospace; font-size: 10px; white-space: nowrap; }
+.pra-card .pr-info { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; font-family: "JetBrains Mono", monospace; font-size: 12px; }
+.pra-card .pr-info .pr-val { font-weight: 600; font-size: 14px; }
+.pra-card .pr-info .pr-date { color: var(--muted); font-size: 11px; }
+
+.option-block {
+  margin-bottom: 50px; padding: 24px;
+  background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px solid var(--border);
+}
+.option-tag {
+  display: inline-block; background: var(--lift); color: white; padding: 4px 12px;
+  border-radius: 6px; font-family: "JetBrains Mono", monospace; font-size: 11px;
+  letter-spacing: 0.1em; margin-bottom: 14px;
+}
+.option-desc { color: var(--muted); font-size: 13px; margin-bottom: 18px; }
+.pros-cons { font-size: 11px; font-family: "JetBrains Mono", monospace; margin-top: 12px; color: var(--muted); }
+.pros-cons .pro { color: #84cc16; }
+.pros-cons .con { color: #f43f5e; }
+
+.controls-row {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 10px; flex-wrap: wrap;
+}
+.bp-group-header {
+  font-family: "JetBrains Mono", monospace; font-size: 11px; letter-spacing: 0.1em;
+  margin: 14px 0 8px; padding: 8px 0; border-bottom: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>💪 PR Activity — Body Part 정렬 옵션</h1>
+<p class="intro">사용자 요청: BP 기준으로 sorting할 수 있는 드롭다운. 3가지 변형 비교.</p>
+
+<!-- ============ OPTION A — Sort Dropdown (그룹) ============ -->
+<div class="option-block">
+  <span class="option-tag">OPTION A — Sort Dropdown (그룹 모드)</span>
+  <p class="option-desc">기간 칩 옆에 Sort 드롭다운 1개. "Body Part" 선택 시 BP별 그룹 헤더 + 그 안에서 sets desc. <strong>가장 직관적.</strong></p>
+
+  <div class="controls-row">
+    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+      <button class="chip">30d</button>
+      <button class="chip">60d</button>
+      <button class="chip active">90d</button>
+      <button class="chip">6mo</button>
+      <button class="chip">1y</button>
+      <button class="chip">All time</button>
+    </div>
+    <select class="select-lift">
+      <option>Sort: Sets desc</option>
+      <option selected>Sort: Body Part</option>
+      <option>Sort: Recent PR</option>
+      <option>Sort: Name</option>
+    </select>
+  </div>
+
+  <div class="label-mono" style="margin-bottom:10px;">지난 90일 · BP 그룹 · 20/153개 표시</div>
+
+  <div class="bp-group-header" style="color:#FF4D00;">
+    <span>CHEST</span><span style="color:var(--muted);">3 exercises</span>
+  </div>
+  <div class="pra-card">
+    <div class="row1">
+      <span class="name">Machine Chest Press <span class="bp chest">CHEST</span></span>
+      <span class="meta">88 sets · 22 sessions</span>
+    </div>
+    <div class="pr-info">
+      <span class="pr-val" style="color:#FF4D00;">61.0 kg × 6</span>
+      <span class="pr-date">📅 2d ago</span>
+    </div>
+  </div>
+  <div class="pra-card">
+    <div class="row1">
+      <span class="name">Dumbbell Incline Bench Press <span class="bp chest">CHEST</span></span>
+      <span class="meta">36 sets · 9 sessions</span>
+    </div>
+    <div class="pr-info">
+      <span class="pr-val" style="color:#FF4D00;">22.7 kg × 12</span>
+      <span class="pr-date">📅 14d ago</span>
+    </div>
+  </div>
+
+  <div class="bp-group-header" style="color:#38bdf8;">
+    <span>BACK</span><span style="color:var(--muted);">4 exercises</span>
+  </div>
+  <div class="pra-card">
+    <div class="row1">
+      <span class="name">One Arm Machine Iso Lateral Row <span class="bp back">BACK</span></span>
+      <span class="meta">12 sets · 3 sessions</span>
+    </div>
+    <div class="pr-info">
+      <span class="pr-val" style="color:#38bdf8;">82.7 kg × 8</span>
+      <span class="pr-date">📅 Yesterday</span>
+    </div>
+  </div>
+  <div class="pra-card">
+    <div class="row1">
+      <span class="name">Cable Straight Arm Pulldown <span class="bp back">BACK</span></span>
+      <span class="meta">40 sets · 10 sessions</span>
+    </div>
+    <div class="pr-info">
+      <span class="pr-val" style="color:#38bdf8;">25.0 kg × 12</span>
+      <span class="pr-date">📅 41d ago</span>
+    </div>
+  </div>
+
+  <div class="bp-group-header" style="color:#84cc16;">
+    <span>LEGS</span><span style="color:var(--muted);">2 exercises ·</span>
+  </div>
+  <div class="pra-card">
+    <div class="row1">
+      <span class="name">Single-Leg Machine Leg Press <span class="bp legs">LEGS</span></span>
+      <span class="meta">28 sets · 7 sessions</span>
+    </div>
+    <div class="pr-info">
+      <span class="pr-val" style="color:#84cc16;">75.0 kg × 10</span>
+      <span class="pr-date">📅 4d ago</span>
+    </div>
+  </div>
+
+  <p class="pros-cons">
+    <span class="pro">✓ BP별 그룹 명확</span> &nbsp;
+    <span class="pro">✓ 정렬 옵션 확장 가능 (Recent PR / Name)</span><br>
+    <span class="con">✗ 그룹 헤더 때문에 행 수가 늘어남</span>
+  </p>
+</div>
+
+<!-- ============ OPTION B — BP Filter Dropdown (1개만) ============ -->
+<div class="option-block">
+  <span class="option-tag" style="background: #38bdf8;">OPTION B — BP Filter Dropdown</span>
+  <p class="option-desc">드롭다운으로 부위 1개 선택 → 그 부위만 표시. 정렬은 sets desc 유지. <strong>특정 부위 집중 보고 싶을 때 좋음.</strong></p>
+
+  <div class="controls-row">
+    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+      <button class="chip">30d</button>
+      <button class="chip">60d</button>
+      <button class="chip active">90d</button>
+      <button class="chip">6mo</button>
+      <button class="chip">1y</button>
+      <button class="chip">All time</button>
+    </div>
+    <select class="select-lift">
+      <option>Body Part: All</option>
+      <option selected>Body Part: CHEST</option>
+      <option>Body Part: BACK</option>
+      <option>Body Part: SHOULDERS</option>
+      <option>Body Part: ARMS</option>
+      <option>Body Part: LEGS</option>
+      <option>Body Part: CORE</option>
+    </select>
+  </div>
+
+  <div class="label-mono" style="margin-bottom:10px;">지난 90일 · CHEST만 · 세트 수 desc · 3개 표시</div>
+
+  <div class="pra-card">
+    <div class="row1">
+      <span class="name">Machine Chest Press <span class="bp chest">CHEST</span></span>
+      <span class="meta">88 sets · 22 sessions</span>
+    </div>
+    <div class="pr-info">
+      <span class="pr-val" style="color:#FF4D00;">61.0 kg × 6</span>
+      <span class="pr-date">📅 2d ago</span>
+    </div>
+  </div>
+  <div class="pra-card">
+    <div class="row1">
+      <span class="name">Dumbbell Incline Bench Press <span class="bp chest">CHEST</span></span>
+      <span class="meta">36 sets · 9 sessions</span>
+    </div>
+    <div class="pr-info">
+      <span class="pr-val" style="color:#FF4D00;">22.7 kg × 12</span>
+      <span class="pr-date">📅 14d ago</span>
+    </div>
+  </div>
+  <div class="pra-card">
+    <div class="row1">
+      <span class="name">Cable Dips <span class="bp chest">CHEST</span></span>
+      <span class="meta">18 sets · 5 sessions</span>
+    </div>
+    <div class="pr-info">
+      <span class="pr-val" style="color:#FF4D00;">22.5 kg × 10</span>
+      <span class="pr-date">📅 9d ago</span>
+    </div>
+  </div>
+
+  <p class="pros-cons">
+    <span class="pro">✓ 컴팩트, 한 부위 집중</span><br>
+    <span class="con">✗ 다른 부위 한눈에 못 봄 (드롭다운 다시 클릭)</span>
+  </p>
+</div>
+
+<!-- ============ OPTION C — 통합: Sort & Filter 2개 드롭다운 ============ -->
+<div class="option-block">
+  <span class="option-tag" style="background: #84cc16;">OPTION C — Sort + Filter 동시</span>
+  <p class="option-desc">Sort + Filter 드롭다운 2개. 가장 유연. "BACK만 + Recent PR 순" 등 조합 가능. <strong>파워유저 친화.</strong></p>
+
+  <div class="controls-row">
+    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+      <button class="chip">30d</button>
+      <button class="chip">60d</button>
+      <button class="chip active">90d</button>
+      <button class="chip">6mo</button>
+      <button class="chip">1y</button>
+      <button class="chip">All time</button>
+    </div>
+    <select class="select-lift">
+      <option selected>Sort: Sets desc</option>
+      <option>Sort: Body Part</option>
+      <option>Sort: Recent PR</option>
+      <option>Sort: Name</option>
+    </select>
+    <select class="select-lift">
+      <option selected>BP: All</option>
+      <option>BP: CHEST</option>
+      <option>BP: BACK</option>
+      <option>BP: SHOULDERS</option>
+      <option>BP: ARMS</option>
+      <option>BP: LEGS</option>
+      <option>BP: CORE</option>
+    </select>
+  </div>
+
+  <div class="label-mono" style="margin-bottom:10px;">지난 90일 · 세트 수 desc · 20/153개 표시</div>
+
+  <div class="pra-card">
+    <div class="row1">
+      <span class="name">Squat <span class="bp legs">LEGS</span></span>
+      <span class="meta">96 sets · 24 sessions</span>
+    </div>
+    <div class="pr-info">
+      <span class="pr-val" style="color:#84cc16;">110.0 kg × 5</span>
+      <span class="pr-date">📅 24d ago</span>
+    </div>
+  </div>
+  <div class="pra-card">
+    <div class="row1">
+      <span class="name">Machine Chest Press <span class="bp chest">CHEST</span></span>
+      <span class="meta">88 sets · 22 sessions</span>
+    </div>
+    <div class="pr-info">
+      <span class="pr-val" style="color:#FF4D00;">61.0 kg × 6</span>
+      <span class="pr-date">📅 2d ago</span>
+    </div>
+  </div>
+  <div class="pra-card">
+    <div class="row1">
+      <span class="name">Cable Straight Arm Pulldown <span class="bp back">BACK</span></span>
+      <span class="meta">40 sets · 10 sessions</span>
+    </div>
+    <div class="pr-info">
+      <span class="pr-val" style="color:#38bdf8;">25.0 kg × 12</span>
+      <span class="pr-date">📅 41d ago</span>
+    </div>
+  </div>
+
+  <p class="pros-cons">
+    <span class="pro">✓ 가장 유연 (BP만 / 정렬만 / 둘 다)</span><br>
+    <span class="con">✗ 컨트롤 3개 (기간 + Sort + Filter) — 시각적 복잡</span>
+  </p>
+</div>
+
+<p style="color: var(--muted); margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--border); font-size: 12px;">
+  📁 C:\tmp\workout\mockups\pr_bp_sort_preview.html
+</p>
+
+</div>
+</body>
+</html>
