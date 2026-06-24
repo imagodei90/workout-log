@@ -393,7 +393,7 @@ const SCHEMA = {
     {id: "no_porn", label: "No Porn", section: "Discipline"},
     {id: "no_smoking", label: "No Smoking", section: "Discipline"},
     // Night
-    {id: "daily_journaling", label: "Daily Journaling", section: "Night"},
+    {id: "daily_journaling", label: "Daily Journaling", section: "Night", startDate: "2026-06-24"},
   ],
   sections: [
     {key: "Morning", label: "Morning"},
@@ -481,6 +481,7 @@ function renderSections() {
   const container = document.getElementById("sections-container");
   const itemsBySection = {};
   for (const it of SCHEMA.items) {
+    if (it.startDate && currentDate < it.startDate) continue;  // not yet active for this date
     (itemsBySection[it.section] = itemsBySection[it.section] || []).push(it);
   }
   let html = "";
@@ -563,6 +564,7 @@ function computeEffectiveProgress(checks, dateIso) {
   for (const it of SCHEMA.items) {
     if (BONUS_WORKOUT_IDS.includes(it.id)) continue;
     if (optional.has(it.id)) continue;  // day-specific optional: not in progress
+    if (it.startDate && dateIso && dateIso < it.startDate) continue;  // item not yet active for this date
     if (CORE_WORKOUT_IDS.includes(it.id)) {
       if (checks[it.id] === true) coreWorkoutAny = true;
     } else {
