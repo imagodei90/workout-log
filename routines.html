@@ -29,6 +29,7 @@
     --sec-focus: #06b6d4;
     --sec-workout: #FF1A8C;
     --sec-discipline: #a855f7;
+    --sec-night: #6366f1;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   [hidden] { display: none !important; }
@@ -109,6 +110,7 @@
   .item-dot.focus { background: var(--sec-focus); }
   .item-dot.workout { background: var(--sec-workout); }
   .item-dot.discipline { background: var(--sec-discipline); }
+  .item-dot.night { background: var(--sec-night); }
   .item-label {
     flex: 1; font-size: 14px; color: var(--text);
   }
@@ -390,12 +392,15 @@ const SCHEMA = {
     {id: "supplements", label: "Supplements", section: "Discipline", dotColor: "workout"},
     {id: "no_porn", label: "No Porn", section: "Discipline"},
     {id: "no_smoking", label: "No Smoking", section: "Discipline"},
+    // Night
+    {id: "daily_journaling", label: "Daily Journaling", section: "Night"},
   ],
   sections: [
     {key: "Morning", label: "Morning"},
     {key: "Focus", label: "Focus"},
     {key: "Workout", label: "Workout"},
     {key: "Discipline", label: "Discipline"},
+    {key: "Night", label: "Night"},
   ],
 };
 
@@ -404,6 +409,7 @@ const SECTION_DOT_CLASS = {
   Focus: "focus",
   Workout: "workout",
   Discipline: "discipline",
+  Night: "night",
 };
 
 const WEEKDAYS_EN = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
