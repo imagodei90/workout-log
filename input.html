@@ -183,6 +183,27 @@
     font-family: 'JetBrains Mono', monospace;
   }
   .kind-badge.run { background: rgba(255,77,0,0.15); color: #FF4D00; }
+
+  .photo-drop {
+    display: flex; gap: 8px; align-items: center;
+    margin-bottom: 10px;
+  }
+  .photo-btn {
+    background: var(--surface-2); color: var(--text);
+    border: 1px dashed var(--border); border-radius: 8px;
+    padding: 10px 14px; font-size: 13px; cursor: pointer;
+    flex: 1; text-align: center; font-family: inherit;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .photo-btn:active { transform: scale(0.99); }
+  .photo-status {
+    color: var(--muted); font-size: 11px; font-family: 'JetBrains Mono', monospace;
+    min-width: 90px; text-align: right;
+  }
+  .photo-status.processing { color: var(--gold); }
+  .photo-status.done { color: var(--green); }
+  .photo-status.error { color: var(--red); }
+  #photo-input { display: none; }
 </style>
 </head>
 <body>
@@ -218,10 +239,15 @@
     Saved to Firestore → PC picks up within 15 min → archive + dashboard updated.
   </p>
   <p class="hint" id="hint-run" hidden>
-    Paste Strava/Watch summary. Required: date + distance (km) + duration (MM:SS).<br>
-    Example:<br>
-    <code>July 4, 2026 06:30<br>5.05 km  28:41  5:41/km  165 bpm<br>https://strava.app.link/...</code>
+    Paste Strava/Watch summary OR upload a Strava screenshot below.<br>
+    Required: date + distance (km) + duration (MM:SS).
   </p>
+
+  <div class="photo-drop" id="photo-drop" hidden>
+    <button type="button" class="photo-btn" id="photo-btn">📷 Upload Strava screenshot</button>
+    <span class="photo-status" id="photo-status"></span>
+    <input type="file" id="photo-input" accept="image/*">
+  </div>
 
   <textarea id="workout-text" placeholder="May 20, 2026
 
@@ -329,10 +355,140 @@ function setKind(kind) {
   });
   document.getElementById("hint-lift").hidden = kind !== "lift";
   document.getElementById("hint-run").hidden = kind !== "run";
+  document.getElementById("photo-drop").hidden = kind !== "run";
   const ta = document.getElementById("workout-text");
   ta.placeholder = kind === "run" ? RUN_PLACEHOLDER : LIFT_PLACEHOLDER;
   document.getElementById("submit-btn").textContent = kind === "run" ? "Submit Run" : "Submit Workout";
 }
+
+// === OCR pipeline (Tesseract.js loaded lazily) ===
+let tesseractLoading = null;
+async function loadTesseract() {
+  if (window.Tesseract) return window.Tesseract;
+  if (tesseractLoading) return tesseractLoading;
+  tesseractLoading = new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = "https://unpkg.com/tesseract.js@5.1.1/dist/tesseract.min.js";
+    s.onload = () => resolve(window.Tesseract);
+    s.onerror = () => reject(new Error("Tesseract load failed"));
+    document.head.appendChild(s);
+  });
+  return tesseractLoading;
+}
+
+/**
+ * Extract structured run data from OCR text and format for parser.
+ * Handles Strava mobile layout: labels above values on separate lines.
+ */
+function ocrToRunText(ocrText) {
+  const cleaned = ocrText
+    .replace(/[|·•]/g, " ")
+    .replace(/[ \t]+/g, " ");
+  const norm = cleaned.replace(/\s+/g, " ");
+  const out = {};
+
+  // Distance: look for "X.XX km"
+  let m = norm.match(/(\d+(?:\.\d+)?)\s*km\b/i);
+  if (m) out.distance = m[1] + " km";
+
+  // Moving Time — first MM:SS after "moving time" or "time" label; otherwise longest MM:SS
+  m = norm.match(/moving\s*time[^\d]*(\d{1,2}:\d{2}(?::\d{2})?)/i)
+    || norm.match(/\btime[^\d]*(\d{1,2}:\d{2}(?::\d{2})?)/i);
+  if (m) out.duration = m[1];
+
+  // Pace — "M:SS /km" or "M:SS/km"
+  m = norm.match(/(\d{1,2}:\d{2})\s*\/\s*km/i)
+    || norm.match(/pace[^\d]*(\d{1,2}:\d{2})/i);
+  if (m) out.pace = m[1] + "/km";
+
+  // HR — "XXX bpm"
+  m = norm.match(/(\d{2,3})\s*bpm/i)
+    || norm.match(/heart\s*rate[^\d]*(\d{2,3})/i);
+  if (m) out.hr = m[1] + " bpm";
+
+  // Calories — "XXX Cal" or "XXX kcal"
+  m = norm.match(/(\d+(?:\.\d+)?)\s*k?cal\b/i)
+    || norm.match(/calories[^\d]*(\d+(?:\.\d+)?)/i);
+  if (m) out.calories = m[1] + " kcal";
+
+  // Date detection: prefer explicit "Month D, YYYY", fallback to "Yesterday at HH:MM AM/PM"
+  const monthPat = /(january|february|march|april|may|june|july|august|september|october|november|december)\s+(\d{1,2}),?\s+(\d{4})/i;
+  m = norm.match(monthPat);
+  let dateStr = null;
+  if (m) {
+    dateStr = `${m[1]} ${m[2]}, ${m[3]}`;
+  } else {
+    // Relative dates
+    const now = new Date();
+    if (/yesterday/i.test(norm)) {
+      const d = new Date(now); d.setDate(d.getDate() - 1);
+      dateStr = d.toLocaleDateString("en-US", {month:"long", day:"numeric", year:"numeric"});
+    } else if (/today/i.test(norm)) {
+      dateStr = now.toLocaleDateString("en-US", {month:"long", day:"numeric", year:"numeric"});
+    }
+  }
+  // Time-of-day from "HH:MM AM/PM"
+  const todM = norm.match(/(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)/);
+  let timeStr = "";
+  if (todM) {
+    let hh = parseInt(todM[1], 10);
+    const mm = todM[2];
+    const ap = todM[3].toLowerCase();
+    if (ap === "pm" && hh < 12) hh += 12;
+    if (ap === "am" && hh === 12) hh = 0;
+    timeStr = ` ${String(hh).padStart(2,"0")}:${mm}`;
+  }
+
+  const firstLine = dateStr ? `${dateStr}${timeStr}` : "";
+  const parts = [];
+  if (out.distance) parts.push(out.distance);
+  if (out.duration) parts.push(out.duration);
+  if (out.pace) parts.push(out.pace);
+  if (out.hr) parts.push(out.hr);
+  if (out.calories) parts.push(out.calories);
+  const dataLine = parts.join("  ");
+  return [firstLine, dataLine].filter(Boolean).join("\n");
+}
+
+async function runOCR(file) {
+  const status = document.getElementById("photo-status");
+  const setStatus = (txt, cls) => {
+    status.textContent = txt;
+    status.className = "photo-status " + (cls || "");
+  };
+  setStatus("Loading OCR...", "processing");
+  try {
+    const T = await loadTesseract();
+    setStatus("Reading image...", "processing");
+    const { data } = await T.recognize(file, "eng", {
+      logger: (m) => {
+        if (m.status === "recognizing text" && m.progress) {
+          setStatus(`OCR ${Math.round(m.progress * 100)}%`, "processing");
+        }
+      },
+    });
+    const runText = ocrToRunText(data.text);
+    if (!runText.trim()) {
+      setStatus("No data extracted", "error");
+      return;
+    }
+    const ta = document.getElementById("workout-text");
+    ta.value = (ta.value.trim() ? ta.value.trim() + "\n" : "") + runText;
+    setStatus("✓ Extracted — review & submit", "done");
+  } catch (e) {
+    console.error("OCR failed:", e);
+    setStatus("Error: " + (e.message || "OCR failed"), "error");
+  }
+}
+
+document.getElementById("photo-btn").addEventListener("click", () => {
+  document.getElementById("photo-input").click();
+});
+document.getElementById("photo-input").addEventListener("change", (e) => {
+  const file = e.target.files && e.target.files[0];
+  if (file) runOCR(file);
+  e.target.value = "";  // allow re-picking same file
+});
 
 document.querySelectorAll(".kind-tab").forEach(b => {
   b.addEventListener("click", () => setKind(b.dataset.kind));
