@@ -163,6 +163,26 @@
     font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted);
     letter-spacing: 0.12em; margin: 20px 0 8px; padding-left: 4px;
   }
+
+  .kind-toggle {
+    display: flex; gap: 4px; background: var(--surface-2); border-radius: 10px;
+    padding: 4px; margin-bottom: 12px;
+  }
+  .kind-tab {
+    flex: 1; padding: 8px; background: transparent; color: var(--muted);
+    border: none; border-radius: 8px; cursor: pointer; font-size: 13px;
+    font-weight: 500; -webkit-tap-highlight-color: transparent;
+    font-family: inherit;
+  }
+  .kind-tab.active { background: var(--surface); color: var(--text); }
+  .kind-badge {
+    display: inline-block; padding: 1px 6px; border-radius: 4px;
+    font-size: 9px; letter-spacing: 0.08em; font-weight: 500;
+    margin-left: 6px;
+    background: rgba(255,26,140,0.15); color: var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .kind-badge.run { background: rgba(255,77,0,0.15); color: #FF4D00; }
 </style>
 </head>
 <body>
@@ -188,9 +208,19 @@
 </div>
 
 <div id="main-screen" hidden>
-  <p class="hint">
+  <div class="kind-toggle" role="tablist" aria-label="Entry kind">
+    <button type="button" class="kind-tab active" data-kind="lift" role="tab" aria-selected="true">🏋️ Lift</button>
+    <button type="button" class="kind-tab" data-kind="run" role="tab" aria-selected="false">🏃 Run</button>
+  </div>
+
+  <p class="hint" id="hint-lift">
     Paste Fleek workout text below. Must start with date like <code>May 20, 2026</code>.<br>
     Saved to Firestore → PC picks up within 15 min → archive + dashboard updated.
+  </p>
+  <p class="hint" id="hint-run" hidden>
+    Paste Strava/Watch summary. Required: date + distance (km) + duration (MM:SS).<br>
+    Example:<br>
+    <code>July 4, 2026 06:30<br>5.05 km  28:41  5:41/km  165 bpm<br>https://strava.app.link/...</code>
   </p>
 
   <textarea id="workout-text" placeholder="May 20, 2026
@@ -275,14 +305,48 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 
+let currentKind = "lift";
+
+const LIFT_PLACEHOLDER = `May 20, 2026
+
+LEGS & GLUTES (Jul25)
+
+Machine Hack Squat
+1. 0kg X 15reps
+2. 20kg X 15reps
+...`;
+
+const RUN_PLACEHOLDER = `July 4, 2026 06:30
+5.05 km  28:41  5:41/km  165 bpm
+https://strava.app.link/xxxxx`;
+
+function setKind(kind) {
+  currentKind = kind;
+  document.querySelectorAll(".kind-tab").forEach(b => {
+    const on = b.dataset.kind === kind;
+    b.classList.toggle("active", on);
+    b.setAttribute("aria-selected", on ? "true" : "false");
+  });
+  document.getElementById("hint-lift").hidden = kind !== "lift";
+  document.getElementById("hint-run").hidden = kind !== "run";
+  const ta = document.getElementById("workout-text");
+  ta.placeholder = kind === "run" ? RUN_PLACEHOLDER : LIFT_PLACEHOLDER;
+  document.getElementById("submit-btn").textContent = kind === "run" ? "Submit Run" : "Submit Workout";
+}
+
+document.querySelectorAll(".kind-tab").forEach(b => {
+  b.addEventListener("click", () => setKind(b.dataset.kind));
+});
+
 document.getElementById("submit-btn").onclick = async () => {
   const text = document.getElementById("workout-text").value.trim();
   if (!text) {
     showToast("Empty input", "error");
     return;
   }
-  if (text.length < 20) {
-    showToast("Too short — paste full workout", "error");
+  const minLen = currentKind === "run" ? 10 : 20;
+  if (text.length < minLen) {
+    showToast("Too short — paste full " + currentKind, "error");
     return;
   }
   const btn = document.getElementById("submit-btn");
@@ -291,6 +355,7 @@ document.getElementById("submit-btn").onclick = async () => {
   try {
     await addDoc(collection(db, "users", currentUser.uid, "workout_inbox"), {
       text,
+      kind: currentKind,
       submittedAt: serverTimestamp(),
       processed: false,
       processedAt: null,
@@ -303,7 +368,7 @@ document.getElementById("submit-btn").onclick = async () => {
     showToast("Submit failed: " + err.message, "error");
   } finally {
     btn.disabled = false;
-    btn.textContent = "Submit Workout";
+    btn.textContent = currentKind === "run" ? "Submit Run" : "Submit Workout";
   }
 };
 
@@ -331,9 +396,11 @@ function subscribeRecent() {
       const status = d.processed ? "processed" : (d.error ? "error" : "pending");
       const preview = (d.text || "").split("\n").slice(0, 2).join(" / ").substring(0, 60);
       const resultStr = d.result || (d.error ? `Error: ${d.error}` : "Awaiting processing...");
+      const kind = d.kind || "lift";
+      const kindBadge = `<span class="kind-badge ${kind === "run" ? "run" : ""}">${kind === "run" ? "RUN" : "LIFT"}</span>`;
       html += `<div class="recent-card">
         <div class="recent-header">
-          <span class="recent-time">${tsStr}</span>
+          <span class="recent-time">${tsStr}${kindBadge}</span>
           <span class="recent-status ${status}">${status.toUpperCase()}</span>
         </div>
         <div class="recent-preview">${preview}</div>
