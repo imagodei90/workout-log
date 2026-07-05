@@ -248,6 +248,10 @@
     <span class="photo-status" id="photo-status"></span>
     <input type="file" id="photo-input" accept="image/*">
   </div>
+  <details id="ocr-raw-wrap" style="margin: 6px 0 10px; font-size: 11px; color: var(--muted); font-family: 'JetBrains Mono', monospace;" hidden>
+    <summary style="cursor:pointer;">Raw OCR text</summary>
+    <pre id="ocr-raw" style="white-space: pre-wrap; background: var(--surface-2); padding: 10px; border-radius: 8px; margin-top: 6px; overflow-x: auto;"></pre>
+  </details>
 
   <textarea id="workout-text" placeholder="May 20, 2026
 
@@ -467,17 +471,25 @@ async function runOCR(file) {
         }
       },
     });
-    const runText = ocrToRunText(data.text);
-    if (!runText.trim()) {
-      setStatus("No data extracted", "error");
-      return;
-    }
+    const rawOcr = (data.text || "").trim();
+    const runText = ocrToRunText(rawOcr);
     const ta = document.getElementById("workout-text");
-    ta.value = (ta.value.trim() ? ta.value.trim() + "\n" : "") + runText;
-    setStatus("✓ Extracted — review & submit", "done");
+    const parsed = runText.trim();
+    // Show raw OCR in collapsible for debugging
+    document.getElementById("ocr-raw").textContent = rawOcr || "(no text detected)";
+    document.getElementById("ocr-raw-wrap").hidden = false;
+    if (parsed) {
+      ta.value = parsed;
+      setStatus("✓ Extracted — review & submit", "done");
+    } else {
+      // Nothing extracted — dump raw so user can hand-edit
+      ta.value = rawOcr;
+      setStatus("Auto-parse failed — edit manually", "error");
+    }
   } catch (e) {
     console.error("OCR failed:", e);
     setStatus("Error: " + (e.message || "OCR failed"), "error");
+    alert("OCR error detail:\n" + (e.stack || e.message || e));
   }
 }
 
