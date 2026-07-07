@@ -204,18 +204,87 @@
   .photo-status.done { color: var(--green); }
   .photo-status.error { color: var(--red); }
   #photo-input { display: none; }
+
+  .settings-btn {
+    background: transparent; color: var(--muted); border: none;
+    font-size: 18px; cursor: pointer; padding: 4px 8px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .settings-btn.has-token { color: var(--green); }
+
+  .run-now-btn {
+    background: var(--surface-2); color: var(--text);
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: 10px 14px; font-size: 13px; cursor: pointer;
+    width: 100%; margin-top: 8px; font-family: inherit;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .run-now-btn:active { transform: scale(0.99); }
+  .run-now-btn:disabled { color: var(--muted); cursor: default; }
+
+  .modal-backdrop {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 300; padding: 16px;
+  }
+  .modal {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 20px; max-width: 480px; width: 100%;
+    color: var(--text);
+  }
+  .modal h3 { font-size: 16px; margin-bottom: 12px; }
+  .modal p { color: var(--muted); font-size: 12px; line-height: 1.5; margin-bottom: 12px; }
+  .modal p code { background: var(--surface-2); padding: 1px 4px; border-radius: 3px; color: var(--accent); font-size: 11px; }
+  .modal input {
+    width: 100%; background: var(--surface-2); color: var(--text);
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: 10px 12px; font-size: 13px; font-family: 'JetBrains Mono', monospace;
+    margin-bottom: 12px;
+  }
+  .modal-buttons { display: flex; gap: 8px; }
+  .modal-buttons button {
+    flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--border);
+    font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .modal-buttons .primary { background: var(--accent); color: white; border-color: var(--accent); }
+  .modal-buttons .secondary { background: transparent; color: var(--muted); }
+  .modal-buttons .danger { background: transparent; color: var(--red); border-color: var(--red); }
 </style>
 </head>
 <body>
 
 <nav class="nav-top">
   <h1>Quick Input</h1>
-  <div class="nav-links">
-    <a href="./" class="nav-link">WORKOUT</a>
-    <a href="routines.html" class="nav-link">ROUTINE</a>
-    <a href="input.html" class="nav-link active">INPUT</a>
+  <div style="display:flex; align-items:center; gap:6px;">
+    <div class="nav-links">
+      <a href="./" class="nav-link">WORKOUT</a>
+      <a href="routines.html" class="nav-link">ROUTINE</a>
+      <a href="input.html" class="nav-link active">INPUT</a>
+    </div>
+    <button type="button" class="settings-btn" id="settings-btn" title="Settings">⚙️</button>
   </div>
 </nav>
+
+<div id="settings-modal" class="modal-backdrop" hidden>
+  <div class="modal">
+    <h3>GitHub PAT for auto-trigger</h3>
+    <p>
+      Submit 시 workflow 를 즉시 트리거하려면 fine-grained PAT 필요.<br>
+      1. <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" style="color:var(--accent);">github.com/settings/personal-access-tokens/new</a><br>
+      2. Repository access → Only select repositories → <code>imagodei90/workout-automation</code><br>
+      3. Repository permissions → <code>Actions: Read and write</code><br>
+      4. Generate → 문자열 복사 → 아래 붙여넣기<br>
+      <em>저장 위치: 브라우저 localStorage (이 기기 전용).</em>
+    </p>
+    <input type="password" id="pat-input" placeholder="github_pat_..." autocomplete="off">
+    <div class="modal-buttons">
+      <button type="button" class="primary" id="pat-save">Save</button>
+      <button type="button" class="danger" id="pat-clear">Clear</button>
+      <button type="button" class="secondary" id="pat-cancel">Close</button>
+    </div>
+  </div>
+</div>
 
 <div id="loading" class="loading-screen">Loading...</div>
 
@@ -263,6 +332,7 @@ Machine Hack Squat
 ..."></textarea>
 
   <button class="submit-btn" id="submit-btn">Submit Workout</button>
+  <button type="button" class="run-now-btn" id="run-now-btn">🚀 Run workflow now</button>
 
   <div class="section-header">RECENT SUBMISSIONS</div>
   <div id="recent-list"></div>
@@ -506,6 +576,85 @@ document.querySelectorAll(".kind-tab").forEach(b => {
   b.addEventListener("click", () => setKind(b.dataset.kind));
 });
 
+// === GitHub workflow trigger ===
+const GH_REPO = "imagodei90/workout-automation";
+const GH_WORKFLOW = "fast.yml";
+
+function getPAT() { return localStorage.getItem("gh_pat") || ""; }
+function setPAT(v) { if (v) localStorage.setItem("gh_pat", v); else localStorage.removeItem("gh_pat"); updateSettingsIcon(); }
+function updateSettingsIcon() {
+  const b = document.getElementById("settings-btn");
+  b.classList.toggle("has-token", !!getPAT());
+  b.title = getPAT() ? "Settings (token saved)" : "Settings (add token to auto-trigger)";
+}
+
+async function triggerWorkflow() {
+  const pat = getPAT();
+  if (!pat) return { ok: false, skipped: true, reason: "no PAT" };
+  try {
+    const res = await fetch(
+      `https://api.github.com/repos/${GH_REPO}/actions/workflows/${GH_WORKFLOW}/dispatches`,
+      {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${pat}`,
+          "Accept": "application/vnd.github+json",
+          "X-GitHub-Api-Version": "2022-11-28",
+        },
+        body: JSON.stringify({ ref: "main" }),
+      }
+    );
+    if (res.status === 204) return { ok: true };
+    const body = await res.text();
+    return { ok: false, status: res.status, body: body.slice(0, 200) };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
+// Settings modal
+document.getElementById("settings-btn").addEventListener("click", () => {
+  document.getElementById("pat-input").value = getPAT();
+  document.getElementById("settings-modal").hidden = false;
+});
+document.getElementById("pat-save").addEventListener("click", () => {
+  const v = document.getElementById("pat-input").value.trim();
+  setPAT(v);
+  document.getElementById("settings-modal").hidden = true;
+  showToast(v ? "Token saved" : "Token cleared", "success");
+});
+document.getElementById("pat-clear").addEventListener("click", () => {
+  setPAT("");
+  document.getElementById("pat-input").value = "";
+  showToast("Token cleared", "success");
+});
+document.getElementById("pat-cancel").addEventListener("click", () => {
+  document.getElementById("settings-modal").hidden = true;
+});
+
+// Manual trigger button
+document.getElementById("run-now-btn").addEventListener("click", async () => {
+  const btn = document.getElementById("run-now-btn");
+  btn.disabled = true;
+  const orig = btn.textContent;
+  btn.textContent = "Triggering...";
+  const r = await triggerWorkflow();
+  if (r.ok) {
+    showToast("Workflow triggered — running now", "success");
+    btn.textContent = "✓ Triggered";
+    setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 3000);
+  } else if (r.skipped) {
+    showToast("No PAT — set one in ⚙️ Settings first", "error");
+    btn.textContent = orig; btn.disabled = false;
+  } else {
+    showToast(`Trigger failed: ${r.status || r.error || "unknown"}`, "error");
+    console.error("Workflow trigger error:", r);
+    btn.textContent = orig; btn.disabled = false;
+  }
+});
+
+updateSettingsIcon();
+
 document.getElementById("submit-btn").onclick = async () => {
   const text = document.getElementById("workout-text").value.trim();
   if (!text) {
@@ -531,7 +680,16 @@ document.getElementById("submit-btn").onclick = async () => {
       source: "quick-input-web",
     });
     document.getElementById("workout-text").value = "";
-    showToast("Submitted! Processing within 15 min.", "success");
+    // Auto-trigger workflow if PAT configured
+    const trig = await triggerWorkflow();
+    if (trig.ok) {
+      showToast("Submitted + workflow triggered", "success");
+    } else if (trig.skipped) {
+      showToast("Submitted — will process in ≤15 min (add PAT for instant)", "success");
+    } else {
+      showToast(`Submitted — trigger failed: ${trig.status || trig.error}`, "success");
+      console.error("Workflow trigger error:", trig);
+    }
   } catch (err) {
     showToast("Submit failed: " + err.message, "error");
   } finally {
