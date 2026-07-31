@@ -183,6 +183,25 @@
     font-family: 'JetBrains Mono', monospace;
   }
   .kind-badge.run { background: rgba(255,77,0,0.15); color: #FF4D00; }
+  .kind-badge.inbody { background: rgba(6,182,212,0.15); color: #06b6d4; }
+
+  .field-row {
+    display: grid; grid-template-columns: 130px 1fr 60px;
+    align-items: center; gap: 10px; padding: 7px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .field-row:last-child { border-bottom: none; }
+  .field-label { font-size: 12px; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+  .field-label b { color: var(--text); font-weight: 500; }
+  .field-input {
+    background: var(--surface-2); color: var(--text);
+    border: 1px solid var(--border); border-radius: 6px;
+    padding: 7px 10px; font-size: 13px;
+    font-family: 'JetBrains Mono', monospace; width: 100%;
+  }
+  .field-input.extracted { border-color: rgba(6,182,212,0.4); color: #06b6d4; }
+  .field-input:focus { outline: none; border-color: var(--accent); color: var(--text); }
+  .field-unit { font-size: 10px; color: var(--muted); font-family: 'JetBrains Mono', monospace; text-align: right; }
 
   .photo-drop {
     display: flex; gap: 8px; align-items: center;
@@ -271,7 +290,7 @@
     <h3>GitHub PAT for auto-trigger</h3>
     <p>
       Submit 시 workflow 를 즉시 트리거하려면 fine-grained PAT 필요.<br>
-      1. <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" style="color:var(--accent);">github.com/settings/personal-access-tokens/new</a><br>
+      1. <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener noreferrer" style="color:var(--accent);">github.com/settings/personal-access-tokens/new</a><br>
       2. Repository access → Only select repositories → <code>imagodei90/workout-automation</code><br>
       3. Repository permissions → <code>Actions: Read and write</code><br>
       4. Generate → 문자열 복사 → 아래 붙여넣기<br>
@@ -301,6 +320,7 @@
   <div class="kind-toggle" role="tablist" aria-label="Entry kind">
     <button type="button" class="kind-tab active" data-kind="lift" role="tab" aria-selected="true">🏋️ Lift</button>
     <button type="button" class="kind-tab" data-kind="run" role="tab" aria-selected="false">🏃 Run</button>
+    <button type="button" class="kind-tab" data-kind="inbody" role="tab" aria-selected="false">🩺 InBody</button>
   </div>
 
   <p class="hint" id="hint-lift">
@@ -311,15 +331,26 @@
     Paste Strava/Watch summary OR upload a Strava screenshot below.<br>
     Required: date + distance (km) + duration (MM:SS).
   </p>
+  <p class="hint" id="hint-inbody" hidden>
+    Upload an InBody screenshot. 11 fields auto-extracted (edit if wrong).<br>
+    Saved to <code>body_data.json</code> → dashboard Body tab.
+  </p>
 
   <div class="photo-drop" id="photo-drop" hidden>
-    <button type="button" class="photo-btn" id="photo-btn">📷 Upload Strava screenshot</button>
+    <button type="button" class="photo-btn" id="photo-btn">📷 Upload screenshot</button>
     <span class="photo-status" id="photo-status"></span>
     <input type="file" id="photo-input" accept="image/*">
   </div>
+
+  <!-- InBody 11-field form (hidden unless kind=inbody) -->
+  <div id="inbody-form" hidden style="background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px; margin-bottom:12px;">
+    <div style="font-family:'JetBrains Mono', monospace; font-size:10px; color:var(--muted); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid var(--border);">📋 Auto-extracted (edit if wrong)</div>
+    <div id="inbody-fields"></div>
+  </div>
+
   <details id="ocr-raw-wrap" style="margin: 6px 0 10px; font-size: 11px; color: var(--muted); font-family: 'JetBrains Mono', monospace;" hidden>
     <summary style="cursor:pointer;">Raw OCR text</summary>
-    <pre id="ocr-raw" style="white-space: pre-wrap; background: var(--surface-2); padding: 10px; border-radius: 8px; margin-top: 6px; overflow-x: auto;"></pre>
+    <pre id="ocr-raw" style="white-space: pre-wrap; background: var(--surface-2); padding: 10px; border-radius: 8px; margin-top: 6px; overflow-x: auto; max-height: 300px; overflow-y: auto;"></pre>
   </details>
 
   <textarea id="workout-text" placeholder="May 20, 2026
@@ -420,6 +451,34 @@ const RUN_PLACEHOLDER = `July 4, 2026 06:30
 5.05 km  28:41  5:41/km  165 bpm
 https://strava.app.link/xxxxx`;
 
+const INBODY_FIELDS = [
+  {k:'date',        label:'검사일시',    sub:'test date',    unit:'YYYY-MM-DD', type:'text'},
+  {k:'weight',      label:'체중',       sub:'weight',       unit:'kg'},
+  {k:'water',       label:'체수분',     sub:'body water',   unit:'L'},
+  {k:'smm',         label:'골격근량',   sub:'SMM',          unit:'kg'},
+  {k:'fatMass',     label:'체지방량',   sub:'fat mass',     unit:'kg'},
+  {k:'bodyFat',     label:'체지방률',   sub:'body fat',     unit:'%'},
+  {k:'leanMass',    label:'제지방량',   sub:'lean mass',    unit:'kg'},
+  {k:'bmi',         label:'BMI',        sub:'',             unit:'kg/m²'},
+  {k:'bmr',         label:'기초대사량', sub:'BMR',          unit:'kcal'},
+  {k:'visceralFat', label:'내장지방레벨', sub:'visceral fat', unit:'level'},
+  {k:'ecwRatio',    label:'세포외수분비', sub:'ECW ratio',   unit:''},
+];
+
+function renderInbodyForm(values) {
+  values = values || {};
+  const html = INBODY_FIELDS.map(f => {
+    const v = values[f.k] != null ? values[f.k] : '';
+    const extracted = v !== '' ? 'extracted' : '';
+    return `<div class="field-row">
+      <span class="field-label"><b>${f.label}</b>${f.sub ? '<br>' + f.sub : ''}</span>
+      <input class="field-input ${extracted}" data-k="${f.k}" value="${v}" placeholder="${f.type === 'text' ? '2026-07-14' : ''}">
+      <span class="field-unit">${f.unit}</span>
+    </div>`;
+  }).join('');
+  document.getElementById('inbody-fields').innerHTML = html;
+}
+
 function setKind(kind) {
   currentKind = kind;
   document.querySelectorAll(".kind-tab").forEach(b => {
@@ -429,10 +488,18 @@ function setKind(kind) {
   });
   document.getElementById("hint-lift").hidden = kind !== "lift";
   document.getElementById("hint-run").hidden = kind !== "run";
-  document.getElementById("photo-drop").hidden = kind !== "run";
+  document.getElementById("hint-inbody").hidden = kind !== "inbody";
+  document.getElementById("photo-drop").hidden = !(kind === "run" || kind === "inbody");
+  document.getElementById("inbody-form").hidden = kind !== "inbody";
   const ta = document.getElementById("workout-text");
+  ta.hidden = kind === "inbody";
   ta.placeholder = kind === "run" ? RUN_PLACEHOLDER : LIFT_PLACEHOLDER;
-  document.getElementById("submit-btn").textContent = kind === "run" ? "Submit Run" : "Submit Workout";
+  const label = kind === "run" ? "Submit Run" : kind === "inbody" ? "Submit InBody" : "Submit Workout";
+  document.getElementById("submit-btn").textContent = label;
+  // Ensure InBody form rendered on first switch
+  if (kind === "inbody" && !document.getElementById('inbody-fields').innerHTML) {
+    renderInbodyForm({});
+  }
 }
 
 // === OCR pipeline (Tesseract.js loaded lazily) ===
@@ -524,6 +591,55 @@ function ocrToRunText(ocrText) {
   return [firstLine, dataLine].filter(Boolean).join("\n");
 }
 
+function ocrToInbodyFields(text) {
+  const out = {};
+  const findFloat = (patterns, min, max) => {
+    for (const p of patterns) {
+      const re = new RegExp(p, "i");
+      const m = text.match(re);
+      if (m) {
+        const v = parseFloat(m[1]);
+        if (!isNaN(v) && (min == null || v >= min) && (max == null || v <= max)) return v;
+      }
+    }
+    return null;
+  };
+  const findInt = (patterns, min, max) => {
+    for (const p of patterns) {
+      const re = new RegExp(p, "i");
+      const m = text.match(re);
+      if (m) {
+        const v = parseInt(m[1], 10);
+        if (!isNaN(v) && (min == null || v >= min) && (max == null || v <= max)) return v;
+      }
+    }
+    return null;
+  };
+
+  // 검사일시: 2026.07.14. 19:09 or 2026-07-14 19:09
+  let dm = text.match(/(\d{4})[.\-\/](\d{1,2})[.\-\/](\d{1,2})[.\s]+(\d{1,2}):(\d{2})/);
+  if (dm) {
+    out.date = `${dm[1]}-${String(dm[2]).padStart(2,'0')}-${String(dm[3]).padStart(2,'0')}`;
+  } else {
+    dm = text.match(/(\d{4})[.\-\/](\d{1,2})[.\-\/](\d{1,2})/);
+    if (dm) out.date = `${dm[1]}-${String(dm[2]).padStart(2,'0')}-${String(dm[3]).padStart(2,'0')}`;
+  }
+  out.weight      = findFloat([`체중[^\\d]{1,60}?(\\d{2,3}\\.\\d)`], 40, 200);
+  out.water       = findFloat([`체수분[^\\d]{1,60}?(\\d{2}\\.\\d)`], 25, 70);
+  out.smm         = findFloat([`골격근량[^\\d]{1,60}?(\\d{2}\\.\\d)`, `SMM[^\\d]{1,40}?(\\d{2}\\.\\d)`], 20, 60);
+  out.fatMass     = findFloat([`체지방(?!률|율)(?:량|\\s*Mass|\\s*\\(kg\\))?[^\\d%]{1,60}?(\\d{1,2}\\.\\d)(?!\\s*%)`], 3, 60);
+  out.bodyFat     = findFloat([`체지방률[^\\d]{1,60}?(\\d{1,2}\\.\\d)`], 4, 50);
+  out.leanMass    = findFloat([`제지방량[^\\d]{1,60}?(\\d{2,3}\\.\\d)`], 30, 120);
+  out.bmi         = findFloat([`BMI[^\\d]{1,40}?(\\d{2}\\.\\d)`], 15, 45);
+  out.bmr         = findInt  ([`기초대사량[^\\d]{1,60}?(\\d{4})`, `BMR[^\\d]{1,40}?(\\d{4})`], 800, 3500);
+  out.visceralFat = findInt  ([`내장지방레벨[^\\d]{1,40}?(\\d{1,2})\\b`], 1, 30);
+  out.ecwRatio    = findFloat([`세포외수분비[^\\d]{1,60}?(0\\.\\d{3})`], 0.30, 0.45);
+  // Drop nulls
+  const cleaned = {};
+  for (const k in out) if (out[k] != null) cleaned[k] = out[k];
+  return cleaned;
+}
+
 async function runOCR(file) {
   const status = document.getElementById("photo-status");
   const setStatus = (txt, cls) => {
@@ -534,7 +650,8 @@ async function runOCR(file) {
   try {
     const T = await loadTesseract();
     setStatus("Reading image...", "processing");
-    const { data } = await T.recognize(file, "eng", {
+    const langs = currentKind === "inbody" ? "eng+kor" : "eng";
+    const { data } = await T.recognize(file, langs, {
       logger: (m) => {
         if (m.status === "recognizing text" && m.progress) {
           setStatus(`OCR ${Math.round(m.progress * 100)}%`, "processing");
@@ -542,19 +659,24 @@ async function runOCR(file) {
       },
     });
     const rawOcr = (data.text || "").trim();
-    const runText = ocrToRunText(rawOcr);
-    const ta = document.getElementById("workout-text");
-    const parsed = runText.trim();
-    // Show raw OCR in collapsible for debugging
     document.getElementById("ocr-raw").textContent = rawOcr || "(no text detected)";
     document.getElementById("ocr-raw-wrap").hidden = false;
-    if (parsed) {
-      ta.value = parsed;
-      setStatus("✓ Extracted — review & submit", "done");
+    if (currentKind === "inbody") {
+      const fields = ocrToInbodyFields(rawOcr);
+      renderInbodyForm(fields);
+      const filled = Object.keys(fields).length;
+      setStatus(filled > 0 ? `✓ Extracted ${filled} field${filled > 1 ? 's' : ''} — review & submit` : "No fields — edit manually", filled > 0 ? "done" : "error");
     } else {
-      // Nothing extracted — dump raw so user can hand-edit
-      ta.value = rawOcr;
-      setStatus("Auto-parse failed — edit manually", "error");
+      const runText = ocrToRunText(rawOcr);
+      const ta = document.getElementById("workout-text");
+      const parsed = runText.trim();
+      if (parsed) {
+        ta.value = parsed;
+        setStatus("✓ Extracted — review & submit", "done");
+      } else {
+        ta.value = rawOcr;
+        setStatus("Auto-parse failed — edit manually", "error");
+      }
     }
   } catch (e) {
     console.error("OCR failed:", e);
@@ -655,46 +777,75 @@ document.getElementById("run-now-btn").addEventListener("click", async () => {
 
 updateSettingsIcon();
 
+function collectInbodyData() {
+  const data = {};
+  document.querySelectorAll('#inbody-fields .field-input').forEach(inp => {
+    const k = inp.dataset.k;
+    const v = inp.value.trim();
+    if (v !== '') data[k] = v;
+  });
+  return data;
+}
+
 document.getElementById("submit-btn").onclick = async () => {
-  const text = document.getElementById("workout-text").value.trim();
-  if (!text) {
-    showToast("Empty input", "error");
-    return;
-  }
-  const minLen = currentKind === "run" ? 10 : 20;
-  if (text.length < minLen) {
-    showToast("Too short — paste full " + currentKind, "error");
-    return;
-  }
   const btn = document.getElementById("submit-btn");
   btn.disabled = true;
   btn.textContent = "Submitting...";
   try {
-    await addDoc(collection(db, "users", currentUser.uid, "workout_inbox"), {
-      text,
-      kind: currentKind,
-      submittedAt: serverTimestamp(),
-      processed: false,
-      processedAt: null,
-      result: null,
-      source: "quick-input-web",
-    });
-    document.getElementById("workout-text").value = "";
-    // Auto-trigger workflow if PAT configured
-    const trig = await triggerWorkflow();
-    if (trig.ok) {
-      showToast("Submitted + workflow triggered", "success");
-    } else if (trig.skipped) {
-      showToast("Submitted — will process in ≤15 min (add PAT for instant)", "success");
+    let doc;
+    if (currentKind === "inbody") {
+      const data = collectInbodyData();
+      if (!data.date || !/^\d{4}-\d{2}-\d{2}$/.test(data.date)) {
+        showToast("date 필수 (YYYY-MM-DD)", "error");
+        return;
+      }
+      const numFields = ['weight','water','smm','fatMass','bodyFat','leanMass','bmi','bmr','visceralFat','ecwRatio'];
+      const hasAny = numFields.some(k => data[k] != null && data[k] !== '');
+      if (!hasAny) {
+        showToast("최소 1개 수치 필드 필요", "error");
+        return;
+      }
+      doc = {
+        kind: "inbody",
+        data,
+        submittedAt: serverTimestamp(),
+        processed: false,
+        processedAt: null,
+        result: null,
+        source: "quick-input-web",
+      };
     } else {
-      showToast(`Submitted — trigger failed: ${trig.status || trig.error}`, "success");
-      console.error("Workflow trigger error:", trig);
+      const text = document.getElementById("workout-text").value.trim();
+      if (!text) { showToast("Empty input", "error"); return; }
+      const minLen = currentKind === "run" ? 10 : 20;
+      if (text.length < minLen) { showToast("Too short — paste full " + currentKind, "error"); return; }
+      doc = {
+        text,
+        kind: currentKind,
+        submittedAt: serverTimestamp(),
+        processed: false,
+        processedAt: null,
+        result: null,
+        source: "quick-input-web",
+      };
     }
+    await addDoc(collection(db, "users", currentUser.uid, "workout_inbox"), doc);
+    if (currentKind === "inbody") {
+      renderInbodyForm({});
+      document.getElementById("photo-status").textContent = "";
+      document.getElementById("ocr-raw-wrap").hidden = true;
+    } else {
+      document.getElementById("workout-text").value = "";
+    }
+    const trig = await triggerWorkflow();
+    if (trig.ok) showToast("Submitted + workflow triggered", "success");
+    else if (trig.skipped) showToast("Submitted — will process in ≤15 min (add PAT for instant)", "success");
+    else { showToast(`Submitted — trigger failed: ${trig.status || trig.error}`, "success"); console.error("Workflow trigger error:", trig); }
   } catch (err) {
     showToast("Submit failed: " + err.message, "error");
   } finally {
     btn.disabled = false;
-    btn.textContent = currentKind === "run" ? "Submit Run" : "Submit Workout";
+    btn.textContent = currentKind === "run" ? "Submit Run" : currentKind === "inbody" ? "Submit InBody" : "Submit Workout";
   }
 };
 
@@ -723,7 +874,12 @@ function subscribeRecent() {
       const preview = (d.text || "").split("\n").slice(0, 2).join(" / ").substring(0, 60);
       const resultStr = d.result || (d.error ? `Error: ${d.error}` : "Awaiting processing...");
       const kind = d.kind || "lift";
-      const kindBadge = `<span class="kind-badge ${kind === "run" ? "run" : ""}">${kind === "run" ? "RUN" : "LIFT"}</span>`;
+      const kindLabel = kind === "run" ? "RUN" : kind === "inbody" ? "INBODY" : "LIFT";
+      const kindClass = kind === "run" ? "run" : kind === "inbody" ? "inbody" : "";
+      const kindBadge = `<span class="kind-badge ${kindClass}">${kindLabel}</span>`;
+      const preview = kind === "inbody" && d.data
+        ? `weight ${d.data.weight || '-'} · SMM ${d.data.smm || '-'} · BF ${d.data.bodyFat || '-'}%`
+        : (d.text || "").split("\n").slice(0, 2).join(" / ").substring(0, 60);
       html += `<div class="recent-card">
         <div class="recent-header">
           <span class="recent-time">${tsStr}${kindBadge}</span>
