@@ -871,7 +871,6 @@ function subscribeRecent() {
         hour: "2-digit", minute: "2-digit", hour12: false
       });
       const status = d.processed ? "processed" : (d.error ? "error" : "pending");
-      const preview = (d.text || "").split("\n").slice(0, 2).join(" / ").substring(0, 60);
       const resultStr = d.result || (d.error ? `Error: ${d.error}` : "Awaiting processing...");
       const kind = d.kind || "lift";
       const kindLabel = kind === "run" ? "RUN" : kind === "inbody" ? "INBODY" : "LIFT";
