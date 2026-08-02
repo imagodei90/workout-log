@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>InBody Input — Design Preview</title>
+<style>
+:root {
+  --bg: #0a0a0a;
+  --surface: #111;
+  --surface-2: #161616;
+  --border: #1f1f23;
+  --text: #fafafa;
+  --muted: #71717a;
+  --accent: #FF1A8C;
+  --green: #84cc16;
+  --red: #f43f5e;
+  --gold: #fbbf24;
+  --inbody: #06b6d4;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: "Inter", -apple-system, sans-serif;
+  padding: 16px; max-width: 640px; margin: 0 auto;
+  min-height: 100vh; line-height: 1.5;
+}
+
+/* Nav */
+.nav-top {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 0 16px; border-bottom: 1px solid var(--border); margin-bottom: 16px;
+}
+h1 { font-size: 20px; font-weight: 600; }
+.nav-links { display: flex; gap: 4px; background: var(--surface-2); border-radius: 8px; padding: 2px; }
+.nav-link {
+  padding: 6px 10px; font-size: 10px; font-family: 'JetBrains Mono', monospace;
+  color: var(--muted); text-decoration: none; border-radius: 6px;
+}
+.nav-link.active { background: var(--surface); color: var(--text); }
+
+/* Kind tabs (Lift / Run / InBody) */
+.kind-toggle {
+  display: flex; gap: 4px; background: var(--surface-2); border-radius: 10px;
+  padding: 4px; margin-bottom: 12px;
+}
+.kind-tab {
+  flex: 1; padding: 8px; background: transparent; color: var(--muted);
+  border: none; border-radius: 8px; cursor: pointer; font-size: 13px;
+  font-weight: 500; font-family: inherit;
+}
+.kind-tab.active { background: var(--surface); color: var(--text); }
+
+/* Hint */
+.hint {
+  color: var(--muted); font-size: 12px; margin: 8px 0 12px;
+  font-family: 'JetBrains Mono', monospace; line-height: 1.5;
+}
+
+/* Photo upload */
+.photo-drop {
+  display: flex; gap: 8px; align-items: center; margin-bottom: 10px;
+}
+.photo-btn {
+  background: var(--surface-2); color: var(--text);
+  border: 1px dashed var(--border); border-radius: 8px;
+  padding: 10px 14px; font-size: 13px; cursor: pointer;
+  flex: 1; text-align: center; font-family: inherit;
+}
+.photo-status {
+  color: var(--muted); font-size: 11px; font-family: 'JetBrains Mono', monospace;
+  min-width: 90px; text-align: right;
+}
+.photo-status.done { color: var(--green); }
+
+/* InBody field grid */
+.inbody-fields {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 14px; margin-bottom: 12px;
+}
+.inbody-field-header {
+  font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase;
+  margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border);
+}
+.field-row {
+  display: grid; grid-template-columns: 140px 1fr 60px;
+  align-items: center; gap: 10px; padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+.field-row:last-child { border-bottom: none; }
+.field-label {
+  font-size: 12px; color: var(--muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+.field-label b { color: var(--text); font-weight: 500; }
+.field-input {
+  background: var(--surface-2); color: var(--text);
+  border: 1px solid var(--border); border-radius: 6px;
+  padding: 7px 10px; font-size: 13px;
+  font-family: 'JetBrains Mono', monospace;
+  width: 100%;
+}
+.field-input.extracted {
+  border-color: rgba(6,182,212,0.4);
+  color: var(--inbody);
+}
+.field-unit {
+  font-size: 10px; color: var(--muted);
+  font-family: 'JetBrains Mono', monospace;
+  text-align: right;
+}
+
+/* Submit button */
+.submit-btn {
+  width: 100%; padding: 14px;
+  background: var(--accent); color: #fff; border: none;
+  border-radius: 10px; font-size: 15px; font-weight: 600;
+  cursor: pointer; margin-top: 12px;
+}
+
+/* Raw OCR (collapsible) */
+details.raw-wrap {
+  margin: 10px 0; font-size: 11px; color: var(--muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+details.raw-wrap pre {
+  white-space: pre-wrap; background: var(--surface-2);
+  padding: 10px; border-radius: 8px; margin-top: 6px; overflow-x: auto;
+  max-height: 200px; overflow-y: auto;
+}
+
+/* Recent submissions preview */
+.section-header {
+  font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted);
+  letter-spacing: 0.12em; margin: 20px 0 8px;
+}
+.recent-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 12px; margin-bottom: 8px;
+  font-size: 12px;
+}
+.recent-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 6px; font-family: 'JetBrains Mono', monospace;
+}
+.recent-time { color: var(--muted); font-size: 10px; }
+.recent-status.processed {
+  background: rgba(132,204,22,0.15); color: var(--green);
+  padding: 2px 6px; border-radius: 4px; font-size: 9px; letter-spacing: 0.08em;
+}
+.kind-badge {
+  display: inline-block; padding: 1px 6px; border-radius: 4px;
+  font-size: 9px; letter-spacing: 0.08em; font-weight: 500; margin-left: 6px;
+  background: rgba(6,182,212,0.15); color: var(--inbody);
+  font-family: 'JetBrains Mono', monospace;
+}
+.recent-preview {
+  color: var(--muted); font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+}
+
+.callout {
+  background: rgba(6,182,212,0.05); border: 1px solid rgba(6,182,212,0.2);
+  border-radius: 8px; padding: 10px 12px; margin-bottom: 12px;
+  font-size: 11px; color: var(--muted); font-family: 'JetBrains Mono', monospace;
+}
+.callout b { color: var(--inbody); }
+</style>
+</head>
+<body>
+
+<nav class="nav-top">
+  <h1>Quick Input</h1>
+  <div class="nav-links">
+    <a href="#" class="nav-link">WORKOUT</a>
+    <a href="#" class="nav-link">ROUTINE</a>
+    <a href="#" class="nav-link active">INPUT</a>
+  </div>
+</nav>
+
+<!-- Kind tabs — InBody added -->
+<div class="kind-toggle">
+  <button class="kind-tab">🏋️ Lift</button>
+  <button class="kind-tab">🏃 Run</button>
+  <button class="kind-tab active">🩺 InBody</button>
+</div>
+
+<p class="hint">
+  Upload an InBody screenshot. Auto-extracts fields below.<br>
+  All fields editable · saved to <code>body_data.json</code> → dashboard.
+</p>
+
+<!-- Photo upload -->
+<div class="photo-drop">
+  <button class="photo-btn">📷 Upload InBody screenshot</button>
+  <span class="photo-status done">✓ Extracted</span>
+</div>
+
+<!-- InBody fields -->
+<div class="inbody-fields">
+  <div class="inbody-field-header">📋 Auto-extracted (edit if wrong)</div>
+
+  <div class="field-row">
+    <span class="field-label"><b>검사일시</b><br>test date</span>
+    <input class="field-input extracted" value="2026-07-14 19:09">
+    <span class="field-unit">-</span>
+  </div>
+  <div class="field-row">
+    <span class="field-label"><b>체중</b><br>weight</span>
+    <input class="field-input extracted" value="74.6">
+    <span class="field-unit">kg</span>
+  </div>
+  <div class="field-row">
+    <span class="field-label"><b>골격근량</b><br>SMM</span>
+    <input class="field-input extracted" value="37.3">
+    <span class="field-unit">kg</span>
+  </div>
+  <div class="field-row">
+    <span class="field-label"><b>체지방률</b><br>body fat</span>
+    <input class="field-input extracted" value="12.3">
+    <span class="field-unit">%</span>
+  </div>
+  <div class="field-row">
+    <span class="field-label"><b>제지방량</b><br>lean mass</span>
+    <input class="field-input extracted" value="65.4">
+    <span class="field-unit">kg</span>
+  </div>
+  <div class="field-row">
+    <span class="field-label"><b>BMI</b></span>
+    <input class="field-input extracted" value="23.5">
+    <span class="field-unit">kg/m²</span>
+  </div>
+  <div class="field-row">
+    <span class="field-label"><b>기초대사량</b><br>BMR</span>
+    <input class="field-input extracted" value="1783">
+    <span class="field-unit">kcal</span>
+  </div>
+  <div class="field-row">
+    <span class="field-label"><b>내장지방레벨</b><br>visceral fat</span>
+    <input class="field-input extracted" value="3">
+    <span class="field-unit">level</span>
+  </div>
+  <div class="field-row">
+    <span class="field-label"><b>세포외수분비</b><br>ECW ratio</span>
+    <input class="field-input extracted" value="0.372">
+    <span class="field-unit">-</span>
+  </div>
+</div>
+
+<div class="callout">
+  <b>Tip:</b> 파란색 = OCR로 자동 채워짐. 하나라도 잘못 인식됐으면 수동 수정 가능.
+  비어있는 필드는 그 값 없이 저장됨 (미측정 항목 처리).
+</div>
+
+<button class="submit-btn">Submit InBody</button>
+
+<details class="raw-wrap" open>
+  <summary style="cursor:pointer;">📎 Raw OCR text (디버깅용)</summary>
+  <pre>InBody570
+회원번호 01077941667  신장 178cm  나이 35  성별 남성  검사일시 2026.07.14. 19:09
+
+체성분분석 Body Composition Analysis
+체수분 47.9 L (39.2~47.8)
+단백질 13.0 kg (10.5~12.9)
+무기질 4.48 kg (3.63~4.43)
+체지방 9.2 kg (8.4~16.7)
+근육량 61.7 (50.3~61.5)
+제지방량 65.4 (53.3~65.2)
+체중 74.6 (59.2~80.2)
+
+인바디점수 86/100 점
+BMI 23.5 (표준)
+체지방률 12.3 (표준)
+골격근량 37.3
+기초대사량 1783 kcal
+내장지방레벨 3
+세포외수분비 0.372</pre>
+</details>
+
+<div class="section-header">RECENT SUBMISSIONS</div>
+<div class="recent-card">
+  <div class="recent-header">
+    <span class="recent-time">2026-07-27 22:15<span class="kind-badge">INBODY</span></span>
+    <span class="recent-status processed">PROCESSED</span>
+  </div>
+  <div class="recent-preview">weight 74.6 · SMM 37.3 · BF 12.3% · BMR 1783kcal</div>
+</div>
+
+<p style="color: var(--muted); margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--border); font-size: 11px; font-family: 'JetBrains Mono', monospace;">
+  📁 mockups/inbody_input_preview.html — 실제 배포 시 input.html 에 통합
+</p>
+
+</body>
+</html>
