@@ -159,6 +159,20 @@
     max-width: 110px;
   }
   .item-dropdown:focus { outline: none; border-color: var(--accent); }
+  .item-numinput {
+    background: var(--surface-2); color: var(--text);
+    -webkit-text-fill-color: var(--text);
+    border: 1px solid var(--border); border-radius: 6px;
+    padding: 6px 10px; font-size: 13px;
+    font-family: 'JetBrains Mono', monospace;
+    text-align: right; min-width: 80px; max-width: 90px;
+  }
+  .item-numinput:focus { outline: none; border-color: var(--accent); }
+  .unit-label {
+    font-size: 11px; color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    margin-left: 4px;
+  }
   .item-timeinput {
     background: var(--surface-2);
     color: var(--text);
@@ -349,7 +363,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence }
   from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, getDocs, collection, query, orderBy, limit, where, serverTimestamp }
+import { getFirestore, doc, setDoc, getDoc, getDocs, collection, addDoc, query, orderBy, limit, where, serverTimestamp }
   from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -372,6 +386,7 @@ const SCHEMA = {
   items: [
     // Morning
     {id: "wake_up", label: "Wake Up", section: "Morning", note: "default 5:30", timeInput: true, defaultTime: "05:30"},
+    {id: "weight_am", label: "Weight (morning)", section: "Morning", note: "공복 · 화장실 후 · optional", numberInput: true, unit: "kg", min: 65, max: 90, step: 0.1, optionalProgress: true},
     {id: "meditation", label: "Meditation", section: "Morning"},
     {id: "stretching", label: "Stretching", section: "Morning"},
     {id: "cold_shower", label: "Cold Shower", section: "Morning"},
@@ -522,12 +537,24 @@ function renderSections() {
         const opts = `<option value="">— select —</option>` + it.typeOptions.map(o => `<option value="${o}"${o === selectedType ? ' selected' : ''}>${o}</option>`).join("");
         dropdownHtml = `<select class="item-dropdown" onclick="event.stopPropagation()" onchange="window.setOtherWorkoutType(event)">${opts}</select>`;
       }
+      if (it.numberInput) {
+        const metaKey = it.id;  // e.g. weight_am
+        const raw = currentMeta[metaKey];
+        const val = (raw === undefined || raw === null || raw === '') ? '' : raw;
+        const minA = it.min != null ? ` min="${it.min}"` : '';
+        const maxA = it.max != null ? ` max="${it.max}"` : '';
+        const stepA = it.step != null ? ` step="${it.step}"` : ' step="0.1"';
+        dropdownHtml = `<input type="number" inputmode="decimal" class="item-numinput" data-id="${it.id}" value="${val}" placeholder="${it.placeholder || ''}"${minA}${maxA}${stepA} onclick="event.stopPropagation()" onchange="window.setNumberField(event)" onblur="window.setNumberField(event)"><span class="unit-label">${it.unit || ''}</span>`;
+      }
 
-      html += `<div class="${itemClass}" data-id="${it.id}" onclick="window.toggleItem('${it.id}')">
+      // Non-clickable if numberInput (checkmark irrelevant); optionalProgress hides check ring
+      const clickHandler = it.numberInput ? '' : `onclick="window.toggleItem('${it.id}')"`;
+      const checkHtml = it.numberInput ? '' : `<div class="item-check"></div>`;
+      html += `<div class="${itemClass}" data-id="${it.id}" ${clickHandler}>
         <div class="item-dot ${dotClass}"></div>
         <div class="item-label">${it.label}${bonusBadge}${noteHtml}</div>
         ${dropdownHtml}
-        <div class="item-check"></div>
+        ${checkHtml}
       </div>`;
     }
   }
@@ -565,6 +592,7 @@ function computeEffectiveProgress(checks, dateIso) {
     if (BONUS_WORKOUT_IDS.includes(it.id)) continue;
     if (optional.has(it.id)) continue;  // day-specific optional: not in progress
     if (it.startDate && dateIso && dateIso < it.startDate) continue;  // item not yet active for this date
+    if (it.optionalProgress || it.numberInput) continue;  // measurement fields (weight etc.) don't affect done/total
     if (CORE_WORKOUT_IDS.includes(it.id)) {
       if (checks[it.id] === true) coreWorkoutAny = true;
     } else {
@@ -605,6 +633,53 @@ window.setWakeUpTime = (e) => {
   const t = e.target.value;
   // Save selected time. If user picks the default (5:30), clear the override
   currentMeta.wake_up_time = t;
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveChecks, 400);
+};
+
+// Numeric field handler (weight_am etc.). Saves to routine doc AND submits
+// to workout_inbox as kind='weight' so it flows to body_data.json → dashboard.
+const _weightSubmitted = {};  // dedup: date+value key
+window.setNumberField = async (e) => {
+  const inp = e.target;
+  const id = inp.dataset.id;
+  const raw = (inp.value || '').trim();
+  if (raw === '') {
+    if (id in currentMeta) delete currentMeta[id];
+  } else {
+    const v = parseFloat(raw);
+    if (isNaN(v)) return;
+    const min = inp.min ? parseFloat(inp.min) : -Infinity;
+    const max = inp.max ? parseFloat(inp.max) : Infinity;
+    if (v < min || v > max) {
+      showToast(`${id}: ${min}-${max} 범위`, "error");
+      return;
+    }
+    currentMeta[id] = v;
+    // Submit to workout_inbox for body_data.json integration (weight_am only for now)
+    if (id === "weight_am") {
+      const key = `${currentDate}:${v}`;
+      if (!_weightSubmitted[key] && e.type === "blur") {
+        _weightSubmitted[key] = true;
+        try {
+          await addDoc(collection(db, "users", currentUser.uid, "workout_inbox"), {
+            kind: "weight",
+            data: { date: currentDate, weight: v, source: "Morning" },
+            submittedAt: serverTimestamp(),
+            processed: false,
+            processedAt: null,
+            result: null,
+            source: "routine-web",
+          });
+          showToast(`Weight ${v}kg saved`, "success");
+        } catch (err) {
+          delete _weightSubmitted[key];
+          console.error("weight submit failed:", err);
+          showToast("Save failed: " + err.message, "error");
+        }
+      }
+    }
+  }
   if (saveTimer) clearTimeout(saveTimer);
   saveTimer = setTimeout(saveChecks, 400);
 };
