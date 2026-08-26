@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>PR Metric Dropdown — Preview</title>
+<style>
+:root {
+  --bg: #0a0a0a; --surface: #111; --surface-2: #161616;
+  --border: #1f1f23; --text: #fafafa; --muted: #71717a;
+  --lift: #FF1A8C; --accent: #FF1A8C;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: -apple-system, sans-serif;
+  padding: 20px; max-width: 720px; margin: 0 auto; line-height: 1.5;
+}
+h1 { font-size: 20px; margin-bottom: 24px; }
+h2 { font-size: 15px; margin: 20px 0 10px; letter-spacing: 0.02em; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 4px 0; margin-bottom: 16px; }
+.label-mono { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+
+/* PR metric dropdown */
+.pr-metric-dropdown {
+  background-color: #27272a; color: #fafafa;
+  -webkit-appearance: none; -moz-appearance: none; appearance: none;
+  border: 1px solid var(--lift); border-radius: 6px;
+  padding: 5px 26px 5px 10px;
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  cursor: pointer;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2210%22 height=%226%22 viewBox=%220 0 10 6%22><path d=%22M0 0l5 6 5-6z%22 fill=%22%23FF1A8C%22/></svg>');
+  background-repeat: no-repeat; background-position: right 8px center;
+}
+.pr-row {
+  display: flex; align-items: center; gap: 14px;
+  padding: 10px 12px; border-bottom: 1px solid var(--border);
+}
+.pr-date { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); min-width: 80px; }
+.pr-date b { color: var(--text); font-weight: 500; }
+.pr-name { flex: 1; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.pr-bp { background: rgba(6,182,212,0.18); color: #06b6d4; padding: 2px 8px; border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.1em; }
+.pr-value { font-family: 'JetBrains Mono', monospace; color: var(--lift); font-weight: 600; font-size: 14px; min-width: 130px; text-align: right; }
+.pr-delta { min-width: 75px; text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #84cc16; }
+
+.callout {
+  background: rgba(255,26,140,0.05); border: 1px solid rgba(255,26,140,0.2);
+  border-radius: 8px; padding: 12px 14px; margin: 20px 0;
+  font-size: 12px; color: var(--muted); font-family: 'JetBrains Mono', monospace;
+  line-height: 1.7;
+}
+.callout b { color: var(--lift); }
+
+.mode-tabs { display: flex; gap: 8px; margin: 16px 0 8px; flex-wrap: wrap; }
+.mode-tab {
+  background: transparent; color: var(--muted); border: 1px dashed var(--border);
+  padding: 6px 12px; border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  cursor: pointer;
+}
+.mode-tab.active { background: var(--surface-2); color: var(--lift); border-color: var(--lift); border-style: solid; }
+
+.mode-panel { display: none; }
+.mode-panel.active { display: block; }
+</style>
+</head>
+<body>
+
+<h1>PR Metric Dropdown — Preview</h1>
+
+<div class="callout">
+<b>변경:</b> RECENT PRs (TOP 10) + PR Activity 각각 상단에 metric dropdown 추가.<br>
+<b>3가지 모드:</b><br>
+1) <b>Max Weight</b> (기본, 현행) — 단일 세트 최고 중량<br>
+2) <b>Single Set Volume</b> — max(weight × reps) 한 세트<br>
+3) <b>Session Volume</b> — 한 세션 sum(weight × reps) 최대<br>
+<br>
+Time-based (Plank) — 3 모드 모두 duration 기반 fallback.<br>
+Bodyweight (Pull-up 등) — Volume 모드에서 reps 기반 fallback (weight=0 이므로 volume 0 회피).
+</div>
+
+<div class="mode-tabs">
+  <button class="mode-tab active" onclick="show('w')">Max Weight (현행)</button>
+  <button class="mode-tab" onclick="show('sv')">Single Set Volume</button>
+  <button class="mode-tab" onclick="show('ssv')">Session Volume</button>
+</div>
+
+<!-- MODE: Max Weight (current) -->
+<div class="mode-panel active" id="p-w">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin: 0 0 10px;">
+    <h2 style="margin:0;">🔥 RECENT PRs (TOP 10)</h2>
+    <select class="pr-metric-dropdown">
+      <option selected>PR: Max Weight</option>
+      <option>PR: Single Set Vol</option>
+      <option>PR: Session Vol</option>
+    </select>
+  </div>
+  <div class="card">
+    <div class="pr-row">
+      <div class="pr-date"><b>Today</b><br>08-24</div>
+      <div class="pr-name">Plank <span class="pr-bp">CORE</span></div>
+      <div class="pr-value">3:30 hold</div>
+      <div class="pr-delta">↑ +10s</div>
+    </div>
+    <div class="pr-row">
+      <div class="pr-date"><b>2d ago</b><br>08-22</div>
+      <div class="pr-name">Machine Thigh Adductor <span class="pr-bp">LEGS</span></div>
+      <div class="pr-value">124.0 kg × 12</div>
+      <div class="pr-delta">↑ +14kg</div>
+    </div>
+    <div class="pr-row">
+      <div class="pr-date"><b>7d ago</b><br>08-17</div>
+      <div class="pr-name">Squat <span class="pr-bp">LEGS</span></div>
+      <div class="pr-value">140.0 kg × 3</div>
+      <div class="pr-delta">↑ +5kg</div>
+    </div>
+  </div>
+</div>
+
+<!-- MODE: Single Set Volume -->
+<div class="mode-panel" id="p-sv">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin: 0 0 10px;">
+    <h2 style="margin:0;">🔥 RECENT PRs (TOP 10)</h2>
+    <select class="pr-metric-dropdown">
+      <option>PR: Max Weight</option>
+      <option selected>PR: Single Set Vol</option>
+      <option>PR: Session Vol</option>
+    </select>
+  </div>
+  <div class="card">
+    <div class="pr-row">
+      <div class="pr-date"><b>2d ago</b><br>08-22</div>
+      <div class="pr-name">Machine Thigh Adductor <span class="pr-bp">LEGS</span></div>
+      <div class="pr-value">124.0kg × 12 = 1,488kg</div>
+      <div class="pr-delta">↑ +288kg</div>
+    </div>
+    <div class="pr-row">
+      <div class="pr-date"><b>4d ago</b><br>08-20</div>
+      <div class="pr-name">Iso-Lateral Row <span class="pr-bp">BACK</span></div>
+      <div class="pr-value">80.0kg × 12 = 960kg</div>
+      <div class="pr-delta">↑ +80kg</div>
+    </div>
+    <div class="pr-row">
+      <div class="pr-date"><b>7d ago</b><br>08-17</div>
+      <div class="pr-name">Pull-up <span class="pr-bp">BACK</span></div>
+      <div class="pr-value">BW × 12 reps</div>
+      <div class="pr-delta">↑ +2 reps</div>
+    </div>
+  </div>
+</div>
+
+<!-- MODE: Session Volume -->
+<div class="mode-panel" id="p-ssv">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin: 0 0 10px;">
+    <h2 style="margin:0;">🔥 RECENT PRs (TOP 10)</h2>
+    <select class="pr-metric-dropdown">
+      <option>PR: Max Weight</option>
+      <option>PR: Single Set Vol</option>
+      <option selected>PR: Session Vol</option>
+    </select>
+  </div>
+  <div class="card">
+    <div class="pr-row">
+      <div class="pr-date"><b>2d ago</b><br>08-22</div>
+      <div class="pr-name">Machine Thigh Adductor <span class="pr-bp">LEGS</span></div>
+      <div class="pr-value">4 sets · 4,528kg total</div>
+      <div class="pr-delta">↑ +1,152kg</div>
+    </div>
+    <div class="pr-row">
+      <div class="pr-date"><b>4d ago</b><br>08-20</div>
+      <div class="pr-name">Barbell Shoulder Press <span class="pr-bp">SHOULDERS</span></div>
+      <div class="pr-value">3 sets · 900kg total</div>
+      <div class="pr-delta">↑ +150kg</div>
+    </div>
+    <div class="pr-row">
+      <div class="pr-date"><b>7d ago</b><br>08-17</div>
+      <div class="pr-name">Pull-up <span class="pr-bp">BACK</span></div>
+      <div class="pr-value">4 sets · 42 reps</div>
+      <div class="pr-delta">↑ +6 reps</div>
+    </div>
+  </div>
+</div>
+
+<div class="callout" style="border-color: rgba(6,182,212,0.3); background: rgba(6,182,212,0.05);">
+<b style="color:#06b6d4;">PR Activity 섹션도 동일한 dropdown 추가.</b><br>
+카드 우측 큰 값 표시가 mode에 따라 바뀜:<br>
+· Max Weight: <code>124.0kg × 12</code><br>
+· Single Set Volume: <code>124.0kg × 12 = 1,488kg</code><br>
+· Session Volume: <code>4 sets · 4,528kg total</code><br>
+숫자 1,000 이상은 콤마 구분자 · 무게는 항상 .1 소수 · 볼륨엔 kg 단위
+<br><br>
+Metric 상태는 <code>window.PR_METRIC</code> 전역에 저장. 두 섹션 dropdown 상태 동기화됨 (하나 바꾸면 둘 다 갱신).
+</div>
+
+<script>
+function show(k) {
+  document.querySelectorAll('.mode-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('p-' + k).classList.add('active');
+  document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+}
+</script>
+
+</body>
+</html>
