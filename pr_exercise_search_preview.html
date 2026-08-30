@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>PR Exercise Search — Preview</title>
+<style>
+:root {
+  --bg: #0a0a0a; --surface: #111; --surface-2: #161616;
+  --border: #1f1f23; --text: #fafafa; --muted: #71717a;
+  --lift: #FF1A8C; --accent: #FF1A8C;
+  --bp-chest: #f43f5e; --bp-back: #06b6d4; --bp-legs: #8b5cf6;
+  --bp-shoulders: #eab308; --bp-arms: #10b981; --bp-core: #f97316;
+  --gold: #fbbf24;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: -apple-system, sans-serif;
+  padding: 20px; max-width: 720px; margin: 0 auto; line-height: 1.5;
+}
+h1 { font-size: 20px; margin-bottom: 20px; }
+h2 { font-size: 15px; margin: 20px 0 10px; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 12px; }
+.label-mono { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+
+/* Search box */
+.ex-search-wrap {
+  position: relative; margin-bottom: 8px;
+}
+.ex-search-input {
+  width: 100%;
+  background: var(--surface); color: var(--text);
+  border: 1px solid var(--lift); border-radius: 10px;
+  padding: 12px 40px 12px 14px;
+  font-size: 14px;
+  font-family: -apple-system, sans-serif;
+  outline: none;
+}
+.ex-search-input:focus {
+  box-shadow: 0 0 0 3px rgba(255,26,140,0.15);
+}
+.ex-search-input::placeholder { color: var(--muted); }
+.ex-search-icon {
+  position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+  color: var(--lift); font-size: 14px; pointer-events: none;
+}
+.ex-search-list {
+  position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; max-height: 320px; overflow-y: auto;
+  z-index: 100; box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+}
+.ex-search-item {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  font-size: 13px;
+}
+.ex-search-item:hover, .ex-search-item.active {
+  background: var(--surface-2);
+}
+.ex-search-item:last-child { border-bottom: none; }
+.ex-search-item .name { flex: 1; }
+.ex-search-item .name .match { color: var(--lift); font-weight: 600; }
+.ex-search-item .meta {
+  font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted);
+  white-space: nowrap;
+}
+.bp-badge {
+  padding: 2px 8px; border-radius: 6px; font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; letter-spacing: 0.1em; white-space: nowrap;
+}
+.bp-BACK { background: rgba(6,182,212,0.2); color: var(--bp-back); }
+.bp-CHEST { background: rgba(244,63,94,0.2); color: var(--bp-chest); }
+.bp-LEGS { background: rgba(139,92,246,0.2); color: var(--bp-legs); }
+.bp-SHOULDERS { background: rgba(234,179,8,0.2); color: var(--bp-shoulders); }
+.bp-ARMS { background: rgba(16,185,129,0.2); color: var(--bp-arms); }
+.bp-CORE { background: rgba(249,115,22,0.2); color: var(--bp-core); }
+
+/* Detail panel */
+.detail-title {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 12px; flex-wrap: wrap; gap: 8px;
+}
+.detail-title .name {
+  font-size: 18px; font-weight: 600;
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+.detail-metrics {
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 14px;
+}
+.metric-tile {
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px;
+  padding: 10px 12px;
+}
+.metric-tile .lbl { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+.metric-tile .val { font-family: 'JetBrains Mono', monospace; font-size: 15px; color: var(--lift); font-weight: 600; margin-top: 4px; }
+.metric-tile .sub { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); margin-top: 2px; }
+.recent-sessions .sess-row {
+  display: flex; justify-content: space-between; padding: 6px 0;
+  font-family: 'JetBrains Mono', monospace; font-size: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.recent-sessions .sess-row:last-child { border-bottom: none; }
+.recent-sessions .sess-row .date { color: var(--muted); }
+
+.callout {
+  background: rgba(6,182,212,0.05); border: 1px solid rgba(6,182,212,0.2);
+  border-radius: 8px; padding: 12px 14px; margin: 20px 0;
+  font-size: 12px; color: var(--muted); font-family: 'JetBrains Mono', monospace;
+  line-height: 1.7;
+}
+.callout b { color: #06b6d4; }
+
+.mode-tabs { display: flex; gap: 8px; margin: 16px 0 8px; flex-wrap: wrap; }
+.mode-tab {
+  background: transparent; color: var(--muted); border: 1px dashed var(--border);
+  padding: 6px 12px; border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  cursor: pointer;
+}
+.mode-tab.active { background: var(--surface-2); color: var(--lift); border-color: var(--lift); border-style: solid; }
+.mode-panel { display: none; }
+.mode-panel.active { display: block; }
+</style>
+</head>
+<body>
+
+<h1>PR Exercise Search — Preview</h1>
+
+<div class="callout">
+<b>배치:</b> PR 탭 최상단 (RECENT PRs 위).<br>
+<b>동작:</b> input 텍스트 → 실시간 필터. 매칭 종목 위에 살구색 하이라이트.<br>
+<b>선택 시:</b> 아래 detail 카드에 PR 요약 + 최근 5 세션 표시.<br>
+<b>기본값:</b> 비어있으면 detail panel 숨김.
+</div>
+
+<h2>State A — 검색 전 (초기)</h2>
+<div class="card">
+  <div class="label-mono" style="margin-bottom: 8px;">🔍 SEARCH EXERCISE</div>
+  <div class="ex-search-wrap">
+    <input type="text" class="ex-search-input" placeholder="종목 검색 (예: squat, plank, pull...)">
+    <span class="ex-search-icon">🔍</span>
+  </div>
+</div>
+
+<div class="mode-tabs">
+  <button class="mode-tab" onclick="show('b')">State B — "squ" 입력</button>
+  <button class="mode-tab" onclick="show('c')">State C — "Squat" 선택 후</button>
+  <button class="mode-tab" onclick="show('d')">State D — "plank" 선택 후</button>
+</div>
+
+<div class="mode-panel" id="p-b">
+<h2>State B — 검색 중 (필터 적용)</h2>
+<div class="card">
+  <div class="label-mono" style="margin-bottom: 8px;">🔍 SEARCH EXERCISE</div>
+  <div class="ex-search-wrap">
+    <input type="text" class="ex-search-input" value="squ" onclick="this.select()">
+    <span class="ex-search-icon">🔍</span>
+    <div class="ex-search-list">
+      <div class="ex-search-item active">
+        <span class="name"><span class="match">Squ</span>at</span>
+        <span class="bp-badge bp-LEGS">LEGS</span>
+        <span class="meta">42 sets · 140.0kg PR</span>
+      </div>
+      <div class="ex-search-item">
+        <span class="name">Bulgarian Split <span class="match">Squ</span>at</span>
+        <span class="bp-badge bp-LEGS">LEGS</span>
+        <span class="meta">18 sets · 20.0kg PR</span>
+      </div>
+      <div class="ex-search-item">
+        <span class="name">Front <span class="match">Squ</span>at</span>
+        <span class="bp-badge bp-LEGS">LEGS</span>
+        <span class="meta">6 sets · 80.0kg PR</span>
+      </div>
+      <div class="ex-search-item">
+        <span class="name">Smith Machine <span class="match">Squ</span>at</span>
+        <span class="bp-badge bp-LEGS">LEGS</span>
+        <span class="meta">3 sets · 100.0kg PR</span>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="mode-panel active" id="p-c">
+<h2>State C — "Squat" 선택 후</h2>
+<div class="card">
+  <div class="label-mono" style="margin-bottom: 8px;">🔍 SEARCH EXERCISE</div>
+  <div class="ex-search-wrap">
+    <input type="text" class="ex-search-input" value="Squat" onclick="this.select()">
+    <span class="ex-search-icon">✕</span>
+  </div>
+</div>
+
+<div class="card" style="border-color: var(--lift);">
+  <div class="detail-title">
+    <div class="name">
+      Squat
+      <span class="bp-badge bp-LEGS">LEGS</span>
+      <span class="bp-badge" style="background: rgba(139,92,246,0.15); color:#a78bfa;">QUADS</span>
+    </div>
+    <span class="label-mono">42 sets · 21 sessions</span>
+  </div>
+
+  <div class="detail-metrics">
+    <div class="metric-tile">
+      <div class="lbl">Max Weight</div>
+      <div class="val">140.0kg × 3</div>
+      <div class="sub">08-17 (9d ago)</div>
+    </div>
+    <div class="metric-tile">
+      <div class="lbl">Single Set Vol</div>
+      <div class="val">420kg</div>
+      <div class="sub">140.0kg × 3</div>
+    </div>
+    <div class="metric-tile">
+      <div class="lbl">Session Vol</div>
+      <div class="val">2,180kg</div>
+      <div class="sub">5 sets · 08-17</div>
+    </div>
+  </div>
+
+  <div class="label-mono" style="margin-bottom: 6px;">PR 진행 (전체 기간)</div>
+  <svg viewBox="0 0 800 90" style="width:100%; max-height:90px; display:block; margin-bottom:12px;">
+    <text x="0" y="14" fill="#71717a" font-size="9" font-family="JetBrains Mono, monospace">140</text>
+    <text x="0" y="76" fill="#71717a" font-size="9" font-family="JetBrains Mono, monospace">0</text>
+    <path d="M32,72 L100,66 L180,60 L260,52 L340,44 L420,38 L500,30 L580,24 L660,18 L740,14" stroke="#FF1A8C" stroke-width="1.5" fill="none"/>
+    <circle cx="32" cy="72" r="2.5" fill="#FF1A8C"/>
+    <circle cx="180" cy="60" r="2.5" fill="#FF1A8C"/>
+    <circle cx="340" cy="44" r="2.5" fill="#FF1A8C"/>
+    <circle cx="500" cy="30" r="2.5" fill="#FF1A8C"/>
+    <circle cx="660" cy="18" r="2.5" fill="#FF1A8C"/>
+    <circle cx="740" cy="14" r="2.5" fill="#FF1A8C"/>
+    <text x="32" y="86" fill="#71717a" font-size="9" font-family="JetBrains Mono, monospace">2025-06-04</text>
+    <text x="768" y="86" fill="#71717a" font-size="9" text-anchor="end" font-family="JetBrains Mono, monospace">오늘</text>
+  </svg>
+
+  <div class="label-mono" style="margin-bottom: 6px;">최근 5 세션</div>
+  <div class="recent-sessions">
+    <div class="sess-row"><span class="date">2026-08-17</span><span>80kg×5, 100kg×3, 120kg×3, 140kg×3, 140kg×3</span></div>
+    <div class="sess-row"><span class="date">2026-08-10</span><span>80kg×5, 100kg×3, 120kg×3, 135kg×3</span></div>
+    <div class="sess-row"><span class="date">2026-08-03</span><span>80kg×5, 100kg×3, 120kg×3, 130kg×3</span></div>
+    <div class="sess-row"><span class="date">2026-07-27</span><span>80kg×5, 100kg×5, 120kg×3</span></div>
+    <div class="sess-row"><span class="date">2026-07-20</span><span>80kg×8, 100kg×5, 120kg×2</span></div>
+  </div>
+</div>
+</div>
+
+<div class="mode-panel" id="p-d">
+<h2>State D — "Plank" 선택 (Time-based)</h2>
+<div class="card">
+  <div class="label-mono" style="margin-bottom: 8px;">🔍 SEARCH EXERCISE</div>
+  <div class="ex-search-wrap">
+    <input type="text" class="ex-search-input" value="Plank" onclick="this.select()">
+    <span class="ex-search-icon">✕</span>
+  </div>
+</div>
+
+<div class="card" style="border-color: var(--lift);">
+  <div class="detail-title">
+    <div class="name">
+      Plank
+      <span class="bp-badge bp-CORE">CORE</span>
+    </div>
+    <span class="label-mono">48 sets · 48 sessions</span>
+  </div>
+
+  <div class="detail-metrics">
+    <div class="metric-tile">
+      <div class="lbl">Max Duration</div>
+      <div class="val">3:55 hold</div>
+      <div class="sub">08-25 (1d ago)</div>
+    </div>
+    <div class="metric-tile" style="opacity: 0.4;">
+      <div class="lbl">Single Set Vol</div>
+      <div class="val">—</div>
+      <div class="sub">time-based</div>
+    </div>
+    <div class="metric-tile" style="opacity: 0.4;">
+      <div class="lbl">Session Vol</div>
+      <div class="val">—</div>
+      <div class="sub">time-based</div>
+    </div>
+  </div>
+
+  <div class="label-mono" style="margin-bottom: 6px;">PR 진행 (전체 기간) — duration</div>
+  <div style="color: var(--muted); font-size: 11px; padding: 8px 0;">📈 (SVG line chart, y=duration_sec)</div>
+
+  <div class="label-mono" style="margin-bottom: 6px;">최근 5 세션</div>
+  <div class="recent-sessions">
+    <div class="sess-row"><span class="date">2026-08-25</span><span>3:55</span></div>
+    <div class="sess-row"><span class="date">2026-08-22</span><span>3:30</span></div>
+    <div class="sess-row"><span class="date">2026-08-19</span><span>3:20</span></div>
+    <div class="sess-row"><span class="date">2026-08-15</span><span>3:20</span></div>
+    <div class="sess-row"><span class="date">2026-08-12</span><span>3:10</span></div>
+  </div>
+</div>
+</div>
+
+<div class="callout" style="border-color: rgba(251,191,36,0.3); background: rgba(251,191,36,0.05);">
+<b style="color:var(--gold);">키보드 지원:</b><br>
+· ↑/↓ — 리스트 이동<br>
+· Enter — 선택<br>
+· Esc — 리스트 닫기<br>
+· ✕ 아이콘 — 검색어 지우기 (detail 숨김)<br>
+<br>
+<b style="color:var(--gold);">Fuzzy 매칭:</b> 대소문자 무시. 부분 문자열 매칭. 세트 수 desc 정렬 (자주 하는 종목 먼저).<br>
+<br>
+<b style="color:var(--gold);">Detail 카드:</b> 현행 PR Activity의 세부 accordion과 동일한 chart/session 로직 재사용.
+</div>
+
+<script>
+function show(k) {
+  document.querySelectorAll('.mode-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('p-' + k).classList.add('active');
+  document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+}
+</script>
+
+</body>
+</html>
