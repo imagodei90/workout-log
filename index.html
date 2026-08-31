@@ -540,9 +540,18 @@ details.conventions-toggle[open] > .conv-body { margin-top: 16px; }
 .plan-list { list-style: none; padding: 0; margin: 8px 0 0; display: flex; flex-direction: column; gap: 6px; }
 .plan-row {
   background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
-  padding: 10px 12px; transition: border-color 0.15s;
+  padding: 10px 12px; transition: border-color 0.15s, opacity 0.15s;
 }
 .plan-row.expanded { border-color: var(--lift); }
+.plan-row.dragging { opacity: 0.4; }
+.plan-row.drag-over { border-color: var(--lift); border-style: dashed; }
+.drag-handle {
+  color: var(--muted); font-size: 15px; cursor: grab;
+  padding: 2px 6px 2px 0; user-select: none;
+  transition: color 0.1s;
+}
+.drag-handle:hover { color: var(--lift); }
+.drag-handle:active { cursor: grabbing; }
 .plan-row-summary {
   display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
   cursor: pointer; user-select: none;
@@ -2009,16 +2018,21 @@ function renderTodayPlanCard() {
   const noteHtml = sc
     ? `<div class="score-note">${bpList ? bpList + ' · ' : ''}priority sum ${sc.priSum}/${sc.maxSum}${sc.bpBonus > 0 ? ` · diversity +${sc.bpBonus.toFixed(1)}` : ''}${sc.bpPenalty > 0 ? ` · same-BP −${sc.bpPenalty.toFixed(1)}` : ''}</div>`
     : '';
-  const rows = planned.map(name => {
+  const rows = planned.map((name, idx) => {
     const collapsed = !!window.PLAN_COLLAPSED[name];
     const bp = bodyPart(name);
     const c = BP_COLORS[bp] || 'var(--muted)';
     const safeName = _escAttr(name);
-    // brief PR hint
     const brief = _prSearchBestBrief(name);
     const detailHtml = collapsed ? '' : `<div class="plan-detail-inner">${_buildDetailTilesHtml(name)}</div>`;
-    return `<li class="plan-row ${collapsed ? '' : 'expanded'}">
-      <div class="plan-row-summary" onclick="window.togglePlanRowCollapse('${safeName}')">
+    return `<li class="plan-row ${collapsed ? '' : 'expanded'}" data-plan-name="${safeName}" data-plan-idx="${idx}" draggable="true"
+             ondragstart="window._planDragStart(event, this)"
+             ondragend="window._planDragEnd(event, this)"
+             ondragover="window._planDragOver(event, this)"
+             ondragleave="window._planDragLeave(event, this)"
+             ondrop="window._planDrop(event, this)">
+      <div class="plan-row-summary" onclick="if(!event.target.closest('.drag-handle,.plan-remove'))window.togglePlanRowCollapse('${safeName}')">
+        <span class="drag-handle" title="Drag to reorder" onmousedown="event.stopPropagation()">☰</span>
         <span class="expand-toggle">${collapsed ? '▸' : '▾'}</span>
         <span class="pln-name">${_esc(name)}</span>
         <span class="bp-badge" style="background:${c}30; color:${c}; padding: 2px 8px; border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.1em;">${bp}</span>
@@ -2030,16 +2044,46 @@ function renderTodayPlanCard() {
   }).join('');
   return `<div class="plan-card">
     <div class="plan-header">
-      <div class="plan-title"><span style="color:var(--accent);">📋</span> Today's Plan</div>
+      <div class="plan-title">My Plan</div>
       <div style="display:flex; gap:10px; align-items:center;">
         ${scoreHtml}
         <span class="plan-count">${planned.length} exercise${planned.length === 1 ? '' : 's'}</span>
       </div>
     </div>
     ${noteHtml}
-    <ul class="plan-list">${rows}</ul>
+    <ul class="plan-list" ondragover="event.preventDefault()">${rows}</ul>
   </div>`;
 }
+
+// Plan drag-drop reorder
+window._planDragStart = function(e, row) {
+  row.classList.add('dragging');
+  try { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', row.dataset.planName || ''); } catch(_) {}
+};
+window._planDragEnd = function(e, row) {
+  row.classList.remove('dragging');
+  document.querySelectorAll('.plan-row.drag-over').forEach(r => r.classList.remove('drag-over'));
+};
+window._planDragOver = function(e, row) {
+  e.preventDefault();
+  const dragging = document.querySelector('.plan-row.dragging');
+  if (dragging && dragging !== row) row.classList.add('drag-over');
+};
+window._planDragLeave = function(e, row) {
+  row.classList.remove('drag-over');
+};
+window._planDrop = async function(e, targetRow) {
+  e.preventDefault();
+  const dragging = document.querySelector('.plan-row.dragging');
+  if (!dragging || dragging === targetRow) return;
+  const rect = targetRow.getBoundingClientRect();
+  const after = (e.clientY - rect.top) > rect.height / 2;
+  const list = targetRow.parentNode;
+  list.insertBefore(dragging, after ? targetRow.nextSibling : targetRow);
+  targetRow.classList.remove('drag-over');
+  const newOrder = Array.from(list.querySelectorAll('.plan-row')).map(r => r.dataset.planName);
+  if (typeof window.reorderPlan === 'function') await window.reorderPlan(newOrder);
+};
 
 function _prSearchBuildDetail(name) {
   const sets = (DATA.lifts || []).filter(l => l.exercise === name);
@@ -4201,7 +4245,7 @@ function renderPlan(agg) {
   const planScoreHtml = _sc ? `
     <div class="plan-tab-score">
       <div>
-        <div class="label-mono" style="margin:0;">TODAY'S PLAN vs. RECOMMENDED</div>
+        <div class="label-mono" style="margin:0;">MY PLAN vs. RECOMMENDED</div>
         <div style="display:flex; align-items:baseline; gap:8px; margin-top:4px;">
           <span style="font-family:'JetBrains Mono', monospace; font-size:22px; color:${_scColor.fg}; font-weight:700;">${_sc.score.toFixed(1)}</span>
           <span style="color:var(--muted); font-family:'JetBrains Mono', monospace;">/ 10</span>
@@ -5676,59 +5720,79 @@ const _fbDb = getFirestore(_fbApp);
 const _fbProvider = new GoogleAuthProvider();
 
 let _fbUid = null;
-let _plannedCache = { date: null, list: [] };
+let _planCache = { list: [], loaded: false };  // date-agnostic; persists until user removes
 
 function _todayISO() {
   const d = new Date();
   return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
 }
 
-async function _loadPlannedForToday() {
-  const d = _todayISO();
-  if (!_fbUid) { _plannedCache = {date: d, list: []}; return; }
+async function _savePlan() {
+  if (!_fbUid) return;
   try {
-    const snap = await getDoc(doc(_fbDb, 'users', _fbUid, 'routines', d));
-    const data = snap.exists() ? snap.data() : {};
-    _plannedCache = { date: d, list: Array.isArray(data.planned_lifts) ? data.planned_lifts : [] };
+    await setDoc(doc(_fbDb, 'users', _fbUid, 'plan', 'current'), {
+      lifts: _planCache.list,
+      updated_at: serverTimestamp(),
+    }, { merge: true });
+    if (typeof refresh === 'function') refresh();
   } catch (e) {
-    console.error('load planned failed:', e);
-    _plannedCache = {date: d, list: []};
+    console.error('save plan failed:', e);
+    alert('Save failed: ' + e.message);
+  }
+}
+
+async function _loadPlan() {
+  if (!_fbUid) { _planCache = {list: [], loaded: true}; return; }
+  try {
+    const planRef = doc(_fbDb, 'users', _fbUid, 'plan', 'current');
+    const snap = await getDoc(planRef);
+    if (snap.exists() && Array.isArray(snap.data().lifts)) {
+      _planCache = { list: snap.data().lifts, loaded: true };
+    } else {
+      // Migrate legacy today's routine planned_lifts if any
+      const d = _todayISO();
+      const legacySnap = await getDoc(doc(_fbDb, 'users', _fbUid, 'routines', d));
+      const legacy = legacySnap.exists() && Array.isArray(legacySnap.data().planned_lifts) ? legacySnap.data().planned_lifts : [];
+      _planCache = { list: legacy, loaded: true };
+      if (legacy.length > 0) {
+        try { await setDoc(planRef, { lifts: legacy, updated_at: serverTimestamp() }); } catch(e){}
+      }
+    }
+  } catch (e) {
+    console.error('load plan failed:', e);
+    _planCache = {list: [], loaded: true};
   }
 }
 
 window.isPlannedToday = function(name) {
-  return _plannedCache.list.includes(name);
+  return _planCache.list.includes(name);
 };
-window.getPlannedLifts = function() { return _plannedCache.list.slice(); };
-window.getPlannedDate = function() { return _plannedCache.date; };
+window.getPlannedLifts = function() { return _planCache.list.slice(); };
 
 window.togglePlannedLift = async function(name) {
   if (!_fbUid) {
     try { await signInWithPopup(_fbAuth, _fbProvider); }
     catch (e) { alert('Sign-in required: ' + e.message); return; }
   }
-  const d = _todayISO();
-  if (_plannedCache.date !== d) await _loadPlannedForToday();
-  const idx = _plannedCache.list.indexOf(name);
-  if (idx >= 0) _plannedCache.list.splice(idx, 1);
-  else _plannedCache.list.push(name);
-  try {
-    await setDoc(doc(_fbDb, 'users', _fbUid, 'routines', d), {
-      planned_lifts: _plannedCache.list,
-      planned_updated_at: serverTimestamp(),
-    }, { merge: true });
-    if (typeof refresh === 'function') refresh();
-  } catch (e) {
-    console.error('save planned failed:', e);
-    alert('Save failed: ' + e.message);
-  }
+  if (!_planCache.loaded) await _loadPlan();
+  const idx = _planCache.list.indexOf(name);
+  if (idx >= 0) _planCache.list.splice(idx, 1);
+  else _planCache.list.push(name);
+  await _savePlan();
+};
+
+window.reorderPlan = async function(newList) {
+  if (!_fbUid || !_planCache.loaded) return;
+  if (!Array.isArray(newList) || newList.length !== _planCache.list.length) return;
+  _planCache.list = newList.slice();
+  await _savePlan();
 };
 
 onAuthStateChanged(_fbAuth, async (user) => {
   _fbUid = user ? user.uid : null;
   if (_fbUid) {
-    await _loadPlannedForToday();
-    if (typeof refresh === 'function' && window.PR_SEARCH_SELECTED) refresh();
+    await _loadPlan();
+    if (typeof refresh === 'function') refresh();
   }
 });
 </script>
