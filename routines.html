@@ -93,6 +93,33 @@
     letter-spacing: 0.12em; margin: 16px 0 6px; padding-left: 4px;
   }
 
+  /* Today's plan (from PR search on dashboard) */
+  .planned-lifts {
+    background: rgba(255, 26, 140, 0.04);
+    border: 1px solid rgba(255, 26, 140, 0.25);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin: 4px 0 10px;
+  }
+  .planned-lifts-label {
+    font-family: 'JetBrains Mono', monospace; font-size: 9px;
+    color: var(--accent, #FF1A8C); letter-spacing: 0.1em;
+    margin-bottom: 6px;
+  }
+  .planned-lifts-list { list-style: none; padding: 0; margin: 0; }
+  .planned-lifts-list li {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 6px 4px; font-size: 13px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .planned-lifts-list li:last-child { border-bottom: none; }
+  .planned-remove {
+    background: transparent; color: var(--muted);
+    border: none; cursor: pointer; font-size: 14px;
+    padding: 2px 8px; line-height: 1;
+  }
+  .planned-remove:hover { color: var(--accent, #FF1A8C); }
+
   /* Option D rows */
   .item {
     display: flex; align-items: center; gap: 12px;
@@ -438,6 +465,7 @@ let currentUser = null;
 let currentDate = isoToday();
 let currentChecks = {};
 let currentMeta = {};  // e.g. { wake_up_time: "07:30", other_workout_type: "Hiking" }
+let currentPlannedLifts = [];  // exercise names added from PR search on dashboard
 let saveTimer = null;
 let heatmapCache = {}; // {iso: pct}
 
@@ -505,6 +533,18 @@ function renderSections() {
     const items = itemsBySection[sec.key] || [];
     if (items.length === 0) continue;
     html += `<div class="section-header">${sec.label.toUpperCase()}</div>`;
+    if (sec.key === "Workout" && currentPlannedLifts.length > 0) {
+      const escH = s => String(s).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+      html += `<div class="planned-lifts">
+        <div class="planned-lifts-label">📋 TODAY'S PLAN (from PR)</div>
+        <ul class="planned-lifts-list">
+          ${currentPlannedLifts.map(name => `<li>
+            <span>${escH(name)}</span>
+            <button class="planned-remove" onclick="window.removePlannedLift('${name.replace(/[\\']/g, m => '\\' + m)}')" title="Remove">✕</button>
+          </li>`).join('')}
+        </ul>
+      </div>`;
+    }
     const optionalToday = getOptionalForDate(currentDate);
     for (const it of items) {
       const checked = currentChecks[it.id] === true;
@@ -707,6 +747,7 @@ async function loadDate(date) {
   updateDateDisplay();
   currentChecks = {};
   currentMeta = {};
+  currentPlannedLifts = [];
   if (!currentUser) return;
   try {
     const ref = doc(db, "users", currentUser.uid, "routines", date);
@@ -715,12 +756,28 @@ async function loadDate(date) {
       const data = snap.data();
       currentChecks = data.items || {};
       currentMeta = data.meta || {};
+      currentPlannedLifts = Array.isArray(data.planned_lifts) ? data.planned_lifts : [];
     }
   } catch (err) {
     showToast("Load failed: " + err.message, "error");
   }
   renderSections();
 }
+
+window.removePlannedLift = async (name) => {
+  if (!currentUser) return;
+  const idx = currentPlannedLifts.indexOf(name);
+  if (idx < 0) return;
+  currentPlannedLifts.splice(idx, 1);
+  try {
+    const ref = doc(db, "users", currentUser.uid, "routines", currentDate);
+    await setDoc(ref, { planned_lifts: currentPlannedLifts, updatedAt: serverTimestamp() }, { merge: true });
+    renderSections();
+    showToast(`Removed: ${name}`, "success");
+  } catch (err) {
+    showToast("Remove failed: " + err.message, "error");
+  }
+};
 
 async function saveChecks() {
   if (!currentUser) return;

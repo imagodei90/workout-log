@@ -500,6 +500,18 @@ details.conventions-toggle[open] > .conv-body { margin-top: 16px; }
 .metric-tile .lbl { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
 .metric-tile .val { font-family: 'JetBrains Mono', monospace; font-size: 14px; color: var(--lift); font-weight: 600; margin-top: 4px; word-break: break-word; }
 .metric-tile .sub { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); margin-top: 2px; }
+.plan-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px;
+  background: var(--card2); border: 1px solid var(--border);
+  color: var(--muted); border-radius: 8px;
+  cursor: pointer; transition: all 0.15s;
+  font-size: 15px; line-height: 1; font-family: 'JetBrains Mono', monospace;
+  padding: 0;
+}
+.plan-btn:hover { border-color: var(--lift); color: var(--lift); background: rgba(255,26,140,0.08); }
+.plan-btn.added { background: var(--lift); color: white; border-color: var(--lift); }
+.plan-btn.added:hover { background: #e01778; }
 .metric-tile .date-link {
   color: var(--muted); text-decoration: none;
   border-bottom: 1px dashed var(--muted);
@@ -1904,7 +1916,16 @@ function _prSearchBuildDetail(name) {
           <span class="bp-badge" style="background: ${c}30; color: ${c}; padding: 2px 8px; border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.1em;">${bp}</span>
           ${subBadge}
         </div>
-        <span class="label-mono">${sets.length} sets · ${sessionsCount} sessions</span>
+        <div style="display:flex; gap:10px; align-items:center;">
+          <span class="label-mono">${sets.length} sets · ${sessionsCount} sessions</span>
+          ${(() => {
+            const inPlan = (typeof window.isPlannedToday === 'function') && window.isPlannedToday(name);
+            const title = inPlan ? 'Planned today · click to remove' : 'Plan today';
+            const glyph = inPlan ? '✓' : '＋';
+            const cls = inPlan ? 'plan-btn added' : 'plan-btn';
+            return `<button class="${cls}" onclick="event.stopPropagation(); (typeof window.togglePlannedLift==='function') ? window.togglePlannedLift('${_escAttr(name)}') : alert('Sign in via Routines page first');" title="${title}" aria-label="${title}">${glyph}</button>`;
+          })()}
+        </div>
       </div>
       <div class="detail-metrics">
         ${mwTile}
@@ -5385,6 +5406,82 @@ document.addEventListener("DOMContentLoaded", () => {
   refresh();
 });
 
+</script>
+
+<script type="module">
+// Firebase — read/write today's planned lifts from Routines account
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, setPersistence, browserLocalPersistence, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCmo9gyAFNfRaSR0GdyJ2BmamhpzfYuQGE",
+  authDomain: "routine-log-7d91b.firebaseapp.com",
+  projectId: "routine-log-7d91b",
+  storageBucket: "routine-log-7d91b.firebasestorage.app",
+  messagingSenderId: "271884499594",
+  appId: "1:271884499594:web:12217347b04ab2448d8b73"
+};
+const _fbApp = initializeApp(firebaseConfig);
+const _fbAuth = getAuth(_fbApp);
+setPersistence(_fbAuth, browserLocalPersistence).catch(() => {});
+const _fbDb = getFirestore(_fbApp);
+const _fbProvider = new GoogleAuthProvider();
+
+let _fbUid = null;
+let _plannedCache = { date: null, list: [] };
+
+function _todayISO() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+async function _loadPlannedForToday() {
+  const d = _todayISO();
+  if (!_fbUid) { _plannedCache = {date: d, list: []}; return; }
+  try {
+    const snap = await getDoc(doc(_fbDb, 'users', _fbUid, 'routines', d));
+    const data = snap.exists() ? snap.data() : {};
+    _plannedCache = { date: d, list: Array.isArray(data.planned_lifts) ? data.planned_lifts : [] };
+  } catch (e) {
+    console.error('load planned failed:', e);
+    _plannedCache = {date: d, list: []};
+  }
+}
+
+window.isPlannedToday = function(name) {
+  return _plannedCache.list.includes(name);
+};
+
+window.togglePlannedLift = async function(name) {
+  if (!_fbUid) {
+    try { await signInWithPopup(_fbAuth, _fbProvider); }
+    catch (e) { alert('Sign-in required: ' + e.message); return; }
+  }
+  const d = _todayISO();
+  if (_plannedCache.date !== d) await _loadPlannedForToday();
+  const idx = _plannedCache.list.indexOf(name);
+  if (idx >= 0) _plannedCache.list.splice(idx, 1);
+  else _plannedCache.list.push(name);
+  try {
+    await setDoc(doc(_fbDb, 'users', _fbUid, 'routines', d), {
+      planned_lifts: _plannedCache.list,
+      planned_updated_at: serverTimestamp(),
+    }, { merge: true });
+    if (typeof refresh === 'function') refresh();
+  } catch (e) {
+    console.error('save planned failed:', e);
+    alert('Save failed: ' + e.message);
+  }
+};
+
+onAuthStateChanged(_fbAuth, async (user) => {
+  _fbUid = user ? user.uid : null;
+  if (_fbUid) {
+    await _loadPlannedForToday();
+    if (typeof refresh === 'function' && window.PR_SEARCH_SELECTED) refresh();
+  }
+});
 </script>
 </body>
 </html>
