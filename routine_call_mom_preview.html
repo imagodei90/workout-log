@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>Routine — Call Mom Preview</title>
+<style>
+:root {
+  --bg: #0a0a0a; --surface: #111; --surface-2: #161616;
+  --border: #1f1f23; --text: #fafafa; --muted: #71717a;
+  --accent: #FF1A8C;
+  --sec-morning: #fbbf24;
+  --sec-focus: #06b6d4;
+  --sec-workout: #f43f5e;
+  --sec-discipline: #8b5cf6;
+  --sec-night: #10b981;
+  --sec-family: #ec4899;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; padding: 20px; max-width: 480px; margin: 0 auto; line-height: 1.5; }
+h1 { font-size: 20px; margin-bottom: 20px; }
+h2 { font-size: 14px; margin: 24px 0 8px; color: var(--muted); font-family: 'JetBrains Mono', monospace; letter-spacing: 0.05em; text-transform: uppercase; }
+.section-header {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  letter-spacing: 0.12em; margin: 14px 0 6px;
+  text-transform: uppercase;
+}
+.sh-morning { color: var(--sec-morning); }
+.sh-focus { color: var(--sec-focus); }
+.sh-workout { color: var(--sec-workout); }
+.sh-discipline { color: var(--sec-discipline); }
+.sh-night { color: var(--sec-night); }
+.sh-family { color: var(--sec-family); }
+
+.item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; margin-bottom: 6px;
+}
+.item.new {
+  background: rgba(236, 72, 153, 0.06);
+  border-color: rgba(236, 72, 153, 0.35);
+}
+.item-dot { width: 8px; height: 8px; border-radius: 50%; }
+.d-morning { background: var(--sec-morning); }
+.d-focus { background: var(--sec-focus); }
+.d-workout { background: var(--sec-workout); }
+.d-discipline { background: var(--sec-discipline); }
+.d-night { background: var(--sec-night); }
+.d-family { background: var(--sec-family); }
+.item-label { flex: 1; font-size: 14px; font-weight: 500; }
+.item-note { font-size: 11px; color: var(--muted); font-family: 'JetBrains Mono', monospace; margin-top: 3px; }
+.item-check { width: 22px; height: 22px; border: 2px solid var(--border); border-radius: 50%; }
+.item.checked .item-check {
+  background: var(--accent); border-color: var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  color: white; font-weight: 700; font-size: 12px;
+}
+.item.checked .item-check::before { content: "✓"; }
+
+.callout {
+  background: rgba(255,26,140,0.05); border: 1px solid rgba(255,26,140,0.2);
+  border-radius: 8px; padding: 12px 14px; margin: 20px 0;
+  font-size: 12px; color: var(--muted); font-family: 'JetBrains Mono', monospace;
+  line-height: 1.7;
+}
+.callout b { color: var(--accent); }
+
+.opt-tabs { display: flex; gap: 6px; margin: 14px 0 10px; flex-wrap: wrap; }
+.opt-tab {
+  background: transparent; color: var(--muted);
+  border: 1px dashed var(--border);
+  padding: 6px 10px; border-radius: 8px;
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  cursor: pointer;
+}
+.opt-tab.active { background: var(--surface-2); color: var(--accent); border-color: var(--accent); border-style: solid; }
+.opt-panel { display: none; }
+.opt-panel.active { display: block; }
+
+.decision-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0 20px;
+}
+.decision-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 12px;
+  font-size: 12px; color: var(--muted); font-family: 'JetBrains Mono', monospace;
+}
+.decision-card b { color: var(--text); font-family: -apple-system, sans-serif; }
+</style>
+</head>
+<body>
+
+<h1>Routine — "Call Mom" 추가 프리뷰</h1>
+
+<h2>결정 1 — 문구 (Label)</h2>
+<div class="decision-grid">
+  <div class="decision-card"><b>Call Mom</b> — 직설, 전화 의미</div>
+  <div class="decision-card"><b>Text Mom</b> — 문자 위주면</div>
+  <div class="decision-card"><b>Check In with Mom</b> — 따뜻, 전화·문자 무관</div>
+  <div class="decision-card"><b>Contact Mom</b> — 중립, 어떤 방식이든</div>
+</div>
+
+<h2>결정 2 — 배치 위치</h2>
+<div class="opt-tabs">
+  <button class="opt-tab active" onclick="show('A')">A — Night 섹션 하단</button>
+  <button class="opt-tab" onclick="show('B')">B — Discipline 하단</button>
+  <button class="opt-tab" onclick="show('C')">C — Focus 하단</button>
+  <button class="opt-tab" onclick="show('D')">D — 신규 Family 섹션</button>
+</div>
+
+<!-- Option A: Night 섹션 -->
+<div class="opt-panel active" id="p-A">
+  <div class="callout"><b>A) Night 섹션 하단</b> — 저녁 시간대 루틴에 통합. Daily Journaling 옆.</div>
+  <div class="section-header sh-night">NIGHT</div>
+  <div class="item">
+    <div class="item-dot d-night"></div>
+    <div class="item-label">Daily Journaling</div>
+    <div class="item-check"></div>
+  </div>
+  <div class="item new">
+    <div class="item-dot d-night"></div>
+    <div class="item-label">Call Mom</div>
+    <div class="item-check"></div>
+  </div>
+</div>
+
+<!-- Option B: Discipline 섹션 -->
+<div class="opt-panel" id="p-B">
+  <div class="callout"><b>B) Discipline 하단</b> — 자기 훈련·가치 유지 카테고리. No Porn / No Smoking과 같은 도덕적 discipline 결.</div>
+  <div class="section-header sh-discipline">DISCIPLINE</div>
+  <div class="item">
+    <div class="item-dot d-workout"></div>
+    <div class="item-label">Supplements</div>
+    <div class="item-check"></div>
+  </div>
+  <div class="item">
+    <div class="item-dot d-discipline"></div>
+    <div class="item-label">No Porn</div>
+    <div class="item-check"></div>
+  </div>
+  <div class="item">
+    <div class="item-dot d-discipline"></div>
+    <div class="item-label">No Smoking</div>
+    <div class="item-check"></div>
+  </div>
+  <div class="item new">
+    <div class="item-dot d-discipline"></div>
+    <div class="item-label">Call Mom</div>
+    <div class="item-check"></div>
+  </div>
+</div>
+
+<!-- Option C: Focus 섹션 -->
+<div class="opt-panel" id="p-C">
+  <div class="callout"><b>C) Focus 하단</b> — Reading·English 같은 개인 성장 항목 카테고리. Mom 연락도 관계 유지 = 성장 관점.</div>
+  <div class="section-header sh-focus">FOCUS</div>
+  <div class="item">
+    <div class="item-dot d-focus"></div>
+    <div class="item-label">Reading</div>
+    <div class="item-check"></div>
+  </div>
+  <div class="item">
+    <div class="item-dot d-focus"></div>
+    <div class="item-label">Morning Briefing</div>
+    <div class="item-check"></div>
+  </div>
+  <div class="item">
+    <div class="item-dot d-focus"></div>
+    <div class="item-label">English Vocab</div>
+    <div class="item-check"></div>
+  </div>
+  <div class="item">
+    <div class="item-dot d-focus"></div>
+    <div class="item-label">English Speech</div>
+    <div class="item-check"></div>
+  </div>
+  <div class="item new">
+    <div class="item-dot d-focus"></div>
+    <div class="item-label">Call Mom</div>
+    <div class="item-check"></div>
+  </div>
+</div>
+
+<!-- Option D: 신규 Family 섹션 -->
+<div class="opt-panel" id="p-D">
+  <div class="callout"><b>D) 신규 "Family" 섹션</b> — Mom 연락을 첫 시작으로, 나중에 다른 가족·관계 항목 (아빠·형제·아내) 확장 여지.</div>
+  <div class="section-header sh-night">NIGHT</div>
+  <div class="item">
+    <div class="item-dot d-night"></div>
+    <div class="item-label">Daily Journaling</div>
+    <div class="item-check"></div>
+  </div>
+  <div class="section-header sh-family">FAMILY</div>
+  <div class="item new">
+    <div class="item-dot d-family"></div>
+    <div class="item-label">Call Mom</div>
+    <div class="item-check"></div>
+  </div>
+</div>
+
+<h2>결정 3 — 빈도</h2>
+<div class="decision-grid">
+  <div class="decision-card"><b>매일</b> — 기본. 미체크 시 Progress 감점</div>
+  <div class="decision-card"><b>Optional</b> — Progress 제외. 체크만 트래킹</div>
+</div>
+
+<div class="callout" style="border-color: rgba(6,182,212,0.3); background: rgba(6,182,212,0.05);">
+<b style="color:#06b6d4;">추천 조합:</b><br>
+· 문구: <b style="color:#f0f;">Call Mom</b><br>
+· 위치: <b style="color:#f0f;">A) Night 섹션 하단</b> (저녁 시간대 자연스러움)<br>
+· 빈도: <b style="color:#f0f;">Optional</b> (매일 강제는 부담, 체크만 트래킹)
+</div>
+
+<script>
+function show(k) {
+  document.querySelectorAll('.opt-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('p-' + k).classList.add('active');
+  document.querySelectorAll('.opt-tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+}
+</script>
+</body>
+</html>
