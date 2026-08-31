@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>Add to Today's Routine — Preview</title>
+<style>
+:root {
+  --bg: #0a0a0a; --surface: #111; --surface-2: #161616; --card2: #18181b;
+  --border: #1f1f23; --text: #fafafa; --muted: #71717a;
+  --lift: #FF1A8C; --accent: #FF1A8C; --gold: #fbbf24;
+  --bp-legs: #8b5cf6;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; padding: 20px; max-width: 720px; margin: 0 auto; line-height: 1.5; }
+h1 { font-size: 20px; margin-bottom: 20px; }
+h2 { font-size: 14px; margin: 24px 0 8px; color: var(--muted); font-family: 'JetBrains Mono', monospace; letter-spacing: 0.05em; text-transform: uppercase; }
+
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 16px; }
+.card.detail { border-color: var(--lift); }
+
+.detail-title { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
+.detail-title .name { font-size: 18px; font-weight: 600; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.bp-badge { padding: 2px 8px; border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.1em; background: rgba(139,92,246,0.2); color: var(--bp-legs); }
+.label-mono { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+
+.detail-metrics { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+.metric-tile { background: var(--card2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
+.metric-tile .lbl { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+.metric-tile .val { font-family: 'JetBrains Mono', monospace; font-size: 14px; color: var(--lift); font-weight: 600; margin-top: 4px; }
+.metric-tile .sub { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+/* =========== Design A: Full-width CTA below tiles =========== */
+.cta-full {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; padding: 12px 16px;
+  background: var(--lift); color: white;
+  border: none; border-radius: 8px;
+  font-family: -apple-system, sans-serif; font-size: 14px; font-weight: 500;
+  cursor: pointer; transition: background 0.15s;
+  margin-top: 12px;
+}
+.cta-full:hover { background: #e01778; }
+.cta-full .icon { font-family: 'JetBrains Mono', monospace; font-weight: 400; }
+
+.cta-full.added {
+  background: transparent; color: var(--lift);
+  border: 1px solid var(--lift);
+}
+
+/* =========== Design B: Compact icon button in header =========== */
+.icon-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px;
+  background: var(--card2); border: 1px solid var(--border);
+  color: var(--muted); border-radius: 8px;
+  cursor: pointer; transition: all 0.15s;
+  font-size: 16px;
+}
+.icon-btn:hover { border-color: var(--lift); color: var(--lift); background: rgba(255,26,140,0.08); }
+.icon-btn.added { background: var(--lift); color: white; border-color: var(--lift); }
+
+/* =========== Design C: Bottom action bar (button + link) =========== */
+.action-bar {
+  display: flex; gap: 8px; align-items: stretch;
+  padding-top: 12px; margin-top: 8px; border-top: 1px solid var(--border);
+}
+.action-bar .primary-btn {
+  flex: 1;
+  background: var(--lift); color: white;
+  border: none; border-radius: 8px;
+  padding: 10px 14px;
+  font-family: -apple-system, sans-serif; font-size: 13px; font-weight: 500;
+  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.action-bar .primary-btn:hover { background: #e01778; }
+.action-bar .primary-btn.added { background: transparent; color: var(--lift); border: 1px solid var(--lift); }
+.action-bar .link-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 10px 14px;
+  background: transparent; color: var(--muted);
+  border: 1px solid var(--border); border-radius: 8px;
+  text-decoration: none; font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  letter-spacing: 0.05em; cursor: pointer;
+}
+.action-bar .link-btn:hover { color: var(--text); border-color: var(--muted); }
+
+/* Preview UI */
+.opt-tabs { display: flex; gap: 8px; margin: 16px 0 8px; flex-wrap: wrap; }
+.opt-tab { background: transparent; color: var(--muted); border: 1px dashed var(--border); padding: 6px 14px; border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 11px; cursor: pointer; }
+.opt-tab.active { background: var(--surface-2); color: var(--lift); border-color: var(--lift); border-style: solid; }
+.opt-panel { display: none; }
+.opt-panel.active { display: block; }
+
+.callout {
+  background: rgba(6,182,212,0.05); border: 1px solid rgba(6,182,212,0.2);
+  border-radius: 8px; padding: 12px 14px; margin: 20px 0 12px;
+  font-size: 12px; color: var(--muted); font-family: 'JetBrains Mono', monospace; line-height: 1.7;
+}
+.callout b { color: #06b6d4; }
+
+.state-toggle {
+  display: inline-flex; margin-left: 8px; font-family: 'JetBrains Mono', monospace; font-size: 10px;
+}
+.state-toggle button {
+  background: var(--card2); color: var(--muted); border: 1px solid var(--border);
+  padding: 4px 8px; cursor: pointer;
+}
+.state-toggle button.on { background: var(--lift); color: white; border-color: var(--lift); }
+.state-toggle button:first-child { border-radius: 4px 0 0 4px; }
+.state-toggle button:last-child { border-radius: 0 4px 4px 0; }
+
+.today-plan {
+  background: var(--card2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 12px 14px; margin-top: 12px;
+}
+.today-plan .lbl { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--gold); letter-spacing: 0.1em; text-transform: uppercase; }
+.today-plan ul { list-style: none; padding: 0; margin: 8px 0 0; }
+.today-plan li {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 6px 0; font-size: 12px; font-family: 'JetBrains Mono', monospace;
+  border-bottom: 1px solid var(--border);
+}
+.today-plan li:last-child { border-bottom: none; }
+.today-plan li .remove {
+  color: var(--muted); cursor: pointer; font-size: 14px;
+}
+.today-plan li .remove:hover { color: var(--lift); }
+</style>
+</head>
+<body>
+
+<h1>Add to Today's Routine — Preview</h1>
+
+<div class="callout">
+<b>기능:</b> PR 탭 종목 검색으로 특정 운동의 3개 PR 확인 후 "오늘 루틴에 추가" 버튼 클릭 → 오늘 날짜 루틴의 <b>planned lifts</b> 리스트에 저장.<br>
+<b>저장 위치:</b> Firestore <code>routines/{today}/planned_lifts: [exerciseName, ...]</code><br>
+<b>루틴 페이지 반영:</b> Workout 섹션 상단에 "오늘 계획한 리프트" 리스트 표시 (체크 가능).<br>
+<b>3가지 UI 옵션 비교</b> — 각 옵션은 "미추가 / 추가완료" 두 상태를 볼 수 있음.
+</div>
+
+<div class="opt-tabs">
+  <button class="opt-tab active" onclick="show('A')">A — Full-width CTA</button>
+  <button class="opt-tab" onclick="show('B')">B — 헤더 아이콘 버튼</button>
+  <button class="opt-tab" onclick="show('C')">C — Bottom action bar</button>
+</div>
+
+<!-- ========== Option A ========== -->
+<div class="opt-panel active" id="p-A">
+  <h2>A — Full-width CTA (3 타일 아래 큰 버튼)</h2>
+  <div class="state-toggle">
+    <button class="on" onclick="setState('A', false)">미추가</button>
+    <button onclick="setState('A', true)">추가완료</button>
+  </div>
+
+  <div class="card detail" style="margin-top:10px;">
+    <div class="detail-title">
+      <div class="name">Squat <span class="bp-badge">LEGS</span></div>
+      <span class="label-mono">42 sets · 21 sessions</span>
+    </div>
+    <div class="detail-metrics">
+      <div class="metric-tile"><div class="lbl">Max Weight</div><div class="val">140.0kg × 3</div><div class="sub">08-17 (9d ago)</div></div>
+      <div class="metric-tile"><div class="lbl">Single Set Vol</div><div class="val">420kg</div><div class="sub">08-17 (9d ago)</div></div>
+      <div class="metric-tile"><div class="lbl">Session Vol</div><div class="val">5 sets · 2,180kg total</div><div class="sub">08-17 (9d ago)</div></div>
+    </div>
+    <button class="cta-full" id="cta-A"><span class="icon">＋</span> 오늘 루틴에 추가</button>
+  </div>
+</div>
+
+<!-- ========== Option B ========== -->
+<div class="opt-panel" id="p-B">
+  <h2>B — 헤더 아이콘 버튼 (컴팩트)</h2>
+  <div class="state-toggle">
+    <button class="on" onclick="setState('B', false)">미추가</button>
+    <button onclick="setState('B', true)">추가완료</button>
+  </div>
+
+  <div class="card detail" style="margin-top:10px;">
+    <div class="detail-title">
+      <div class="name">Squat <span class="bp-badge">LEGS</span></div>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <span class="label-mono">42 sets · 21 sessions</span>
+        <button class="icon-btn" id="cta-B" title="오늘 루틴에 추가">＋</button>
+      </div>
+    </div>
+    <div class="detail-metrics">
+      <div class="metric-tile"><div class="lbl">Max Weight</div><div class="val">140.0kg × 3</div><div class="sub">08-17 (9d ago)</div></div>
+      <div class="metric-tile"><div class="lbl">Single Set Vol</div><div class="val">420kg</div><div class="sub">08-17 (9d ago)</div></div>
+      <div class="metric-tile"><div class="lbl">Session Vol</div><div class="val">5 sets · 2,180kg total</div><div class="sub">08-17 (9d ago)</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== Option C ========== -->
+<div class="opt-panel" id="p-C">
+  <h2>C — Bottom Action Bar (추가 버튼 + 오늘 루틴 링크)</h2>
+  <div class="state-toggle">
+    <button class="on" onclick="setState('C', false)">미추가</button>
+    <button onclick="setState('C', true)">추가완료</button>
+  </div>
+
+  <div class="card detail" style="margin-top:10px;">
+    <div class="detail-title">
+      <div class="name">Squat <span class="bp-badge">LEGS</span></div>
+      <span class="label-mono">42 sets · 21 sessions</span>
+    </div>
+    <div class="detail-metrics">
+      <div class="metric-tile"><div class="lbl">Max Weight</div><div class="val">140.0kg × 3</div><div class="sub">08-17 (9d ago)</div></div>
+      <div class="metric-tile"><div class="lbl">Single Set Vol</div><div class="val">420kg</div><div class="sub">08-17 (9d ago)</div></div>
+      <div class="metric-tile"><div class="lbl">Session Vol</div><div class="val">5 sets · 2,180kg total</div><div class="sub">08-17 (9d ago)</div></div>
+    </div>
+    <div class="action-bar">
+      <button class="primary-btn" id="cta-C"><span>＋</span> 오늘 루틴에 추가</button>
+      <a class="link-btn" href="#">오늘 루틴 →</a>
+    </div>
+  </div>
+</div>
+
+<h2>공통 — 루틴 페이지 반영 (프리뷰)</h2>
+<div class="today-plan">
+  <div class="lbl">🏋 TODAY'S PLANNED LIFTS</div>
+  <ul>
+    <li><span>Squat</span><span class="remove">✕</span></li>
+    <li><span>Barbell Row</span><span class="remove">✕</span></li>
+    <li><span>Face Pull</span><span class="remove">✕</span></li>
+  </ul>
+</div>
+
+<div class="callout" style="border-color: rgba(251,191,36,0.3); background: rgba(251,191,36,0.05);">
+<b style="color:var(--gold);">동작 세부:</b><br>
+· 버튼 클릭 → Firestore 저장 → 토스트 "Added to today's routine"<br>
+· 이미 추가된 종목은 재클릭 시 제거 (toggle)<br>
+· 현재 상태 (추가/미추가) 로컬 캐시 유지<br>
+· 루틴 페이지의 Workout 섹션 상단에 리스트 표시. 각 항목 옆 ✕로 제거<br>
+· 자정 지나면 자동 리셋 (날짜 키 기준)<br>
+</div>
+
+<script>
+function show(k) {
+  document.querySelectorAll('.opt-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('p-' + k).classList.add('active');
+  document.querySelectorAll('.opt-tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+}
+function setState(k, added) {
+  // toggle demo state
+  const cta = document.getElementById('cta-' + k);
+  if (k === 'A') {
+    cta.classList.toggle('added', added);
+    cta.innerHTML = added
+      ? '<span class="icon">✓</span> 오늘 루틴에 추가됨 · 취소하려면 클릭'
+      : '<span class="icon">＋</span> 오늘 루틴에 추가';
+  } else if (k === 'B') {
+    cta.classList.toggle('added', added);
+    cta.textContent = added ? '✓' : '＋';
+    cta.title = added ? '오늘 루틴에서 제거' : '오늘 루틴에 추가';
+  } else if (k === 'C') {
+    cta.classList.toggle('added', added);
+    cta.innerHTML = added
+      ? '<span>✓</span> 추가됨 · 클릭 시 제거'
+      : '<span>＋</span> 오늘 루틴에 추가';
+  }
+  // toggle state buttons visual
+  const parent = event.target.parentElement;
+  parent.querySelectorAll('button').forEach(b => b.classList.remove('on'));
+  event.target.classList.add('on');
+}
+</script>
+</body>
+</html>
