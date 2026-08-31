@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>Plan Reorder — Preview</title>
+<style>
+:root {
+  --bg: #0a0a0a; --surface: #111; --surface-2: #161616; --card2: #18181b;
+  --border: #1f1f23; --text: #fafafa; --muted: #71717a;
+  --lift: #FF1A8C; --accent: #FF1A8C; --gold: #fbbf24;
+  --bp-back: #06b6d4;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; padding: 20px; max-width: 780px; margin: 0 auto; line-height: 1.5; }
+h1 { font-size: 20px; margin-bottom: 20px; }
+h2 { font-size: 14px; margin: 24px 0 8px; color: var(--muted); font-family: 'JetBrains Mono', monospace; letter-spacing: 0.05em; text-transform: uppercase; }
+
+.plan-card {
+  background: linear-gradient(135deg, rgba(255,26,140,0.06), transparent);
+  border: 1px solid rgba(255,26,140,0.28);
+  border-radius: 10px; padding: 14px 16px; margin-bottom: 16px;
+}
+.plan-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 8px; flex-wrap: wrap; }
+.plan-title { font-size: 14px; font-weight: 600; }
+.score-badge {
+  display: inline-flex; align-items: baseline; gap: 4px;
+  background: rgba(251,191,36,0.12); color: #fbbf24;
+  border: 1px solid rgba(251,191,36,0.3);
+  padding: 4px 10px; border-radius: 6px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.score-badge .val { font-size: 15px; font-weight: 700; }
+.score-badge .max { font-size: 11px; opacity: 0.7; }
+.plan-count { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 0.05em; }
+.score-note { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); margin: 2px 0 10px; padding-left: 2px; }
+
+.plan-list { list-style: none; padding: 0; margin: 8px 0 0; display: flex; flex-direction: column; gap: 6px; }
+.plan-row {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+  padding: 10px 12px;
+  transition: border-color 0.15s, opacity 0.15s;
+}
+.plan-row-summary { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.expand-toggle { color: var(--muted); font-size: 12px; font-family: 'JetBrains Mono', monospace; min-width: 12px; cursor: pointer; }
+.pln-name { flex: 1; font-size: 14px; font-weight: 500; }
+.bp-badge { padding: 2px 8px; border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.1em; background: rgba(6,182,212,0.2); color: var(--bp-back); white-space: nowrap; }
+.pr-hint { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); white-space: nowrap; }
+.plan-remove { background: transparent; color: var(--muted); border: none; cursor: pointer; font-size: 14px; padding: 4px 8px; line-height: 1; }
+.plan-remove:hover { color: var(--lift); }
+
+/* === Option A: Drag handle (native drag & drop) === */
+.drag-handle {
+  color: var(--muted); font-size: 16px; cursor: grab;
+  padding: 4px 6px; user-select: none;
+  transition: color 0.1s;
+}
+.drag-handle:hover { color: var(--lift); }
+.drag-handle:active { cursor: grabbing; }
+.plan-row.dragging { opacity: 0.4; }
+.plan-row.drag-over { border-color: var(--lift); border-style: dashed; }
+
+/* === Option B: Handle click → up/down arrows appear === */
+.reorder-btns { display: none; gap: 2px; margin-left: 4px; }
+.plan-row.reorder-mode { border-color: var(--lift); }
+.plan-row.reorder-mode .reorder-btns { display: inline-flex; }
+.reorder-btns button {
+  background: var(--card2); color: var(--muted); border: 1px solid var(--border);
+  border-radius: 5px; padding: 4px 8px; cursor: pointer;
+  font-family: 'JetBrains Mono', monospace; font-size: 11px; line-height: 1;
+}
+.reorder-btns button:hover { color: var(--lift); border-color: var(--lift); }
+.reorder-btns button:disabled { opacity: 0.3; cursor: not-allowed; }
+.handle-btn {
+  color: var(--muted); font-size: 16px; cursor: pointer;
+  padding: 4px 6px; user-select: none; background: transparent; border: none;
+  line-height: 1;
+}
+.handle-btn:hover { color: var(--lift); }
+.plan-row.reorder-mode .handle-btn { color: var(--lift); }
+
+.callout { background: rgba(6,182,212,0.05); border: 1px solid rgba(6,182,212,0.2); border-radius: 8px; padding: 12px 14px; margin: 20px 0 12px; font-size: 12px; color: var(--muted); font-family: 'JetBrains Mono', monospace; line-height: 1.7; }
+.callout b { color: #06b6d4; }
+
+.opt-tabs { display: flex; gap: 8px; margin: 16px 0 10px; flex-wrap: wrap; }
+.opt-tab { background: transparent; color: var(--muted); border: 1px dashed var(--border); padding: 6px 14px; border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 11px; cursor: pointer; }
+.opt-tab.active { background: var(--surface-2); color: var(--lift); border-color: var(--lift); border-style: solid; }
+.opt-panel { display: none; }
+.opt-panel.active { display: block; }
+</style>
+</head>
+<body>
+
+<h1>Plan Reorder — Preview</h1>
+
+<div class="callout">
+<b>변경 사항:</b><br>
+1) "📋 Today's Plan" 이모티콘 제거 → 그냥 "Today's Plan"<br>
+2) 각 행 좌측에 <b>☰ 드래그 핸들</b> 추가 → 순서 조정 가능<br>
+3) 변경된 순서는 Firestore <code>routines/{today}.planned_lifts</code>에 반영 (배열 순서 = 표시 순서)
+</div>
+
+<div class="opt-tabs">
+  <button class="opt-tab active" onclick="show('A')">A — 드래그 & 드롭</button>
+  <button class="opt-tab" onclick="show('B')">B — 핸들 클릭 → ↑↓ 버튼</button>
+</div>
+
+<!-- ============ Option A ============ -->
+<div class="opt-panel active" id="p-A">
+<h2>A — 드래그 & 드롭 (터치/마우스 지원)</h2>
+
+<div class="plan-card">
+  <div class="plan-header">
+    <div class="plan-title">Today's Plan</div>
+    <div style="display:flex; gap:10px; align-items:center;">
+      <span class="score-badge"><span class="val">5.0</span><span class="max">/10</span></span>
+      <span class="plan-count">4 exercises</span>
+    </div>
+  </div>
+  <div class="score-note">BACK · priority sum 11/20 · same-BP −0.5</div>
+  <ul class="plan-list" id="listA">
+    <li class="plan-row" draggable="true">
+      <div class="plan-row-summary">
+        <span class="drag-handle" title="Drag to reorder">☰</span>
+        <span class="expand-toggle">▸</span>
+        <span class="pln-name">Cable Seated Row</span>
+        <span class="bp-badge">BACK</span>
+        <span class="pr-hint">85.0kg PR</span>
+        <button class="plan-remove">✕</button>
+      </div>
+    </li>
+    <li class="plan-row" draggable="true">
+      <div class="plan-row-summary">
+        <span class="drag-handle">☰</span>
+        <span class="expand-toggle">▸</span>
+        <span class="pln-name">Chin Up</span>
+        <span class="bp-badge">BACK</span>
+        <span class="pr-hint">13 reps PR</span>
+        <button class="plan-remove">✕</button>
+      </div>
+    </li>
+    <li class="plan-row" draggable="true">
+      <div class="plan-row-summary">
+        <span class="drag-handle">☰</span>
+        <span class="expand-toggle">▸</span>
+        <span class="pln-name">V-bar Lat Pulldown</span>
+        <span class="bp-badge">BACK</span>
+        <span class="pr-hint">57.5kg PR</span>
+        <button class="plan-remove">✕</button>
+      </div>
+    </li>
+    <li class="plan-row" draggable="true">
+      <div class="plan-row-summary">
+        <span class="drag-handle">☰</span>
+        <span class="expand-toggle">▸</span>
+        <span class="pln-name">Dumbbell Incline Row</span>
+        <span class="bp-badge">BACK</span>
+        <span class="pr-hint">22.7kg PR</span>
+        <button class="plan-remove">✕</button>
+      </div>
+    </li>
+  </ul>
+</div>
+
+<div class="callout"><b>동작:</b> ☰ 핸들 잡고 드래그 (또는 터치)해서 원하는 위치로 이동. 놓으면 순서 저장됨.</div>
+</div>
+
+<!-- ============ Option B ============ -->
+<div class="opt-panel" id="p-B">
+<h2>B — 핸들 클릭 → 위/아래 버튼 (탭 편의)</h2>
+
+<div class="plan-card">
+  <div class="plan-header">
+    <div class="plan-title">Today's Plan</div>
+    <div style="display:flex; gap:10px; align-items:center;">
+      <span class="score-badge"><span class="val">5.0</span><span class="max">/10</span></span>
+      <span class="plan-count">4 exercises</span>
+    </div>
+  </div>
+  <div class="score-note">BACK · priority sum 11/20 · same-BP −0.5</div>
+  <ul class="plan-list" id="listB">
+    <li class="plan-row">
+      <div class="plan-row-summary">
+        <button class="handle-btn" onclick="toggleReorder(this)" title="Reorder">☰</button>
+        <span class="reorder-btns">
+          <button disabled>↑</button>
+          <button>↓</button>
+        </span>
+        <span class="expand-toggle">▸</span>
+        <span class="pln-name">Cable Seated Row</span>
+        <span class="bp-badge">BACK</span>
+        <span class="pr-hint">85.0kg PR</span>
+        <button class="plan-remove">✕</button>
+      </div>
+    </li>
+    <li class="plan-row reorder-mode">
+      <div class="plan-row-summary">
+        <button class="handle-btn" onclick="toggleReorder(this)">☰</button>
+        <span class="reorder-btns">
+          <button>↑</button>
+          <button>↓</button>
+        </span>
+        <span class="expand-toggle">▸</span>
+        <span class="pln-name">Chin Up ← 활성 상태</span>
+        <span class="bp-badge">BACK</span>
+        <span class="pr-hint">13 reps PR</span>
+        <button class="plan-remove">✕</button>
+      </div>
+    </li>
+    <li class="plan-row">
+      <div class="plan-row-summary">
+        <button class="handle-btn" onclick="toggleReorder(this)">☰</button>
+        <span class="reorder-btns">
+          <button>↑</button>
+          <button>↓</button>
+        </span>
+        <span class="expand-toggle">▸</span>
+        <span class="pln-name">V-bar Lat Pulldown</span>
+        <span class="bp-badge">BACK</span>
+        <span class="pr-hint">57.5kg PR</span>
+        <button class="plan-remove">✕</button>
+      </div>
+    </li>
+    <li class="plan-row">
+      <div class="plan-row-summary">
+        <button class="handle-btn" onclick="toggleReorder(this)">☰</button>
+        <span class="reorder-btns">
+          <button>↑</button>
+          <button disabled>↓</button>
+        </span>
+        <span class="expand-toggle">▸</span>
+        <span class="pln-name">Dumbbell Incline Row</span>
+        <span class="bp-badge">BACK</span>
+        <span class="pr-hint">22.7kg PR</span>
+        <button class="plan-remove">✕</button>
+      </div>
+    </li>
+  </ul>
+</div>
+
+<div class="callout"><b>동작:</b> ☰ 클릭 → 그 행이 "이동 모드" (핑크 테두리) + 옆에 ↑↓ 버튼 표시. 클릭 시 한 칸씩 이동. 다시 ☰ 클릭 시 종료.</div>
+</div>
+
+<script>
+// Option A drag-drop demo
+const listA = document.getElementById('listA');
+let dragEl = null;
+listA.querySelectorAll('.plan-row').forEach(row => {
+  row.addEventListener('dragstart', e => { dragEl = row; row.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; });
+  row.addEventListener('dragend', () => { row.classList.remove('dragging'); listA.querySelectorAll('.drag-over').forEach(r => r.classList.remove('drag-over')); });
+  row.addEventListener('dragover', e => { e.preventDefault(); if (dragEl && dragEl !== row) row.classList.add('drag-over'); });
+  row.addEventListener('dragleave', () => row.classList.remove('drag-over'));
+  row.addEventListener('drop', e => {
+    e.preventDefault();
+    if (dragEl && dragEl !== row) {
+      const rect = row.getBoundingClientRect();
+      const after = (e.clientY - rect.top) > rect.height / 2;
+      row.parentNode.insertBefore(dragEl, after ? row.nextSibling : row);
+    }
+    row.classList.remove('drag-over');
+  });
+});
+
+// Option B click-to-reorder demo
+function toggleReorder(btn) {
+  const row = btn.closest('.plan-row');
+  const list = row.parentElement;
+  list.querySelectorAll('.reorder-mode').forEach(r => { if (r !== row) r.classList.remove('reorder-mode'); });
+  row.classList.toggle('reorder-mode');
+}
+
+function show(k) {
+  document.querySelectorAll('.opt-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('p-' + k).classList.add('active');
+  document.querySelectorAll('.opt-tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+}
+</script>
+</body>
+</html>
