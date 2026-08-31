@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>Unit Toggle (kg / lbs) — Preview</title>
+<style>
+:root {
+  --bg: #0a0a0a; --surface: #111; --surface-2: #161616;
+  --card: #111114; --border: #1f1f23;
+  --text: #fafafa; --muted: #71717a; --accent: #FF1A8C;
+  --lift: #FF1A8C; --gold: #fbbf24;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; padding: 20px; max-width: 720px; margin: 0 auto; line-height: 1.5; }
+h1 { font-size: 20px; margin-bottom: 24px; }
+h2 { font-size: 14px; margin: 24px 0 8px; color: var(--muted); font-family: 'JetBrains Mono', monospace; letter-spacing: 0.05em; text-transform: uppercase; }
+
+/* Match dashboard top-right toggle style */
+.header-row {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  margin-bottom: 24px; gap: 8px; flex-wrap: wrap;
+  padding: 12px 16px; background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+}
+.h-title { font-size: 18px; font-weight: 600; }
+.top-controls { display: flex; align-items: center; gap: 8px; }
+.nav-pill {
+  display: inline-flex; gap: 4px; background: var(--surface-2);
+  border: 1px solid var(--border); border-radius: 8px; padding: 2px;
+}
+.nav-pill a {
+  padding: 6px 10px; font-size: 11px; font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.05em; text-decoration: none; color: var(--muted); border-radius: 6px;
+}
+.nav-pill a.active { color: var(--text); background: var(--surface); }
+.mini-toggle {
+  display: inline-flex; gap: 0; border: 1px solid var(--border); border-radius: 6px; overflow: hidden;
+}
+.mini-btn {
+  background: transparent; color: var(--muted);
+  border: none; padding: 6px 12px; font-size: 11px;
+  cursor: pointer; font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.1em;
+}
+.mini-btn:hover { color: var(--text); }
+.mini-btn.active { background: var(--accent); color: var(--bg); font-weight: 600; }
+
+.callout {
+  background: rgba(255,26,140,0.05); border: 1px solid rgba(255,26,140,0.2);
+  border-radius: 8px; padding: 12px 14px; margin: 20px 0;
+  font-size: 12px; color: var(--muted); font-family: 'JetBrains Mono', monospace; line-height: 1.7;
+}
+.callout b { color: var(--accent); }
+
+.pr-row {
+  display: flex; align-items: center; gap: 14px; padding: 10px 12px;
+  border-bottom: 1px solid var(--border); background: var(--card);
+}
+.pr-date { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); min-width: 80px; }
+.pr-date b { color: var(--text); font-weight: 500; }
+.pr-name { flex: 1; font-size: 14px; font-weight: 500; }
+.pr-bp { background: rgba(139,92,246,0.2); color: #a78bfa; padding: 2px 8px; border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.1em; margin-left: 6px; }
+.pr-value { font-family: 'JetBrains Mono', monospace; color: var(--lift); font-weight: 600; font-size: 14px; min-width: 160px; text-align: right; }
+
+.mode-tabs { display: flex; gap: 8px; margin: 16px 0 8px; flex-wrap: wrap; }
+.mode-tab { background: transparent; color: var(--muted); border: 1px dashed var(--border); padding: 6px 12px; border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 11px; cursor: pointer; }
+.mode-tab.active { background: var(--surface-2); color: var(--accent); border-color: var(--accent); border-style: solid; }
+.mode-panel { display: none; }
+.mode-panel.active { display: block; }
+
+.big3-tile {
+  background: linear-gradient(135deg, rgba(251,191,36,0.06), transparent);
+  border: 1px solid rgba(251,191,36,0.3); border-radius: 10px; padding: 14px 18px; margin: 8px 0;
+  display: flex; justify-content: space-between; align-items: baseline;
+}
+.big3-tile .lbl { color: var(--gold); font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.12em; }
+.big3-tile .val { color: var(--gold); font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 600; }
+
+.metric-tile {
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px;
+  padding: 10px 12px; display: inline-block; margin-right: 8px; min-width: 200px; vertical-align: top;
+}
+.metric-tile .lbl { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+.metric-tile .val { font-family: 'JetBrains Mono', monospace; font-size: 14px; color: var(--lift); font-weight: 600; margin-top: 4px; }
+</style>
+</head>
+<body>
+
+<h1>Unit Toggle (kg / lbs) — Preview</h1>
+
+<h2>1. 상단 우측 UI (KG / LB 스위치)</h2>
+
+<div class="header-row">
+  <div class="h-title">운동 대시보드</div>
+  <div class="top-controls">
+    <div class="nav-pill">
+      <a class="active">WORKOUT</a>
+      <a>ROUTINE</a>
+      <a>INPUT</a>
+    </div>
+    <div class="mini-toggle" title="Weight unit">
+      <button class="mini-btn active">kg</button>
+      <button class="mini-btn">lbs</button>
+    </div>
+    <div class="mini-toggle" title="Language">
+      <button class="mini-btn active">KO</button>
+      <button class="mini-btn">EN</button>
+    </div>
+  </div>
+</div>
+
+<div class="callout">
+<b>배치:</b> ROUTINE 네비 pill 우측, 언어 토글 좌측. 기존 KO/EN 토글과 동일 스타일 (JetBrains Mono, 핑크 accent).
+</div>
+
+<h2>2. 모드별 값 표시 (KG / LB 전환)</h2>
+
+<div class="mode-tabs">
+  <button class="mode-tab active" onclick="show('kg')">kg mode (기본)</button>
+  <button class="mode-tab" onclick="show('lb')">lbs mode</button>
+</div>
+
+<!-- kg mode -->
+<div class="mode-panel active" id="p-kg">
+  <div class="big3-tile"><span class="lbl">🏆 SQUAT</span><span class="val">140.0 kg</span></div>
+  <div class="big3-tile"><span class="lbl">🏆 DEADLIFT</span><span class="val">195.0 kg</span></div>
+
+  <div style="margin-top:14px;">
+    <div class="metric-tile">
+      <div class="lbl">Max Weight</div>
+      <div class="val">124.0kg × 12</div>
+    </div>
+    <div class="metric-tile">
+      <div class="lbl">Single Set Vol</div>
+      <div class="val">124.0kg × 12 = 1,488kg</div>
+    </div>
+    <div class="metric-tile">
+      <div class="lbl">Session Vol</div>
+      <div class="val">4 sets · 4,528kg total</div>
+    </div>
+  </div>
+
+  <div style="margin-top:14px; background: var(--card); border: 1px solid var(--border); border-radius: 10px;">
+    <div class="pr-row">
+      <div class="pr-date"><b>2d ago</b><br>08-22</div>
+      <div class="pr-name">Machine Thigh Adductor <span class="pr-bp">LEGS</span></div>
+      <div class="pr-value">124.0 kg × 12</div>
+    </div>
+    <div class="pr-row" style="border-bottom:none;">
+      <div class="pr-date"><b>7d ago</b><br>08-17</div>
+      <div class="pr-name">Squat <span class="pr-bp">LEGS</span></div>
+      <div class="pr-value">140.0 kg × 3</div>
+    </div>
+  </div>
+</div>
+
+<!-- lbs mode -->
+<div class="mode-panel" id="p-lb">
+  <div class="big3-tile"><span class="lbl">🏆 SQUAT</span><span class="val">308.5 lbs</span></div>
+  <div class="big3-tile"><span class="lbl">🏆 DEADLIFT</span><span class="val">429.9 lbs</span></div>
+
+  <div style="margin-top:14px;">
+    <div class="metric-tile">
+      <div class="lbl">Max Weight</div>
+      <div class="val">273.4lbs × 12</div>
+    </div>
+    <div class="metric-tile">
+      <div class="lbl">Single Set Vol</div>
+      <div class="val">273.4lbs × 12 = 3,280lbs</div>
+    </div>
+    <div class="metric-tile">
+      <div class="lbl">Session Vol</div>
+      <div class="val">4 sets · 9,983lbs total</div>
+    </div>
+  </div>
+
+  <div style="margin-top:14px; background: var(--card); border: 1px solid var(--border); border-radius: 10px;">
+    <div class="pr-row">
+      <div class="pr-date"><b>2d ago</b><br>08-22</div>
+      <div class="pr-name">Machine Thigh Adductor <span class="pr-bp">LEGS</span></div>
+      <div class="pr-value">273.4 lbs × 12</div>
+    </div>
+    <div class="pr-row" style="border-bottom:none;">
+      <div class="pr-date"><b>7d ago</b><br>08-17</div>
+      <div class="pr-name">Squat <span class="pr-bp">LEGS</span></div>
+      <div class="pr-value">308.5 lbs × 3</div>
+    </div>
+  </div>
+</div>
+
+<div class="callout" style="border-color: rgba(6,182,212,0.3); background: rgba(6,182,212,0.05);">
+<b style="color:#06b6d4;">동작 규칙</b><br>
+· <b style="color:#06b6d4;">환산 계수</b>: 1 kg = 2.20462 lbs<br>
+· <b style="color:#06b6d4;">저장 데이터는 항상 kg</b> (Fleek/InBody 원본 그대로 유지). 표시할 때만 변환.<br>
+· <b style="color:#06b6d4;">모든 무게 표기 동시 변환</b>: RECENT PRs, PR Activity, BIG 3, 세션 모달, Body 탭 weight/lean mass/fat mass/SMM<br>
+· 반올림: 개별 무게 소수 1자리 (예: <code>124.0kg → 273.4lb</code>). 볼륨은 정수 반올림 (예: <code>1,488kg → 3,280lbs</code>).<br>
+· 상태는 <code>localStorage</code>에 저장 → 다음 방문 시 유지<br>
+· BMI, BMR, %BF, HR, 거리, 페이스, 칼로리는 <b>영향 없음</b> (무게 아님)<br>
+· 러닝 데이터도 영향 없음
+</div>
+
+<h2>3. 미지정 사항 (결정 필요)</h2>
+<div class="callout" style="border-color: rgba(251,191,36,0.3); background: rgba(251,191,36,0.05);">
+<b style="color:var(--gold);">Q1.</b> Body 탭의 몸무게도 lb로 변환? <b>YES 추천</b> (일관성)<br>
+<b style="color:var(--gold);">Q2.</b> Routine 탭의 아침 몸무게 입력창 (65-90 kg)도 lb로 표시? <b>NO 추천</b> (입력용이라 kg 고정이 안전)<br>
+<b style="color:var(--gold);">Q3.</b> Progression 차트 y축 라벨도 lb로 바뀜? <b>YES 추천</b> (당연)
+</div>
+
+<script>
+function show(k) {
+  document.querySelectorAll('.mode-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('p-' + k).classList.add('active');
+  document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+}
+</script>
+</body>
+</html>
