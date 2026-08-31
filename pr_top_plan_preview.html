@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>PR Tab Top Plan — Preview</title>
+<style>
+:root {
+  --bg: #0a0a0a; --surface: #111; --surface-2: #161616; --card2: #18181b;
+  --border: #1f1f23; --text: #fafafa; --muted: #71717a;
+  --lift: #FF1A8C; --accent: #FF1A8C; --gold: #fbbf24;
+  --bp-legs: #8b5cf6; --bp-back: #06b6d4;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; padding: 20px; max-width: 720px; margin: 0 auto; line-height: 1.5; }
+h1 { font-size: 20px; margin-bottom: 20px; }
+h2 { font-size: 15px; margin: 24px 0 10px; letter-spacing: 0.02em; display: flex; align-items: baseline; gap: 12px; }
+h2::after { content:""; flex:1; height:1px; background: var(--border); transform: translateY(-6px); }
+
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 12px; }
+.label-mono { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+
+/* Plan card (top of PR tab) */
+.plan-card {
+  background: linear-gradient(135deg, rgba(255,26,140,0.06), transparent);
+  border: 1px solid rgba(255,26,140,0.28);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+.plan-header {
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 12px; margin-bottom: 10px; flex-wrap: wrap;
+}
+.plan-title { font-size: 14px; font-weight: 600; display:flex; align-items:center; gap:8px; }
+.plan-title .emoji { color: var(--accent); }
+.plan-count { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 0.08em; }
+
+/* Score badge */
+.score-badge {
+  display: inline-flex; align-items: baseline; gap: 4px;
+  background: rgba(251,191,36,0.12); color: var(--gold);
+  border: 1px solid rgba(251,191,36,0.3);
+  padding: 4px 10px; border-radius: 6px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.score-badge .val { font-size: 15px; font-weight: 700; }
+.score-badge .max { font-size: 11px; opacity: 0.7; }
+.score-note {
+  font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted);
+  margin-top: 8px; padding-left: 4px;
+}
+
+/* Planned exercise rows */
+.plan-list { list-style: none; padding: 0; margin: 10px 0 0; display: flex; flex-direction: column; gap: 6px; }
+.plan-row {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+  padding: 10px 12px; cursor: pointer; transition: border-color 0.15s;
+}
+.plan-row:hover { border-color: var(--muted); }
+.plan-row.expanded { border-color: var(--lift); }
+.plan-row-summary {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.plan-row-summary .name { flex: 1; font-size: 14px; font-weight: 500; min-width: 0; }
+.bp-badge { padding: 2px 8px; border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.1em; white-space: nowrap; }
+.bp-LEGS { background: rgba(139,92,246,0.2); color: var(--bp-legs); }
+.bp-BACK { background: rgba(6,182,212,0.2); color: var(--bp-back); }
+.plan-row-summary .pr-hint {
+  font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted);
+  white-space: nowrap;
+}
+.plan-remove {
+  background: transparent; color: var(--muted); border: none;
+  cursor: pointer; font-size: 14px; padding: 4px 8px; line-height: 1;
+}
+.plan-remove:hover { color: var(--lift); }
+.expand-toggle { color: var(--muted); font-size: 12px; font-family: 'JetBrains Mono', monospace; }
+.plan-row.expanded .expand-toggle { color: var(--lift); }
+
+/* Expanded detail */
+.plan-detail {
+  overflow: hidden; max-height: 0; transition: max-height 0.3s ease;
+}
+.plan-row.expanded .plan-detail { max-height: 600px; }
+.detail-inner { padding-top: 12px; margin-top: 10px; border-top: 1px dashed var(--border); }
+
+.detail-metrics { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.metric-tile { background: var(--card2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
+.metric-tile .lbl { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+.metric-tile .val { font-family: 'JetBrains Mono', monospace; font-size: 14px; color: var(--lift); font-weight: 600; margin-top: 4px; }
+.metric-tile .sub { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); margin-top: 2px; }
+.date-link {
+  color: var(--muted); text-decoration: none;
+  border-bottom: 1px dashed var(--muted); padding-bottom: 1px;
+}
+.date-link:hover { color: var(--lift); border-color: var(--lift); }
+@media (max-width: 520px) {
+  .detail-metrics { grid-template-columns: 1fr; }
+}
+
+/* Empty state */
+.plan-empty {
+  padding: 20px; text-align: center;
+  color: var(--muted); font-family: 'JetBrains Mono', monospace; font-size: 12px;
+}
+
+/* Plan tab score card */
+.plan-tab-score {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; padding: 14px 16px; margin-bottom: 12px;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  flex-wrap: wrap;
+}
+.plan-tab-score .lbl { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); letter-spacing: 0.08em; }
+.plan-tab-score .score-big { font-family: 'JetBrains Mono', monospace; font-size: 22px; color: var(--gold); font-weight: 700; }
+.plan-tab-score .breakdown { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); }
+
+.opt-tabs { display: flex; gap: 8px; margin: 16px 0 10px; flex-wrap: wrap; }
+.opt-tab { background: transparent; color: var(--muted); border: 1px dashed var(--border); padding: 6px 14px; border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 11px; cursor: pointer; }
+.opt-tab.active { background: var(--surface-2); color: var(--lift); border-color: var(--lift); border-style: solid; }
+.opt-panel { display: none; }
+.opt-panel.active { display: block; }
+
+.callout {
+  background: rgba(6,182,212,0.05); border: 1px solid rgba(6,182,212,0.2);
+  border-radius: 8px; padding: 12px 14px; margin: 20px 0 12px;
+  font-size: 12px; color: var(--muted); font-family: 'JetBrains Mono', monospace; line-height: 1.7;
+}
+.callout b { color: #06b6d4; }
+</style>
+</head>
+<body>
+
+<h1>PR Tab Top Plan — Preview</h1>
+
+<div style="background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 16px;">
+  <div style="font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--muted); letter-spacing:0.08em; margin-bottom:12px;">SCORE BADGE — 색상 옵션</div>
+
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+    <div style="border:1px solid var(--border); border-radius:8px; padding:12px; text-align:center;">
+      <div style="font-family:'JetBrains Mono', monospace; font-size:10px; color:var(--muted); margin-bottom:8px;">1) DYNAMIC (점수별)</div>
+      <div style="display:flex; justify-content:center; gap:6px; flex-wrap:wrap;">
+        <span class="score-badge" style="background:rgba(132,204,22,0.15); color:#84cc16; border-color:rgba(132,204,22,0.4);"><span class="val">8.5</span><span class="max">/10</span></span>
+        <span class="score-badge"><span class="val">7.5</span><span class="max">/10</span></span>
+        <span class="score-badge" style="background:rgba(244,63,94,0.15); color:#f43f5e; border-color:rgba(244,63,94,0.4);"><span class="val">3.0</span><span class="max">/10</span></span>
+      </div>
+      <div style="font-family:'JetBrains Mono', monospace; font-size:9px; color:var(--muted); margin-top:8px;">≥8 라임 / 5-7 앰버 / &lt;5 레드</div>
+    </div>
+
+    <div style="border:1px solid var(--border); border-radius:8px; padding:12px; text-align:center;">
+      <div style="font-family:'JetBrains Mono', monospace; font-size:10px; color:var(--muted); margin-bottom:8px;">2) LIME (단일)</div>
+      <div style="display:flex; justify-content:center;">
+        <span class="score-badge" style="background:rgba(132,204,22,0.15); color:#84cc16; border-color:rgba(132,204,22,0.4);"><span class="val">7.5</span><span class="max">/10</span></span>
+      </div>
+    </div>
+
+    <div style="border:1px solid var(--border); border-radius:8px; padding:12px; text-align:center;">
+      <div style="font-family:'JetBrains Mono', monospace; font-size:10px; color:var(--muted); margin-bottom:8px;">3) CYAN (단일)</div>
+      <div style="display:flex; justify-content:center;">
+        <span class="score-badge" style="background:rgba(6,182,212,0.15); color:#06b6d4; border-color:rgba(6,182,212,0.4);"><span class="val">7.5</span><span class="max">/10</span></span>
+      </div>
+    </div>
+
+    <div style="border:1px solid var(--border); border-radius:8px; padding:12px; text-align:center;">
+      <div style="font-family:'JetBrains Mono', monospace; font-size:10px; color:var(--muted); margin-bottom:8px;">4) 실버/화이트</div>
+      <div style="display:flex; justify-content:center;">
+        <span class="score-badge" style="background:rgba(203,213,225,0.1); color:#cbd5e1; border-color:rgba(203,213,225,0.3);"><span class="val">7.5</span><span class="max">/10</span></span>
+      </div>
+    </div>
+
+    <div style="border:1px solid var(--border); border-radius:8px; padding:12px; text-align:center;">
+      <div style="font-family:'JetBrains Mono', monospace; font-size:10px; color:var(--muted); margin-bottom:8px;">5) 핑크 (액센트 매칭)</div>
+      <div style="display:flex; justify-content:center;">
+        <span class="score-badge" style="background:rgba(255,26,140,0.12); color:#FF1A8C; border-color:rgba(255,26,140,0.35);"><span class="val">7.5</span><span class="max">/10</span></span>
+      </div>
+    </div>
+
+    <div style="border:1px solid var(--border); border-radius:8px; padding:12px; text-align:center;">
+      <div style="font-family:'JetBrains Mono', monospace; font-size:10px; color:var(--muted); margin-bottom:8px;">6) 보라 (deep)</div>
+      <div style="display:flex; justify-content:center;">
+        <span class="score-badge" style="background:rgba(139,92,246,0.15); color:#a78bfa; border-color:rgba(139,92,246,0.4);"><span class="val">7.5</span><span class="max">/10</span></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="callout">
+<b>변경:</b> "Today's Plan" 카드가 PR 탭 최상단 (RECENT PRs 위)에 표시됨. Routine 탭 리스트는 제거.<br>
+<b>각 행:</b> 종목명 + BP 뱃지 + PR 요약 힌트 + 제거 버튼. 클릭하면 검색 detail과 동일한 <b>3 tile</b> 확장.<br>
+<b>날짜 링크:</b> 각 tile의 날짜 클릭 시 그날 세션 모달 (기존 동일).<br>
+<b>Plan 탭 스코어:</b> Plan 탭 상단에 오늘 plan의 우선순위 커버리지 점수 표기.
+</div>
+
+<div class="opt-tabs">
+  <button class="opt-tab active" onclick="show('A')">A — 아코디언 리스트</button>
+  <button class="opt-tab" onclick="show('B')">B — 모두 펼침 (Always expanded)</button>
+</div>
+
+<!-- ============ Option A ============ -->
+<div class="opt-panel active" id="p-A">
+  <h2>PR TAB (top)</h2>
+
+  <div class="plan-card">
+    <div class="plan-header">
+      <div class="plan-title"><span class="emoji">📋</span> Today's Plan</div>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <span class="score-badge">
+          <span class="val">7.5</span><span class="max">/10</span>
+        </span>
+        <span class="plan-count">3 exercises</span>
+      </div>
+    </div>
+    <div class="score-note">Covers 3 of 5 priority-5 due · BACK/LEGS balanced · CORE missing</div>
+
+    <ul class="plan-list">
+      <!-- Row 1: collapsed -->
+      <li class="plan-row">
+        <div class="plan-row-summary">
+          <span class="expand-toggle">▸</span>
+          <span class="name">Squat</span>
+          <span class="bp-badge bp-LEGS">LEGS</span>
+          <span class="pr-hint">PR 140.0 kg</span>
+          <button class="plan-remove" title="Remove">✕</button>
+        </div>
+        <div class="plan-detail"></div>
+      </li>
+
+      <!-- Row 2: expanded -->
+      <li class="plan-row expanded">
+        <div class="plan-row-summary">
+          <span class="expand-toggle">▾</span>
+          <span class="name">Pull Up</span>
+          <span class="bp-badge bp-BACK">BACK</span>
+          <span class="pr-hint">PR BW × 15</span>
+          <button class="plan-remove" title="Remove">✕</button>
+        </div>
+        <div class="plan-detail">
+          <div class="detail-inner">
+            <div class="detail-metrics">
+              <div class="metric-tile"><div class="lbl">Max Reps</div><div class="val">BW × 15</div><div class="sub"><a class="date-link" href="#">08-22 (4d ago)</a></div></div>
+              <div class="metric-tile"><div class="lbl">Single Set Vol</div><div class="val">BW × 15 reps</div><div class="sub"><a class="date-link" href="#">08-22 (4d ago)</a></div></div>
+              <div class="metric-tile"><div class="lbl">Session Vol</div><div class="val">4 sets · 52 reps</div><div class="sub"><a class="date-link" href="#">08-22 (4d ago)</a></div></div>
+            </div>
+          </div>
+        </div>
+      </li>
+
+      <!-- Row 3: collapsed -->
+      <li class="plan-row">
+        <div class="plan-row-summary">
+          <span class="expand-toggle">▸</span>
+          <span class="name">Face Pull</span>
+          <span class="bp-badge bp-BACK">BACK</span>
+          <span class="pr-hint">PR 22.5 kg</span>
+          <button class="plan-remove" title="Remove">✕</button>
+        </div>
+        <div class="plan-detail"></div>
+      </li>
+    </ul>
+  </div>
+
+  <h2>PLAN TAB</h2>
+  <div class="plan-tab-score">
+    <div>
+      <div class="lbl">TODAY'S PLAN VS. RECOMMENDED</div>
+      <div style="display:flex; align-items:baseline; gap:8px; margin-top:4px;">
+        <span class="score-big">7.5</span><span style="color:var(--muted); font-family:'JetBrains Mono', monospace;">/ 10</span>
+      </div>
+      <div class="breakdown">priority sum 22 / 30 possible · 3 of 5 P5-due covered</div>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:4px; font-family:'JetBrains Mono', monospace; font-size:10px; color:var(--muted); text-align:right;">
+      <span>✅ BACK · LEGS covered</span>
+      <span>⚠ CORE missing</span>
+      <span>⚠ CHEST missing</span>
+    </div>
+  </div>
+</div>
+
+<!-- ============ Option B ============ -->
+<div class="opt-panel" id="p-B">
+  <h2>PR TAB (top) — 항상 펼침</h2>
+
+  <div class="plan-card">
+    <div class="plan-header">
+      <div class="plan-title"><span class="emoji">📋</span> Today's Plan</div>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <span class="score-badge">
+          <span class="val">7.5</span><span class="max">/10</span>
+        </span>
+        <span class="plan-count">3 exercises</span>
+      </div>
+    </div>
+    <div class="score-note">Covers 3 of 5 priority-5 due · BACK/LEGS balanced · CORE missing</div>
+
+    <ul class="plan-list">
+      <!-- All expanded -->
+      <li class="plan-row expanded">
+        <div class="plan-row-summary">
+          <span class="name">Squat</span>
+          <span class="bp-badge bp-LEGS">LEGS</span>
+          <button class="plan-remove" title="Remove">✕</button>
+        </div>
+        <div class="plan-detail">
+          <div class="detail-inner">
+            <div class="detail-metrics">
+              <div class="metric-tile"><div class="lbl">Max Weight</div><div class="val">140.0kg × 3</div><div class="sub"><a class="date-link" href="#">08-17 (9d ago)</a></div></div>
+              <div class="metric-tile"><div class="lbl">Single Set Vol</div><div class="val">420kg</div><div class="sub"><a class="date-link" href="#">08-17 (9d ago)</a></div></div>
+              <div class="metric-tile"><div class="lbl">Session Vol</div><div class="val">5 sets · 2,180kg total</div><div class="sub"><a class="date-link" href="#">08-17 (9d ago)</a></div></div>
+            </div>
+          </div>
+        </div>
+      </li>
+
+      <li class="plan-row expanded">
+        <div class="plan-row-summary">
+          <span class="name">Pull Up</span>
+          <span class="bp-badge bp-BACK">BACK</span>
+          <button class="plan-remove" title="Remove">✕</button>
+        </div>
+        <div class="plan-detail">
+          <div class="detail-inner">
+            <div class="detail-metrics">
+              <div class="metric-tile"><div class="lbl">Max Reps</div><div class="val">BW × 15</div><div class="sub"><a class="date-link" href="#">08-22 (4d ago)</a></div></div>
+              <div class="metric-tile"><div class="lbl">Single Set Vol</div><div class="val">BW × 15 reps</div><div class="sub"><a class="date-link" href="#">08-22 (4d ago)</a></div></div>
+              <div class="metric-tile"><div class="lbl">Session Vol</div><div class="val">4 sets · 52 reps</div><div class="sub"><a class="date-link" href="#">08-22 (4d ago)</a></div></div>
+            </div>
+          </div>
+        </div>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="callout" style="border-color: rgba(251,191,36,0.3); background: rgba(251,191,36,0.05);">
+<b style="color:var(--gold);">스코어 계산 방식 (제안)</b><br>
+· <b style="color:var(--gold);">Plan Priority Sum</b> = sum(planned exercises의 priority값). 예: Squat(2) + PullUp(5) + FacePull(5) = 12<br>
+· <b style="color:var(--gold);">Recommended Max</b> = sum(우선순위 desc 상위 N개 종목 priority), N = plan 개수<br>
+· 예: 3개 계획 → 상위 3개 P5(15)와 비교 → 12/15 = 8.0/10<br>
+· <b style="color:var(--gold);">보너스/감점:</b><br>
+　· 다른 body part 커버 시 +0.5 씩 (최대 +2)<br>
+　· 같은 body part 반복 시 -0.5 씩<br>
+　· 오늘 이미 훈련한 종목 중복 시 감점<br>
+<br>
+<b style="color:var(--gold);">비어있을 때</b>: plan 카드는 표시하지 않음. Plan 탭 스코어도 hide.
+</div>
+
+<script>
+function show(k) {
+  document.querySelectorAll('.opt-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('p-' + k).classList.add('active');
+  document.querySelectorAll('.opt-tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+}
+// Toggle expansion demo
+document.querySelectorAll('.plan-row .plan-row-summary').forEach(r => {
+  r.addEventListener('click', function(e) {
+    if (e.target.closest('.plan-remove')) return;
+    const row = this.closest('.plan-row');
+    row.classList.toggle('expanded');
+    const toggle = row.querySelector('.expand-toggle');
+    if (toggle) toggle.textContent = row.classList.contains('expanded') ? '▾' : '▸';
+  });
+});
+</script>
+</body>
+</html>
