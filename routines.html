@@ -533,18 +533,7 @@ function renderSections() {
     const items = itemsBySection[sec.key] || [];
     if (items.length === 0) continue;
     html += `<div class="section-header">${sec.label.toUpperCase()}</div>`;
-    if (sec.key === "Workout" && currentPlannedLifts.length > 0) {
-      const escH = s => String(s).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-      html += `<div class="planned-lifts">
-        <div class="planned-lifts-label">📋 TODAY'S PLAN (from PR)</div>
-        <ul class="planned-lifts-list">
-          ${currentPlannedLifts.map(name => `<li>
-            <span>${escH(name)}</span>
-            <button class="planned-remove" onclick="window.removePlannedLift('${name.replace(/[\\']/g, m => '\\' + m)}')" title="Remove">✕</button>
-          </li>`).join('')}
-        </ul>
-      </div>`;
-    }
+    // Note: planned_lifts are managed in the dashboard PR tab; not shown here.
     const optionalToday = getOptionalForDate(currentDate);
     for (const it of items) {
       const checked = currentChecks[it.id] === true;

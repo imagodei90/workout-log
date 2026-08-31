@@ -512,6 +512,56 @@ details.conventions-toggle[open] > .conv-body { margin-top: 16px; }
 .plan-btn:hover { border-color: var(--lift); color: var(--lift); background: rgba(255,26,140,0.08); }
 .plan-btn.added { background: var(--lift); color: white; border-color: var(--lift); }
 .plan-btn.added:hover { background: #e01778; }
+
+/* Today's Plan card (top of PR view) */
+.plan-card {
+  background: linear-gradient(135deg, rgba(255,26,140,0.06), transparent);
+  border: 1px solid rgba(255,26,140,0.28);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+.plan-header {
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 12px; margin-bottom: 8px; flex-wrap: wrap;
+}
+.plan-title { font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.plan-count { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 0.05em; }
+.score-badge {
+  display: inline-flex; align-items: baseline; gap: 4px;
+  border: 1px solid;
+  padding: 4px 10px; border-radius: 6px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.score-badge .val { font-size: 15px; font-weight: 700; }
+.score-badge .max { font-size: 11px; opacity: 0.7; }
+.score-note { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); margin: 2px 0 8px; padding-left: 2px; }
+
+.plan-list { list-style: none; padding: 0; margin: 8px 0 0; display: flex; flex-direction: column; gap: 6px; }
+.plan-row {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+  padding: 10px 12px; transition: border-color 0.15s;
+}
+.plan-row.expanded { border-color: var(--lift); }
+.plan-row-summary {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  cursor: pointer; user-select: none;
+}
+.plan-row-summary .expand-toggle { color: var(--muted); font-size: 12px; font-family: 'JetBrains Mono', monospace; min-width: 12px; }
+.plan-row.expanded .expand-toggle { color: var(--lift); }
+.plan-row-summary .pln-name { flex: 1; font-size: 14px; font-weight: 500; min-width: 0; }
+.plan-row-summary .pr-hint { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); white-space: nowrap; }
+.plan-remove { background: transparent; color: var(--muted); border: none; cursor: pointer; font-size: 14px; padding: 4px 8px; line-height: 1; }
+.plan-remove:hover { color: var(--lift); }
+.plan-detail-inner { padding-top: 12px; margin-top: 10px; border-top: 1px dashed var(--border); }
+
+/* Plan tab score card */
+.plan-tab-score {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 8px; padding: 14px 16px; margin-bottom: 12px;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  flex-wrap: wrap;
+}
 .metric-tile .date-link {
   color: var(--muted); text-decoration: none;
   border-bottom: 1px dashed var(--muted);
@@ -1815,6 +1865,182 @@ document.addEventListener('mousedown', function(ev) {
   }
 });
 
+function _buildDetailTilesHtml(name) {
+  // Returns the 3 metric tiles HTML for an exercise (Max Weight/Duration, Single Set Vol, Session Vol)
+  const sets = (DATA.lifts || []).filter(l => l.exercise === name);
+  if (sets.length === 0) return '<div style="color:var(--muted); padding:8px 0; font-size:12px;">데이터 없음</div>';
+
+  const maxW = Math.max(0, ...sets.map(s => s.weight || 0));
+  const maxReps = Math.max(0, ...sets.map(s => s.reps || 0));
+  const maxDur = Math.max(0, ...sets.map(s => s.duration_sec || 0));
+  const isTimeBased = maxW === 0 && maxReps === 0 && maxDur > 0;
+  const isBW = maxW === 0 && !isTimeBased;
+
+  const today = new Date(); today.setHours(0,0,0,0);
+  const _daysAgo = (d) => {
+    const diff = Math.floor((today - parseDateOnly(d)) / 86400000);
+    if (diff === 0) return 'today';
+    if (diff === 1) return '1d ago';
+    return `${diff}d ago`;
+  };
+  const _fmtDur = (sec) => { const m=Math.floor(sec/60), s=sec%60; return m>0?`${m}:${String(s).padStart(2,'0')}`:`${s}s`; };
+
+  let mwTile;
+  if (isTimeBased) {
+    let bestDur = 0, bestDate = '';
+    for (const s of sets) {
+      const dur = s.duration_sec || 0;
+      const d = dateOnly(s.date);
+      if (dur > bestDur || (dur === bestDur && d > bestDate)) { bestDur = dur; bestDate = d; }
+    }
+    mwTile = `<div class="metric-tile"><div class="lbl">Max Duration</div><div class="val">${_fmtDur(bestDur)} hold</div><div class="sub"><a class="date-link" onclick="event.preventDefault(); showLiftModal('${bestDate}')" href="#">${bestDate.slice(5)} (${_daysAgo(bestDate)})</a></div></div>`;
+  } else {
+    let bestW = 0, bestR = 0, bestDate = '';
+    for (const s of sets) {
+      const w = s.weight || 0, r = s.reps || 0;
+      const d = dateOnly(s.date);
+      if (w > bestW || (w === bestW && r > bestR) || (w === bestW && r === bestR && d > bestDate)) { bestW = w; bestR = r; bestDate = d; }
+    }
+    const wStr = bestW > 0 ? `${_fmtKg(bestW)} × ${bestR}` : `BW × ${bestR}`;
+    mwTile = `<div class="metric-tile"><div class="lbl">Max Weight</div><div class="val">${wStr}</div><div class="sub"><a class="date-link" onclick="event.preventDefault(); showLiftModal('${bestDate}')" href="#">${bestDate.slice(5)} (${_daysAgo(bestDate)})</a></div></div>`;
+  }
+
+  let svTile;
+  if (isTimeBased) {
+    svTile = `<div class="metric-tile" style="opacity: 0.4;"><div class="lbl">Single Set Vol</div><div class="val">—</div><div class="sub">time-based</div></div>`;
+  } else {
+    let bestSetVol = 0, bestSetW = 0, bestSetR = 0, bestSetDate = '';
+    for (const s of sets) {
+      const w = s.weight || 0, r = s.reps || 0;
+      const v = isBW ? r : (w * r);
+      const d = dateOnly(s.date);
+      if (v > bestSetVol || (v === bestSetVol && d > bestSetDate)) { bestSetVol = v; bestSetW = w; bestSetR = r; bestSetDate = d; }
+    }
+    const vStr = isBW ? `BW × ${bestSetR} reps` : `${_fmtKg(bestSetW)} × ${bestSetR} = ${_fmtVol(bestSetVol)}`;
+    svTile = `<div class="metric-tile"><div class="lbl">Single Set Vol</div><div class="val">${vStr}</div><div class="sub"><a class="date-link" onclick="event.preventDefault(); showLiftModal('${bestSetDate}')" href="#">${bestSetDate.slice(5)} (${_daysAgo(bestSetDate)})</a></div></div>`;
+  }
+
+  let ssTile;
+  if (isTimeBased) {
+    ssTile = `<div class="metric-tile" style="opacity: 0.4;"><div class="lbl">Session Vol</div><div class="val">—</div><div class="sub">time-based</div></div>`;
+  } else {
+    const sessMap = new Map();
+    for (const s of sets) {
+      const d = dateOnly(s.date);
+      const v = isBW ? (s.reps || 0) : ((s.weight || 0) * (s.reps || 0));
+      if (!sessMap.has(d)) sessMap.set(d, {vol: 0, sets: 0});
+      const e = sessMap.get(d);
+      e.vol += v; e.sets++;
+    }
+    let bestSess = null, bestSessDate = '';
+    for (const [d, e] of sessMap) {
+      if (!bestSess || e.vol > bestSess.vol || (e.vol === bestSess.vol && d > bestSessDate)) { bestSess = e; bestSessDate = d; }
+    }
+    const vStr = isBW ? `${bestSess.sets} sets · ${_fmtNum(bestSess.vol)} reps` : `${bestSess.sets} sets · ${_fmtVol(bestSess.vol)} total`;
+    ssTile = `<div class="metric-tile"><div class="lbl">Session Vol</div><div class="val">${vStr}</div><div class="sub"><a class="date-link" onclick="event.preventDefault(); showLiftModal('${bestSessDate}')" href="#">${bestSessDate.slice(5)} (${_daysAgo(bestSessDate)})</a></div></div>`;
+  }
+
+  return `<div class="detail-metrics">${mwTile}${svTile}${ssTile}</div>`;
+}
+
+// === Plan Score (planned lifts vs. exercise priorities) ===
+function _findPriorityEntry(name) {
+  const pris = (DATA.exercise_priorities || {}).exercises || [];
+  for (const ep of pris) {
+    for (const pat of (ep.patterns || [])) {
+      try { if (new RegExp(pat, 'i').test(name)) return ep; } catch(e) {}
+    }
+    // also exact/starts-with name match
+    if (ep.name && (ep.name.toLowerCase() === name.toLowerCase() || name.toLowerCase().startsWith(ep.name.toLowerCase().split(' ')[0]))) return ep;
+  }
+  return null;
+}
+
+function computePlanScore() {
+  const planned = (typeof window.getPlannedLifts === 'function') ? window.getPlannedLifts() : [];
+  if (!planned || planned.length === 0) return null;
+  const pris = (DATA.exercise_priorities || {}).exercises || [];
+  const plannedPri = planned.map(name => ({name, ep: _findPriorityEntry(name)}));
+  const priSum = plannedPri.reduce((s, x) => s + ((x.ep && x.ep.priority) || 1), 0);
+  const topN = [...pris].sort((a,b) => (b.priority||0) - (a.priority||0)).slice(0, planned.length);
+  const maxSum = topN.reduce((s, ep) => s + (ep.priority || 5), 0) || (planned.length * 5);
+  const ratio = maxSum > 0 ? priSum / maxSum : 0;
+  let score = ratio * 10;
+  const bps = new Set(plannedPri.map(x => x.ep && x.ep.body_part).filter(Boolean));
+  const bpBonus = Math.min(2, Math.max(0, bps.size - 1) * 0.5);
+  score += bpBonus;
+  const bpCounts = {};
+  for (const x of plannedPri) {
+    const bp = x.ep && x.ep.body_part;
+    if (bp) bpCounts[bp] = (bpCounts[bp] || 0) + 1;
+  }
+  let bpPenalty = 0;
+  for (const c of Object.values(bpCounts)) if (c > 1) bpPenalty += (c - 1) * 0.5;
+  score = Math.max(0, Math.min(10, score - bpPenalty));
+  return {score, priSum, maxSum, bpBonus, bpPenalty, bps: [...bps], bpCounts, plannedPri};
+}
+
+function _scoreColor(s) {
+  if (s == null) return {bg: 'rgba(203,213,225,0.10)', fg: '#cbd5e1', bd: 'rgba(203,213,225,0.30)'};
+  if (s >= 8) return {bg: 'rgba(132,204,22,0.15)', fg: '#84cc16', bd: 'rgba(132,204,22,0.40)'};
+  if (s >= 5) return {bg: 'rgba(251,191,36,0.12)', fg: '#fbbf24', bd: 'rgba(251,191,36,0.30)'};
+  return {bg: 'rgba(244,63,94,0.15)', fg: '#f43f5e', bd: 'rgba(244,63,94,0.40)'};
+}
+
+function _scoreBadgeHtml(sc) {
+  if (!sc) return '';
+  const c = _scoreColor(sc.score);
+  return `<span class="score-badge" style="background:${c.bg}; color:${c.fg}; border-color:${c.bd};"><span class="val">${sc.score.toFixed(1)}</span><span class="max">/10</span></span>`;
+}
+
+// Track collapse state per exercise (default: expanded)
+window.PLAN_COLLAPSED = window.PLAN_COLLAPSED || {};
+window.togglePlanRowCollapse = function(name) {
+  window.PLAN_COLLAPSED[name] = !window.PLAN_COLLAPSED[name];
+  refresh();
+};
+
+function renderTodayPlanCard() {
+  const planned = (typeof window.getPlannedLifts === 'function') ? window.getPlannedLifts() : [];
+  if (!planned || planned.length === 0) return '';
+  const sc = computePlanScore();
+  const scoreHtml = _scoreBadgeHtml(sc);
+  const bpList = sc ? [...sc.bps].join(' · ') : '';
+  const noteHtml = sc
+    ? `<div class="score-note">${bpList ? bpList + ' · ' : ''}priority sum ${sc.priSum}/${sc.maxSum}${sc.bpBonus > 0 ? ` · diversity +${sc.bpBonus.toFixed(1)}` : ''}${sc.bpPenalty > 0 ? ` · same-BP −${sc.bpPenalty.toFixed(1)}` : ''}</div>`
+    : '';
+  const rows = planned.map(name => {
+    const collapsed = !!window.PLAN_COLLAPSED[name];
+    const bp = bodyPart(name);
+    const c = BP_COLORS[bp] || 'var(--muted)';
+    const safeName = _escAttr(name);
+    // brief PR hint
+    const brief = _prSearchBestBrief(name);
+    const detailHtml = collapsed ? '' : `<div class="plan-detail-inner">${_buildDetailTilesHtml(name)}</div>`;
+    return `<li class="plan-row ${collapsed ? '' : 'expanded'}">
+      <div class="plan-row-summary" onclick="window.togglePlanRowCollapse('${safeName}')">
+        <span class="expand-toggle">${collapsed ? '▸' : '▾'}</span>
+        <span class="pln-name">${_esc(name)}</span>
+        <span class="bp-badge" style="background:${c}30; color:${c}; padding: 2px 8px; border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.1em;">${bp}</span>
+        <span class="pr-hint">${brief}</span>
+        <button class="plan-remove" onclick="event.stopPropagation(); window.togglePlannedLift('${safeName}')" title="Remove">✕</button>
+      </div>
+      ${detailHtml}
+    </li>`;
+  }).join('');
+  return `<div class="plan-card">
+    <div class="plan-header">
+      <div class="plan-title"><span style="color:var(--accent);">📋</span> Today's Plan</div>
+      <div style="display:flex; gap:10px; align-items:center;">
+        ${scoreHtml}
+        <span class="plan-count">${planned.length} exercise${planned.length === 1 ? '' : 's'}</span>
+      </div>
+    </div>
+    ${noteHtml}
+    <ul class="plan-list">${rows}</ul>
+  </div>`;
+}
+
 function _prSearchBuildDetail(name) {
   const sets = (DATA.lifts || []).filter(l => l.exercise === name);
   if (sets.length === 0) {
@@ -2799,6 +3025,8 @@ function renderPR(agg) {
   })() : '';
 
   return `
+    ${renderTodayPlanCard()}
+
     ${renderPRExerciseSearch()}
 
     ${renderRecentPRs(10)}
@@ -3967,7 +4195,26 @@ function renderPlan(agg) {
     </div>
   `;
 
+  // Plan tab: today's plan score summary at top
+  const _sc = computePlanScore();
+  const _scColor = _scoreColor(_sc ? _sc.score : null);
+  const planScoreHtml = _sc ? `
+    <div class="plan-tab-score">
+      <div>
+        <div class="label-mono" style="margin:0;">TODAY'S PLAN vs. RECOMMENDED</div>
+        <div style="display:flex; align-items:baseline; gap:8px; margin-top:4px;">
+          <span style="font-family:'JetBrains Mono', monospace; font-size:22px; color:${_scColor.fg}; font-weight:700;">${_sc.score.toFixed(1)}</span>
+          <span style="color:var(--muted); font-family:'JetBrains Mono', monospace;">/ 10</span>
+        </div>
+        <div style="font-family:'JetBrains Mono', monospace; font-size:10px; color:var(--muted); margin-top:4px;">${_sc.plannedPri.length} exercises · priority sum ${_sc.priSum}/${_sc.maxSum}${_sc.bpBonus > 0 ? ` · diversity +${_sc.bpBonus.toFixed(1)}` : ''}${_sc.bpPenalty > 0 ? ` · same-BP −${_sc.bpPenalty.toFixed(1)}` : ''}</div>
+      </div>
+      <div style="font-family:'JetBrains Mono', monospace; font-size:10px; color:var(--muted); text-align:right;">
+        ${[..._sc.bps].map(bp => `<div>✅ ${bp}</div>`).join('')}
+      </div>
+    </div>` : '';
+
   return `
+    ${planScoreHtml}
     ${calendarHtml}
     ${todayWorkoutHtml}
     ${goalAttentionHtml}
@@ -5452,6 +5699,8 @@ async function _loadPlannedForToday() {
 window.isPlannedToday = function(name) {
   return _plannedCache.list.includes(name);
 };
+window.getPlannedLifts = function() { return _plannedCache.list.slice(); };
+window.getPlannedDate = function() { return _plannedCache.date; };
 
 window.togglePlannedLift = async function(name) {
   if (!_fbUid) {
