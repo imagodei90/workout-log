@@ -2245,6 +2245,8 @@ window.setWeightUnit = function(u) {
   if (u === 'kg' || u === 'lbs') {
     window.WEIGHT_UNIT = u;
     try { localStorage.setItem('WEIGHT_UNIT', u); } catch(e) {}
+    document.querySelectorAll('.unit-btn').forEach(b =>
+      b.classList.toggle('active', b.dataset.unit === u));
     refresh();
   }
 };
