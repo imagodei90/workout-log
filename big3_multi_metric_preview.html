@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>BIG 3/7 Multi-Metric Preview</title>
+<style>
+:root {
+  --bg: #0a0a0a; --surface: #111; --surface-2: #161616; --card2: #18181b;
+  --border: #1f1f23; --text: #fafafa; --muted: #71717a;
+  --lift: #FF1A8C; --accent: #FF1A8C; --gold: #fbbf24; --silver: #cbd5e1;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; padding: 20px; max-width: 720px; margin: 0 auto; line-height: 1.5; }
+h1 { font-size: 20px; margin-bottom: 20px; }
+h2 { font-size: 14px; margin: 24px 0 8px; color: var(--muted); font-family: 'JetBrains Mono', monospace; letter-spacing: 0.05em; text-transform: uppercase; }
+
+.pr-card {
+  background: linear-gradient(135deg, rgba(251,191,36,0.06), transparent);
+  border: 1px solid rgba(251,191,36,0.3); border-radius: 10px; padding: 14px 18px; margin-bottom: 12px;
+}
+.label-mono { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+.card-lbl { color: var(--gold); margin-bottom: 8px; }
+.card-lbl.silver { color: var(--silver); }
+
+/* Layout A: stacked right column */
+.pr-row-A {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  padding: 10px 0; border-bottom: 1px solid var(--border);
+}
+.pr-row-A:last-child { border-bottom: none; }
+.pr-row-A .left { flex: 0 0 auto; }
+.pr-row-A .left .name { font-family: 'JetBrains Mono', monospace; color: var(--muted); font-size: 11px; letter-spacing: 0.05em; }
+.pr-row-A .left .date { font-family: 'JetBrains Mono', monospace; color: var(--muted); font-size: 10px; margin-top: 2px; }
+.pr-row-A .right { text-align: right; }
+.pr-row-A .right .big { font-family: 'JetBrains Mono', monospace; color: var(--text); font-size: 14px; }
+.pr-row-A .right .change { font-family: 'JetBrains Mono', monospace; color: #84cc16; font-size: 10px; }
+.pr-row-A .right .sub { font-family: 'JetBrains Mono', monospace; color: var(--muted); font-size: 10px; margin-top: 4px; }
+.pr-row-A .right .sub b { color: var(--text); font-weight: 500; }
+
+/* Layout B: 3-column mini grid */
+.pr-row-B {
+  display: grid;
+  grid-template-columns: 90px 1fr 1fr 1fr;
+  gap: 8px; align-items: baseline;
+  padding: 10px 0; border-bottom: 1px solid var(--border);
+}
+.pr-row-B:last-child { border-bottom: none; }
+.pr-row-B .name { font-family: 'JetBrains Mono', monospace; color: var(--muted); font-size: 11px; letter-spacing: 0.05em; }
+.pr-row-B .metric { text-align: right; font-family: 'JetBrains Mono', monospace; }
+.pr-row-B .metric .val { color: var(--text); font-size: 13px; }
+.pr-row-B .metric .lbl { color: var(--muted); font-size: 9px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+/* Layout C: single line inline */
+.pr-row-C {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 0; border-bottom: 1px solid var(--border); gap: 10px; flex-wrap: wrap;
+}
+.pr-row-C .name { font-family: 'JetBrains Mono', monospace; color: var(--muted); font-size: 11px; letter-spacing: 0.05em; min-width: 80px; }
+.pr-row-C .metrics { display: flex; gap: 16px; align-items: flex-end; font-family: 'JetBrains Mono', monospace; }
+.pr-row-C .metrics .m { display: flex; flex-direction: column; align-items: flex-end; }
+.pr-row-C .metrics .m .val { color: var(--text); font-size: 13px; line-height: 1.2; }
+.pr-row-C .metrics .m .lbl { color: var(--muted); font-size: 8px; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px; }
+/* Style 1: plain (no underline, hover color) */
+.pr-row-C .metrics .m .date { color: var(--muted); font-size: 9px; margin-top: 3px; text-decoration: none; cursor: pointer; transition: color 0.1s; }
+.pr-row-C .metrics .m .date:hover { color: var(--lift); }
+/* Style 2/3 alternatives */
+.pr-row-C.style-solid .metrics .m .date { border-bottom: 1px solid transparent; padding-bottom: 1px; }
+.pr-row-C.style-solid .metrics .m .date:hover { border-bottom-color: var(--lift); }
+.pr-row-C.style-arrow .metrics .m .date::after { content: " ›"; opacity: 0.4; }
+.pr-row-C.style-arrow .metrics .m .date:hover::after { opacity: 1; color: var(--lift); }
+.pr-row-C .metrics .m.pri .val { color: var(--gold); font-weight: 600; font-size: 14px; }
+
+.callout {
+  background: rgba(6,182,212,0.05); border: 1px solid rgba(6,182,212,0.2);
+  border-radius: 8px; padding: 12px 14px; margin: 20px 0 12px;
+  font-size: 12px; color: var(--muted); font-family: 'JetBrains Mono', monospace; line-height: 1.7;
+}
+.callout b { color: #06b6d4; }
+.opt-tabs { display: flex; gap: 8px; margin: 16px 0 10px; flex-wrap: wrap; }
+.opt-tab { background: transparent; color: var(--muted); border: 1px dashed var(--border); padding: 6px 14px; border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 11px; cursor: pointer; }
+.opt-tab.active { background: var(--surface-2); color: var(--lift); border-color: var(--lift); border-style: solid; }
+.opt-panel { display: none; }
+.opt-panel.active { display: block; }
+</style>
+</head>
+<body>
+
+<h1>BIG 3/7 Multi-Metric Preview</h1>
+
+<div class="callout">
+<b>변경 1:</b> BIG 3/BIG 7 각 종목 행에 <b>Single Set Vol + Session Vol</b> 함께 표시. Max Weight는 그대로 메인.<br>
+<b>변경 2:</b> DIP 매칭 regex 수정 — 현재 <code>^dips</code>가 "Cable Dips", "Machine Seated Dips" 못 잡음. <code>\bdips?\b</code>로 변경.<br>
+<b>Dips 데이터:</b> archive에 Dips 67회, Cable Dips 40회, Machine Seated Dips 4회, Assisted Machine Dips 3회 존재.
+</div>
+
+<div class="opt-tabs">
+  <button class="opt-tab active" onclick="show('A')">A — 우측 세로 스택</button>
+  <button class="opt-tab" onclick="show('B')">B — 3열 그리드</button>
+  <button class="opt-tab" onclick="show('C')">C — 인라인 3-metric</button>
+</div>
+
+<!-- Layout A -->
+<div class="opt-panel active" id="p-A">
+<h2>A — 우측 세로 스택 (Max Weight 크게, Vol 작게)</h2>
+<div class="pr-card">
+  <div class="label-mono card-lbl">🏆 BIG 3 PR</div>
+  <div class="pr-row-A">
+    <div class="left"><div class="name">SQUAT</div><div class="date">2026-08-17</div></div>
+    <div class="right">
+      <div class="big">140.0 kg</div>
+      <div class="change">↑ +5kg vs Jul 26</div>
+      <div class="sub">set vol <b>420 kg</b> · session <b>2,180 kg</b></div>
+    </div>
+  </div>
+  <div class="pr-row-A">
+    <div class="left"><div class="name">BENCH</div><div class="date">2026-08-11</div></div>
+    <div class="right">
+      <div class="big">100.0 kg</div>
+      <div class="change">first record</div>
+      <div class="sub">set vol <b>600 kg</b> · session <b>1,850 kg</b></div>
+    </div>
+  </div>
+  <div class="pr-row-A">
+    <div class="left"><div class="name">DEADLIFT</div><div class="date">2026-08-21</div></div>
+    <div class="right">
+      <div class="big">180.0 kg</div>
+      <div class="change">↑ +10kg vs Jul 15</div>
+      <div class="sub">set vol <b>540 kg</b> · session <b>1,260 kg</b></div>
+    </div>
+  </div>
+</div>
+
+<div class="pr-card" style="background: none; border-color: rgba(203,213,225,0.25);">
+  <div class="label-mono card-lbl silver">⭐ BIG 7 (rest)</div>
+  <div class="pr-row-A">
+    <div class="left"><div class="name">OHP</div><div class="date">2026-09-01</div></div>
+    <div class="right">
+      <div class="big">45.0 kg</div>
+      <div class="change">↑ +2.5kg</div>
+      <div class="sub">set vol <b>450 kg</b> · session <b>1,120 kg</b></div>
+    </div>
+  </div>
+  <div class="pr-row-A">
+    <div class="left"><div class="name">DIP</div><div class="date">2026-08-24</div></div>
+    <div class="right">
+      <div class="big">BW × 12</div>
+      <div class="change">first record</div>
+      <div class="sub">set vol <b>12 reps</b> · session <b>4 sets · 48 reps</b></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- Layout B -->
+<div class="opt-panel" id="p-B">
+<h2>B — 3열 그리드 (Max/Set/Session 병렬)</h2>
+<div class="pr-card">
+  <div class="label-mono card-lbl">🏆 BIG 3 PR</div>
+  <div class="pr-row-B">
+    <div class="name">SQUAT<br><span style="font-size:9px;">2026-08-17</span></div>
+    <div class="metric"><div class="lbl">MAX</div><div class="val" style="color:var(--gold);">140.0 kg</div></div>
+    <div class="metric"><div class="lbl">SET VOL</div><div class="val">420 kg</div></div>
+    <div class="metric"><div class="lbl">SESSION</div><div class="val">2,180 kg</div></div>
+  </div>
+  <div class="pr-row-B">
+    <div class="name">BENCH<br><span style="font-size:9px;">2026-08-11</span></div>
+    <div class="metric"><div class="lbl">MAX</div><div class="val" style="color:var(--gold);">100.0 kg</div></div>
+    <div class="metric"><div class="lbl">SET VOL</div><div class="val">600 kg</div></div>
+    <div class="metric"><div class="lbl">SESSION</div><div class="val">1,850 kg</div></div>
+  </div>
+  <div class="pr-row-B">
+    <div class="name">DEADLIFT<br><span style="font-size:9px;">2026-08-21</span></div>
+    <div class="metric"><div class="lbl">MAX</div><div class="val" style="color:var(--gold);">180.0 kg</div></div>
+    <div class="metric"><div class="lbl">SET VOL</div><div class="val">540 kg</div></div>
+    <div class="metric"><div class="lbl">SESSION</div><div class="val">1,260 kg</div></div>
+  </div>
+</div>
+</div>
+
+<!-- Layout C -->
+<div class="opt-panel" id="p-C">
+<h2>C — 인라인 (한 줄, 각 metric별 날짜)</h2>
+
+<div style="margin: 8px 0 12px; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted);">
+  ── 3가지 날짜 스타일 (호버해서 비교) ──
+</div>
+
+<h2 style="margin-top: 10px;">Style 1 — 밑줄 없이 색상만</h2>
+<div class="pr-card">
+  <div class="label-mono card-lbl">🏆 BIG 3 PR</div>
+  <div class="pr-row-C">
+    <div class="name">SQUAT</div>
+    <div class="metrics">
+      <div class="m pri"><div class="val">140.0kg</div><div class="lbl">MAX</div><a class="date">2026-08-17</a></div>
+      <div class="m"><div class="val">420kg</div><div class="lbl">SET</div><a class="date">2026-08-17</a></div>
+      <div class="m"><div class="val">2,180kg</div><div class="lbl">SESSION</div><a class="date">2026-07-26</a></div>
+    </div>
+  </div>
+  <div class="pr-row-C">
+    <div class="name">BENCH</div>
+    <div class="metrics">
+      <div class="m pri"><div class="val">100.0kg</div><div class="lbl">MAX</div><a class="date">2026-08-11</a></div>
+      <div class="m"><div class="val">600kg</div><div class="lbl">SET</div><a class="date">2026-08-04</a></div>
+      <div class="m"><div class="val">1,850kg</div><div class="lbl">SESSION</div><a class="date">2026-08-04</a></div>
+    </div>
+  </div>
+  <div class="pr-row-C">
+    <div class="name">DEADLIFT</div>
+    <div class="metrics">
+      <div class="m pri"><div class="val">180.0kg</div><div class="lbl">MAX</div><a class="date">2026-08-21</a></div>
+      <div class="m"><div class="val">540kg</div><div class="lbl">SET</div><a class="date">2026-08-14</a></div>
+      <div class="m"><div class="val">1,260kg</div><div class="lbl">SESSION</div><a class="date">2026-08-14</a></div>
+    </div>
+  </div>
+</div>
+
+<div class="pr-card" style="background: none; border-color: rgba(203,213,225,0.25);">
+  <div class="label-mono card-lbl silver">⭐ BIG 7 (rest)</div>
+  <div class="pr-row-C">
+    <div class="name">OHP</div>
+    <div class="metrics">
+      <div class="m pri"><div class="val">45.0kg</div><div class="lbl">MAX</div><a class="date">2026-09-01</a></div>
+      <div class="m"><div class="val">450kg</div><div class="lbl">SET</div><a class="date">2026-08-19</a></div>
+      <div class="m"><div class="val">1,120kg</div><div class="lbl">SESSION</div><a class="date">2026-08-19</a></div>
+    </div>
+  </div>
+  <div class="pr-row-C">
+    <div class="name">Dips</div>
+    <div class="metrics">
+      <div class="m pri"><div class="val">15.0kg</div><div class="lbl">MAX</div><a class="date">2026-08-24</a></div>
+      <div class="m"><div class="val">180kg</div><div class="lbl">SET</div><a class="date">2026-08-24</a></div>
+      <div class="m"><div class="val">540kg</div><div class="lbl">SESSION</div><a class="date">2026-07-11</a></div>
+    </div>
+  </div>
+</div>
+
+<h2 style="margin-top: 20px;">Style 2 — 호버 시에만 solid underline</h2>
+<div class="pr-card">
+  <div class="label-mono card-lbl">🏆 BIG 3 PR</div>
+  <div class="pr-row-C style-solid">
+    <div class="name">SQUAT</div>
+    <div class="metrics">
+      <div class="m pri"><div class="val">140.0kg</div><div class="lbl">MAX</div><a class="date">2026-08-17</a></div>
+      <div class="m"><div class="val">420kg</div><div class="lbl">SET</div><a class="date">2026-08-17</a></div>
+      <div class="m"><div class="val">2,180kg</div><div class="lbl">SESSION</div><a class="date">2026-07-26</a></div>
+    </div>
+  </div>
+  <div class="pr-row-C style-solid">
+    <div class="name">BENCH</div>
+    <div class="metrics">
+      <div class="m pri"><div class="val">100.0kg</div><div class="lbl">MAX</div><a class="date">2026-08-11</a></div>
+      <div class="m"><div class="val">600kg</div><div class="lbl">SET</div><a class="date">2026-08-04</a></div>
+      <div class="m"><div class="val">1,850kg</div><div class="lbl">SESSION</div><a class="date">2026-08-04</a></div>
+    </div>
+  </div>
+</div>
+
+<h2 style="margin-top: 20px;">Style 3 — 작은 › 아이콘</h2>
+<div class="pr-card">
+  <div class="label-mono card-lbl">🏆 BIG 3 PR</div>
+  <div class="pr-row-C style-arrow">
+    <div class="name">SQUAT</div>
+    <div class="metrics">
+      <div class="m pri"><div class="val">140.0kg</div><div class="lbl">MAX</div><a class="date">2026-08-17</a></div>
+      <div class="m"><div class="val">420kg</div><div class="lbl">SET</div><a class="date">2026-08-17</a></div>
+      <div class="m"><div class="val">2,180kg</div><div class="lbl">SESSION</div><a class="date">2026-07-26</a></div>
+    </div>
+  </div>
+  <div class="pr-row-C style-arrow">
+    <div class="name">BENCH</div>
+    <div class="metrics">
+      <div class="m pri"><div class="val">100.0kg</div><div class="lbl">MAX</div><a class="date">2026-08-11</a></div>
+      <div class="m"><div class="val">600kg</div><div class="lbl">SET</div><a class="date">2026-08-04</a></div>
+      <div class="m"><div class="val">1,850kg</div><div class="lbl">SESSION</div><a class="date">2026-08-04</a></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="callout" style="border-color: rgba(251,191,36,0.3); background: rgba(251,191,36,0.05);">
+<b style="color:var(--gold);">계산 방식:</b><br>
+· <b style="color:var(--gold);">Max Weight</b>: BIG 7 매칭 종목 중 최고 중량 (현행)<br>
+· <b style="color:var(--gold);">Set Vol</b>: 그 종목의 all-time max(weight × reps) 단일 세트<br>
+· <b style="color:var(--gold);">Session Vol</b>: 그 종목의 all-time max sum(weight × reps) 세션<br>
+· BW 종목(Pull-up)은 reps 기준: max reps, session = N sets · sum reps<br>
+· 각각의 날짜(Max 기준일)는 소형으로 유지
+</div>
+
+<script>
+function show(k) {
+  document.querySelectorAll('.opt-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('p-' + k).classList.add('active');
+  document.querySelectorAll('.opt-tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+}
+</script>
+</body>
+</html>
