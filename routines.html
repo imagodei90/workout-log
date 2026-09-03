@@ -810,19 +810,31 @@ async function refreshStreakAndHeatmap(rebuild = true) {
     }
     await Promise.all(promises);
   }
-  // Streak
+  // Streak — lazy-fetch beyond heatmap cache so streak can exceed HEATMAP_DAYS
   let streak = 0;
-  for (let i = 0; i < 365; i++) {
+  for (let i = 0; i < 1000; i++) {  // hard cap
     const d = addDays(today, -i);
-    const pct = heatmapCache[d];
+    let pct = heatmapCache[d];
     if (pct === undefined) {
-      if (i === 0) continue;
-      break;
+      // Fetch that date on demand
+      try {
+        const snap = await getDoc(doc(db, "users", currentUser.uid, "routines", d));
+        if (snap.exists()) {
+          const items = snap.data().items || {};
+          const { done, total } = computeEffectiveProgress(items, d);
+          pct = total > 0 ? done / total : 0;
+        } else {
+          pct = 0;  // no doc = no completion
+        }
+        heatmapCache[d] = pct;  // populate cache so next check is instant
+      } catch {
+        pct = 0;
+      }
     }
     if (pct >= STREAK_THRESHOLD) {
       streak++;
     } else {
-      if (i === 0) continue;
+      if (i === 0) continue;  // today can be blank; skip and check yesterday
       break;
     }
   }
