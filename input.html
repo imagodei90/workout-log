@@ -710,6 +710,16 @@ function updateSettingsIcon() {
   b.title = getPAT() ? "Settings (token saved)" : "Settings (add token to auto-trigger)";
 }
 
+function explainTriggerError(r) {
+  if (r.error) return `network · ${r.error}`;
+  const s = r.status;
+  if (s === 401) return "401 · PAT expired or invalid — regenerate";
+  if (s === 403) return "403 · rate limit or account restriction";
+  if (s === 404) return "404 · PAT missing repo access or Actions:write (check token settings)";
+  if (s === 422) return "422 · workflow_dispatch not enabled on this branch";
+  return `HTTP ${s || "?"} · unknown`;
+}
+
 async function triggerWorkflow() {
   const pat = getPAT();
   if (!pat) return { ok: false, skipped: true, reason: "no PAT" };
@@ -769,7 +779,7 @@ document.getElementById("run-now-btn").addEventListener("click", async () => {
     showToast("No PAT — set one in ⚙️ Settings first", "error");
     btn.textContent = orig; btn.disabled = false;
   } else {
-    showToast(`Trigger failed: ${r.status || r.error || "unknown"}`, "error");
+    showToast(`Trigger failed — ${explainTriggerError(r)}`, "error");
     console.error("Workflow trigger error:", r);
     btn.textContent = orig; btn.disabled = false;
   }
@@ -840,7 +850,7 @@ document.getElementById("submit-btn").onclick = async () => {
     const trig = await triggerWorkflow();
     if (trig.ok) showToast("Submitted + workflow triggered", "success");
     else if (trig.skipped) showToast("Submitted — will process in ≤15 min (add PAT for instant)", "success");
-    else { showToast(`Submitted — trigger failed: ${trig.status || trig.error}`, "success"); console.error("Workflow trigger error:", trig); }
+    else { showToast(`Submitted — trigger failed (${explainTriggerError(trig)})`, "success"); console.error("Workflow trigger error:", trig); }
   } catch (err) {
     showToast("Submit failed: " + err.message, "error");
   } finally {
