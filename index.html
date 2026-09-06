@@ -3953,24 +3953,31 @@ function renderPlan(agg) {
     const exactRecent7 = exactDates.filter(d => parseDateOnly(d) >= sevenAgo).length;
 
     // Substitute matches: same body_part+sub_part but NOT exact regex match
+    // Dedup by date, but PREFER same-sub over same-bp on the same date
+    // (fixes: doing Chin Up + Cable Seated Row on the same day was crediting
+    //  BB Row Underhand as same-bp only because Chin Up was iterated first).
     let substSameSubRecent7 = 0;
     let substSameBpRecent7 = 0;
     let lastSubstSameSubDate = null;
     let lastSubstSameBpDate = null;
     const targetBp = ep.body_part, targetSub = ep.sub_part || null;
-    const substSeenDates = new Set();
+    const dateBestKind = new Map();  // date -> 'same-sub' | 'same-bp'
     for (const l of allLifts) {
-      if (matchAny(l.exercise || '', ep.patterns)) continue;  // not a substitute (exact)
+      if (matchAny(l.exercise || '', ep.patterns)) continue;
       const liftBp = bodyPart(l.exercise || '');
       if (liftBp !== targetBp) continue;
       const liftSub = subBodyPart(l.exercise || '', liftBp);
       const d = dateOnly(l.date);
-      if (substSeenDates.has(d)) continue;
-      substSeenDates.add(d);
-      const dt = parseDateOnly(d);
       const isSameSub = targetSub && liftSub === targetSub;
+      const cur = dateBestKind.get(d);
+      if (cur === 'same-sub') continue;  // already best for this date
+      if (isSameSub) dateBestKind.set(d, 'same-sub');
+      else if (!cur) dateBestKind.set(d, 'same-bp');
+    }
+    for (const [d, kind] of dateBestKind) {
+      const dt = parseDateOnly(d);
       const isRecent = dt >= sevenAgo;
-      if (isSameSub) {
+      if (kind === 'same-sub') {
         if (isRecent) substSameSubRecent7++;
         if (!lastSubstSameSubDate || d > lastSubstSameSubDate) lastSubstSameSubDate = d;
       } else {
