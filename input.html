@@ -322,6 +322,7 @@
     <button type="button" class="kind-tab active" data-kind="lift" role="tab" aria-selected="true">🏋️ Lift</button>
     <button type="button" class="kind-tab" data-kind="run" role="tab" aria-selected="false">🏃 Run</button>
     <button type="button" class="kind-tab" data-kind="inbody" role="tab" aria-selected="false">🩺 InBody</button>
+    <button type="button" class="kind-tab" data-kind="flight" role="tab" aria-selected="false">✈️ Flight</button>
   </div>
 
   <p class="hint" id="hint-lift">
@@ -331,6 +332,10 @@
   <p class="hint" id="hint-run" hidden>
     Paste Strava/Watch summary OR upload a Strava screenshot below.<br>
     Required: date + distance (km) + duration (MM:SS).
+  </p>
+  <p class="hint" id="hint-flight" hidden>
+    대한항공 탑승 1건을 기록. e-ticket 스크린샷을 올리면 편명·구간·날짜를 자동 인식.<br>
+    마일리지(보너스) 발권은 <code>마일리지 발권</code> 체크 — 실적에서 제외됨.
   </p>
   <p class="hint" id="hint-inbody" hidden>
     Upload an InBody screenshot. 11 fields auto-extracted (edit if wrong).<br>
@@ -347,6 +352,30 @@
   <div id="inbody-form" hidden style="background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px; margin-bottom:12px;">
     <div style="font-family:'JetBrains Mono', monospace; font-size:10px; color:var(--muted); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid var(--border);">📋 Auto-extracted (edit if wrong)</div>
     <div id="inbody-fields"></div>
+  </div>
+
+  <div id="flight-form" hidden style="background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px; margin-bottom:12px;">
+    <div style="font-family:'JetBrains Mono', monospace; font-size:10px; color:var(--muted); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid var(--border);">✈️ 탑승 기록</div>
+    <div class="field-row"><label>날짜</label><input type="date" id="fl-date"><span></span></div>
+    <div class="field-row"><label>편명</label><input type="text" id="fl-flightno" placeholder="KE081" autocapitalize="characters"><span></span></div>
+    <div class="field-row"><label>출발</label><input type="text" id="fl-from" placeholder="ICN" maxlength="3" autocapitalize="characters"><span></span></div>
+    <div class="field-row"><label>도착</label><input type="text" id="fl-to" placeholder="JFK" maxlength="3" autocapitalize="characters"><span></span></div>
+    <div class="field-row"><label>구간</label>
+      <select id="fl-intl">
+        <option value="true">국제선 (2pt)</option>
+        <option value="false">국내선 (1pt)</option>
+      </select><span></span></div>
+    <div class="field-row"><label>왕복</label>
+      <select id="fl-legs">
+        <option value="1">편도</option>
+        <option value="2">왕복</option>
+      </select><span></span></div>
+    <div class="field-row"><label>적립 마일</label><input type="number" id="fl-miles" placeholder="6880" inputmode="numeric"><span>mi</span></div>
+    <div class="field-row"><label>마일리지 발권</label>
+      <input type="checkbox" id="fl-award" style="width:18px; height:18px; accent-color:var(--accent); justify-self:start;"><span></span></div>
+    <div style="font-family:'JetBrains Mono', monospace; font-size:10px; color:var(--muted); margin-top:10px; padding-top:9px; border-top:1px dashed var(--border);" id="fl-calc">
+      탑승 포인트 <b style="color:var(--text);">2</b> pt · 적립 마일 <b style="color:var(--text);">0</b> mi
+    </div>
   </div>
 
   <details id="ocr-raw-wrap" style="margin: 6px 0 10px; font-size: 11px; color: var(--muted); font-family: 'JetBrains Mono', monospace;" hidden>
@@ -490,12 +519,15 @@ function setKind(kind) {
   document.getElementById("hint-lift").hidden = kind !== "lift";
   document.getElementById("hint-run").hidden = kind !== "run";
   document.getElementById("hint-inbody").hidden = kind !== "inbody";
-  document.getElementById("photo-drop").hidden = !(kind === "run" || kind === "inbody");
+  document.getElementById("hint-flight").hidden = kind !== "flight";
+  document.getElementById("photo-drop").hidden = !(kind === "run" || kind === "inbody" || kind === "flight");
   document.getElementById("inbody-form").hidden = kind !== "inbody";
+  document.getElementById("flight-form").hidden = kind !== "flight";
   const ta = document.getElementById("workout-text");
-  ta.hidden = kind === "inbody";
+  ta.hidden = kind === "inbody" || kind === "flight";
   ta.placeholder = kind === "run" ? RUN_PLACEHOLDER : LIFT_PLACEHOLDER;
-  const label = kind === "run" ? "Submit Run" : kind === "inbody" ? "Submit InBody" : "Submit Workout";
+  const label = kind === "run" ? "Submit Run" : kind === "inbody" ? "Submit InBody"
+              : kind === "flight" ? "Submit Flight" : "Submit Workout";
   document.getElementById("submit-btn").textContent = label;
   // Ensure InBody form rendered on first switch
   if (kind === "inbody" && !document.getElementById('inbody-fields').innerHTML) {
@@ -651,7 +683,7 @@ async function runOCR(file) {
   try {
     const T = await loadTesseract();
     setStatus("Reading image...", "processing");
-    const langs = currentKind === "inbody" ? "eng+kor" : "eng";
+    const langs = (currentKind === "inbody" || currentKind === "flight") ? "eng+kor" : "eng";
     const { data } = await T.recognize(file, langs, {
       logger: (m) => {
         if (m.status === "recognizing text" && m.progress) {
@@ -662,7 +694,12 @@ async function runOCR(file) {
     const rawOcr = (data.text || "").trim();
     document.getElementById("ocr-raw").textContent = rawOcr || "(no text detected)";
     document.getElementById("ocr-raw-wrap").hidden = false;
-    if (currentKind === "inbody") {
+    if (currentKind === "flight") {
+      const f = parseFlightOCR(rawOcr);
+      fillFlightForm(f);
+      const filled = Object.keys(f).length;
+      setStatus(filled > 0 ? `✓ ${filled}개 인식 — 확인 후 제출` : "인식 실패 — 직접 입력", filled > 0 ? "done" : "error");
+    } else if (currentKind === "inbody") {
       const fields = ocrToInbodyFields(rawOcr);
       renderInbodyForm(fields);
       const filled = Object.keys(fields).length;
@@ -798,13 +835,96 @@ function collectInbodyData() {
   return data;
 }
 
+
+// === Flight tab ===
+function collectFlightData() {
+  const v = id => (document.getElementById(id).value || "").trim();
+  const legs = parseInt(document.getElementById("fl-legs").value, 10) || 1;
+  const intl = document.getElementById("fl-intl").value === "true";
+  const award = document.getElementById("fl-award").checked;
+  const miles = parseInt(v("fl-miles"), 10);
+  return {
+    date: v("fl-date"),
+    flight_no: v("fl-flightno").toUpperCase(),
+    from: v("fl-from").toUpperCase(),
+    to: v("fl-to").toUpperCase(),
+    intl, legs, award,
+    // Award tickets earn neither miles nor boarding points
+    points: award ? 0 : (intl ? 2 : 1) * legs,
+    miles: award ? 0 : (isNaN(miles) ? 0 : miles),
+  };
+}
+
+function updateFlightCalc() {
+  const d = collectFlightData();
+  const el = document.getElementById("fl-calc");
+  if (!el) return;
+  el.innerHTML = d.award
+    ? '<span style="color:var(--gold);">마일리지 발권 — 실적 미적립 (0 pt · 0 mi)</span>'
+    : `탑승 포인트 <b style="color:var(--text);">${d.points}</b> pt · 적립 마일 <b style="color:var(--text);">${d.miles.toLocaleString()}</b> mi`;
+}
+["fl-intl","fl-legs","fl-award","fl-miles"].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener("change", updateFlightCalc);
+  if (el) el.addEventListener("input", updateFlightCalc);
+});
+
+// e-ticket OCR: pull flight number, route and date out of the raw text
+function parseFlightOCR(text) {
+  const out = {};
+  const fno = text.match(/(KE)\s?(\d{3,4})/i);
+  if (fno) out.flight_no = (fno[1] + fno[2]).toUpperCase();
+  const route = text.match(/([A-Z]{3})\s*(?:-|–|→|\/|to)\s*([A-Z]{3})/);
+  if (route) { out.from = route[1]; out.to = route[2]; }
+  let d = text.match(/(20\d{2})[-.\/](\d{1,2})[-.\/](\d{1,2})/);
+  if (d) {
+    out.date = `${d[1]}-${d[2].padStart(2,'0')}-${d[3].padStart(2,'0')}`;
+  } else {
+    const MON = {JAN:1,FEB:2,MAR:3,APR:4,MAY:5,JUN:6,JUL:7,AUG:8,SEP:9,OCT:10,NOV:11,DEC:12};
+    d = text.match(/(\d{1,2})\s*(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)\s*(20\d{2})?/i);
+    if (d) {
+      const y = d[3] || String(new Date().getFullYear());
+      out.date = `${y}-${String(MON[d[2].toUpperCase()]).padStart(2,'0')}-${d[1].padStart(2,'0')}`;
+    }
+  }
+  return out;
+}
+
+function fillFlightForm(f) {
+  const set = (id, val) => { if (val) document.getElementById(id).value = val; };
+  set("fl-date", f.date);
+  set("fl-flightno", f.flight_no);
+  set("fl-from", f.from);
+  set("fl-to", f.to);
+  updateFlightCalc();
+}
+
 document.getElementById("submit-btn").onclick = async () => {
   const btn = document.getElementById("submit-btn");
   btn.disabled = true;
   btn.textContent = "Submitting...";
   try {
     let doc;
-    if (currentKind === "inbody") {
+    if (currentKind === "flight") {
+      const data = collectFlightData();
+      if (!data.date || !/^\d{4}-\d{2}-\d{2}$/.test(data.date)) {
+        showToast("날짜 필수 (YYYY-MM-DD)", "error");
+        return;
+      }
+      if (!data.from || !data.to) {
+        showToast("출발·도착 공항 필수", "error");
+        return;
+      }
+      doc = {
+        kind: "flight",
+        data,
+        submittedAt: serverTimestamp(),
+        processed: false,
+        processedAt: null,
+        result: null,
+        source: "quick-input-web",
+      };
+    } else if (currentKind === "inbody") {
       const data = collectInbodyData();
       if (!data.date || !/^\d{4}-\d{2}-\d{2}$/.test(data.date)) {
         showToast("date 필수 (YYYY-MM-DD)", "error");
@@ -841,7 +961,13 @@ document.getElementById("submit-btn").onclick = async () => {
       };
     }
     await addDoc(collection(db, "users", currentUser.uid, "workout_inbox"), doc);
-    if (currentKind === "inbody") {
+    if (currentKind === "flight") {
+      ["fl-date","fl-flightno","fl-from","fl-to","fl-miles"].forEach(id => document.getElementById(id).value = "");
+      document.getElementById("fl-award").checked = false;
+      updateFlightCalc();
+      document.getElementById("photo-status").textContent = "";
+      document.getElementById("ocr-raw-wrap").hidden = true;
+    } else if (currentKind === "inbody") {
       renderInbodyForm({});
       document.getElementById("photo-status").textContent = "";
       document.getElementById("ocr-raw-wrap").hidden = true;
@@ -856,7 +982,8 @@ document.getElementById("submit-btn").onclick = async () => {
     showToast("Submit failed: " + err.message, "error");
   } finally {
     btn.disabled = false;
-    btn.textContent = currentKind === "run" ? "Submit Run" : currentKind === "inbody" ? "Submit InBody" : "Submit Workout";
+    btn.textContent = currentKind === "run" ? "Submit Run" : currentKind === "inbody" ? "Submit InBody"
+                    : currentKind === "flight" ? "Submit Flight" : "Submit Workout";
   }
 };
 

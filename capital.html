@@ -109,7 +109,11 @@ function renderMorningCalm(mc) {
   const dday = Math.max(0, Math.floor((parseDate(mc.period_end) - today) / 86400000));
   const monthsLeft = Math.max(1, dday / 30.44);
 
-  const cur = { total: mc.miles_total || 0, flight: mc.miles_flight || 0, pts: mc.flight_points || 0 };
+  const cur = {
+    total: mc.miles_total != null ? mc.miles_total : (mc.miles_other || 0) + (mc.miles_flight || 0),
+    flight: mc.miles_flight || 0,
+    pts: mc.flight_points || 0,
+  };
   const rule = mc.point_rule || { domestic_per_leg: 1, international_per_leg: 2 };
   const routes = mc.routes || [];
   const intlPtsPerRT = rule.international_per_leg * 2;
