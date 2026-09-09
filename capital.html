@@ -58,6 +58,18 @@
     .row .bar { grid-column: 1/-1; order: 3; }
   }
 
+  .methods { margin-top: 13px; padding-top: 11px; border-top: 1px dashed var(--border); display: grid; gap: 7px; }
+  .mrow { display: grid; grid-template-columns: 52px 1fr auto; gap: 10px; align-items: baseline; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); }
+  .mrow.top { color: var(--text); }
+  .mrow.top .mid { color: var(--lime); }
+  .mrow .mname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mrow .mneed { text-align: right; white-space: nowrap; }
+  .mrow.top .mneed { color: var(--lime); }
+  .mrow .mi { color: var(--muted); margin-left: 6px; }
+  @media (max-width: 520px) {
+    .mrow { grid-template-columns: 52px 1fr; }
+    .mrow .mneed { grid-column: 2; text-align: left; }
+  }
   .spend { display: flex; gap: 22px; flex-wrap: wrap; margin-top: 13px; padding-top: 12px; border-top: 1px dashed var(--border); font-family: 'JetBrains Mono', monospace; }
   .spend div { font-size: 10px; color: var(--muted); }
   .spend b { display: block; font-size: 15px; color: var(--text); font-weight: 600; margin-top: 2px; }
@@ -97,22 +109,69 @@ function renderMorningCalm(mc) {
   const dday = Math.max(0, Math.floor((parseDate(mc.period_end) - today) / 86400000));
   const monthsLeft = Math.max(1, dday / 30.44);
 
-  const mCur = mc.miles_current || 0, mTgt = mc.miles_target || 0;
-  const pCur = mc.flight_points_current || 0, pTgt = mc.flight_points_target || 0;
-  const milesPct = mTgt > 0 ? Math.min(100, mCur / mTgt * 100) : 0;
-  const ptsPct = pTgt > 0 ? Math.min(100, pCur / pTgt * 100) : 0;
+  const cur = { total: mc.miles_total || 0, flight: mc.miles_flight || 0, pts: mc.flight_points || 0 };
+  const rule = mc.point_rule || { domestic_per_leg: 1, international_per_leg: 2 };
+  const routes = mc.routes || [];
+  const intlPtsPerRT = rule.international_per_leg * 2;
 
-  const gap = Math.max(0, mTgt - mCur);
-  const perMonth = Math.round(gap / monthsLeft);
+  // Longest route = fewest trips when the binding constraint is flight MILES.
+  // For POINT requirements every international route is worth the same, so
+  // trips are route-independent and the cheapest route is the sensible one.
+  const longest = routes.filter(r => r.intl)
+    .reduce((a, r) => (!a || r.one_way_miles > a.one_way_miles) ? r : a, null);
+
+  const methods = (mc.methods || []).map(m => {
+    const needFlightMi = Math.max(0, (m.flight_miles || 0) - cur.flight);
+    const needPts = Math.max(0, (m.points || 0) - cur.pts);
+    const needTotalMi = Math.max(0, (m.total_miles || 0) - cur.total);
+
+    const tripsByMiles = (needFlightMi > 0 && longest)
+      ? Math.ceil(needFlightMi / (longest.one_way_miles * 2)) : 0;
+    const tripsByPts = needPts > 0 ? Math.ceil(needPts / intlPtsPerRT) : 0;
+    const trips = Math.max(tripsByMiles, tripsByPts);
+
+    // Those flights also feed the total-mile requirement, so the card only
+    // has to cover what they leave behind.
+    const flightMiEarned = tripsByMiles > 0
+      ? tripsByMiles * longest.one_way_miles * 2
+      : 0;
+    const cardGap = Math.max(0, needTotalMi - flightMiEarned);
+
+    let need;
+    if (trips === 0) need = '탑승 불필요';
+    else if (tripsByMiles >= tripsByPts) need = `장거리 왕복 ${trips}회`;
+    else need = `국제선 왕복 ${trips}회`;
+
+    return { ...m, trips, need, cardGap };
+  });
+
+  // Fewest flights wins
+  const top = [...methods].sort((a, b) => a.trips - b.trips)[0];
+
+  const bar = (c, tgt, color) => {
+    const pct = tgt > 0 ? Math.min(100, c / tgt * 100) : 100;
+    return `<span class="bar"><i style="width:${pct.toFixed(1)}%; background:${color};"></i></span>`;
+  };
+
   const card = mc.card || {};
+  const cardGap = top ? top.cardGap : 0;
+  const perMonth = Math.round(cardGap / monthsLeft);
   const manwon = won => Math.round(perMonth * won / 10000);
 
-  // Boarding points are the hard requirement — card spend cannot substitute
-  const ptsShort = pTgt - pCur;
-  const status = ptsShort > 0 ? `탑승 ${ptsShort}pt 필요`
-               : gap > 0 ? `마일 ${fmt(gap)} 부족` : '조건 충족';
-  const statusColor = ptsShort > 0 ? 'var(--red)' : gap > 0 ? 'var(--gold)' : 'var(--lime)';
   const period = `${mc.period_start.slice(0, 7)} ~ ${mc.period_end.slice(0, 7)}`;
+  const headline = top && top.trips > 0 ? top.need : '조건 충족';
+  const headColor = top && top.trips > 0 ? 'var(--red)' : 'var(--lime)';
+
+  const rows = methods.map(m => {
+    const isTop = top && m.id === top.id;
+    const label = m.need;
+    const extra = m.cardGap > 0 ? `<span class="mi">+ 카드 ${fmt(m.cardGap)}mi</span>` : '';
+    return `<div class="mrow${isTop ? ' top' : ''}">
+      <span class="mid">방법 ${m.id}</span>
+      <span class="mname">${m.name}</span>
+      <span class="mneed">${label}${extra}</span>
+    </div>`;
+  }).join('');
 
   return `
     <div class="sec">
@@ -122,20 +181,29 @@ function renderMorningCalm(mc) {
     </div>
     <div class="card">
       <div class="hd">
-        <span class="s" style="color:${statusColor};">${status}</span>
+        <span class="s" style="color:${headColor};">최단 ${headline}</span>
         <span class="d">D-<b>${dday}</b></span>
       </div>
+
       <div class="row">
-        <span class="k">마일리지</span>
-        <span class="bar"><i style="width:${milesPct.toFixed(1)}%; background:var(--gold);"></i></span>
-        <span class="v"><b>${fmt(mCur)}</b> / ${fmt(mTgt)}</span>
+        <span class="k">총 마일</span>
+        ${bar(cur.total, 30000, 'var(--gold)')}
+        <span class="v"><b>${fmt(cur.total)}</b> / 30,000</span>
       </div>
-      <div class="row${ptsShort > 0 ? ' no' : ''}">
-        <span class="k">탑승</span>
-        <span class="bar"><i style="width:${ptsPct.toFixed(1)}%; background:${ptsShort > 0 ? 'var(--red)' : 'var(--lime)'};"></i></span>
-        <span class="v"><b>${pCur}</b> / ${pTgt} pt</span>
+      <div class="row${cur.flight < 20000 ? ' no' : ''}">
+        <span class="k">탑승 마일</span>
+        ${bar(cur.flight, 20000, cur.flight >= 20000 ? 'var(--lime)' : 'var(--red)')}
+        <span class="v"><b>${fmt(cur.flight)}</b> / 20,000</span>
       </div>
-      ${gap > 0 ? `<div class="spend">
+      <div class="row${cur.pts < 30 ? ' no' : ''}">
+        <span class="k">탑승 pt</span>
+        ${bar(cur.pts, 40, cur.pts >= 30 ? 'var(--lime)' : 'var(--red)')}
+        <span class="v"><b>${cur.pts}</b> / 30 · 40</span>
+      </div>
+
+      <div class="methods">${rows}</div>
+
+      ${cardGap > 0 ? `<div class="spend">
         <div>월 카드 · 일반<b>${fmt(manwon(card.base_won_per_mile || 1000))}만원</b></div>
         <div class="a">월 카드 · 특별업종<b>${fmt(manwon(card.bonus_won_per_mile || 500))}만원</b></div>
         <div>월 필요 적립<b>${fmt(perMonth)} mi</b></div>

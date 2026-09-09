@@ -3,10 +3,17 @@
     "label": "MORNING CALM",
     "period_start": "2026-06-01",
     "period_end": "2028-05-31",
-    "miles_current": 5441,
-    "miles_target": 30000,
-    "flight_points_current": 0,
-    "flight_points_target": 30,
+
+    "miles_total": 5441,
+    "miles_flight": 0,
+    "flight_points": 0,
+
+    "methods": [
+      { "id": 1, "name": "탑승 20,000mi + 총 30,000mi", "flight_miles": 20000, "total_miles": 30000, "points": 0 },
+      { "id": 2, "name": "총 30,000mi + 탑승 30pt",     "flight_miles": 0,     "total_miles": 30000, "points": 30 },
+      { "id": 3, "name": "탑승 40pt",                    "flight_miles": 0,     "total_miles": 0,     "points": 40 }
+    ],
+
     "card": {
       "name": "삼성 마일리지 플래티넘 스카이패스",
       "base_won_per_mile": 1000,
@@ -14,7 +21,26 @@
       "bonus_cap_miles_per_month": 2000,
       "annual_fee": 47000
     },
-    "note": "방법 2 기준 (30,000마일 + 탑승 30pt). 방법 1은 탑승 20,000mi, 방법 3은 탑승 40pt로 요구 탑승량이 더 큼."
+
+    "point_rule": { "domestic_per_leg": 1, "international_per_leg": 2 },
+
+    "routes": [
+      { "name": "인천-JFK",   "one_way_miles": 6880, "intl": true },
+      { "name": "인천-LAX",   "one_way_miles": 5973, "intl": true },
+      { "name": "인천-싱가포르", "one_way_miles": 2883, "intl": true },
+      { "name": "인천-방콕",   "one_way_miles": 2286, "intl": true },
+      { "name": "인천-나리타",  "one_way_miles": 758,  "intl": true },
+      { "name": "김포-제주",   "one_way_miles": 285,  "intl": false }
+    ],
+
+    "flights": [],
+
+    "notes": [
+      "탑승 포인트: 국내선 편도 1pt, 국제선 편도 2pt (왕복=편도 2회)",
+      "보너스(마일리지) 항공권은 마일·포인트 모두 미적립 — flights[]에 award=true로 기록하되 실적 제외",
+      "카드·제휴 적립분은 '총 마일리지'에는 포함되나 '탑승 마일'에는 미포함",
+      "노선 거리는 근사값 — 실제 적립은 예약등급별 적립률에 따라 달라짐"
+    ]
   },
   "updated_at": "2026-09-09"
 }
