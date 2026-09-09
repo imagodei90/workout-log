@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
+<meta name="theme-color" content="#0a0a0a">
+<title>Economic Capital</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0a; --card: #111114; --card2: #18181b; --surface: #111; --surface-2: #161616;
+    --border: #1f1f23; --text: #fafafa; --muted: #71717a;
+    --accent: #FF1A8C; --lift: #FF1A8C; --gold: #fbbf24;
+    --lime: #84cc16; --red: #f43f5e;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'Inter', -apple-system, sans-serif;
+    padding: 20px; max-width: 680px; margin: 0 auto; line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  nav { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 22px; flex-wrap: wrap; }
+  h1 { font-size: 20px; font-weight: 600; }
+  .nav-links { display: flex; gap: 4px; background: var(--surface-2); border-radius: 8px; padding: 2px; }
+  .nav-link {
+    padding: 6px 12px; font-size: 11px; font-family: 'JetBrains Mono', monospace;
+    color: var(--muted); text-decoration: none; border-radius: 6px;
+    letter-spacing: 0.05em;
+  }
+  .nav-link.active { background: var(--surface); color: var(--text); }
+
+  .sec { display: flex; align-items: center; gap: 12px; margin: 0 0 10px; }
+  .sec .n { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.14em; color: var(--accent); white-space: nowrap; }
+  .sec .line { flex: 1; height: 1px; background: var(--border); }
+  .sec .r { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); white-space: nowrap; }
+
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 15px 17px; margin-bottom: 26px; }
+
+  .hd { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 13px; flex-wrap: wrap; }
+  .hd .s { font-size: 14px; font-weight: 600; }
+  .hd .d { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); }
+  .hd .d b { color: var(--gold); }
+
+  .row { display: grid; grid-template-columns: 76px 1fr 118px; gap: 11px; align-items: center; padding: 9px 0; font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+  .row + .row { border-top: 1px solid var(--border); }
+  .row .k { color: var(--muted); }
+  .row .v { text-align: right; }
+  .row .v b { color: var(--text); font-size: 13px; }
+  .row.no .v b { color: var(--red); }
+  .bar { height: 5px; background: var(--card2); border-radius: 3px; overflow: hidden; }
+  .bar > i { display: block; height: 100%; border-radius: 3px; }
+  @media (max-width: 520px) {
+    .row { grid-template-columns: 1fr auto; }
+    .row .bar { grid-column: 1/-1; order: 3; }
+  }
+
+  .spend { display: flex; gap: 22px; flex-wrap: wrap; margin-top: 13px; padding-top: 12px; border-top: 1px dashed var(--border); font-family: 'JetBrains Mono', monospace; }
+  .spend div { font-size: 10px; color: var(--muted); }
+  .spend b { display: block; font-size: 15px; color: var(--text); font-weight: 600; margin-top: 2px; }
+  .spend .a b { color: var(--lime); }
+
+  .ghost { opacity: 0.32; }
+  .ghost .card { border-style: dashed; padding: 13px 17px; }
+  .ghost .p { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); }
+
+  .err { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<nav>
+  <h1>Economic Capital</h1>
+  <div class="nav-links">
+    <a href="./" class="nav-link">WORKOUT</a>
+    <a href="routines.html" class="nav-link">ROUTINE</a>
+    <a href="input.html" class="nav-link">INPUT</a>
+    <a href="capital.html" class="nav-link active">CAPITAL</a>
+  </div>
+</nav>
+
+<div id="content"><div class="err">불러오는 중...</div></div>
+
+<script>
+const fmt = n => Math.round(n).toLocaleString('en-US');
+
+function parseDate(s) {
+  const [y, m, d] = s.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
+function renderMorningCalm(mc) {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const dday = Math.max(0, Math.floor((parseDate(mc.period_end) - today) / 86400000));
+  const monthsLeft = Math.max(1, dday / 30.44);
+
+  const mCur = mc.miles_current || 0, mTgt = mc.miles_target || 0;
+  const pCur = mc.flight_points_current || 0, pTgt = mc.flight_points_target || 0;
+  const milesPct = mTgt > 0 ? Math.min(100, mCur / mTgt * 100) : 0;
+  const ptsPct = pTgt > 0 ? Math.min(100, pCur / pTgt * 100) : 0;
+
+  const gap = Math.max(0, mTgt - mCur);
+  const perMonth = Math.round(gap / monthsLeft);
+  const card = mc.card || {};
+  const manwon = won => Math.round(perMonth * won / 10000);
+
+  // Boarding points are the hard requirement — card spend cannot substitute
+  const ptsShort = pTgt - pCur;
+  const status = ptsShort > 0 ? `탑승 ${ptsShort}pt 필요`
+               : gap > 0 ? `마일 ${fmt(gap)} 부족` : '조건 충족';
+  const statusColor = ptsShort > 0 ? 'var(--red)' : gap > 0 ? 'var(--gold)' : 'var(--lime)';
+  const period = `${mc.period_start.slice(0, 7)} ~ ${mc.period_end.slice(0, 7)}`;
+
+  return `
+    <div class="sec">
+      <span class="n">${mc.label || 'MORNING CALM'}</span>
+      <span class="line"></span>
+      <span class="r">${period}</span>
+    </div>
+    <div class="card">
+      <div class="hd">
+        <span class="s" style="color:${statusColor};">${status}</span>
+        <span class="d">D-<b>${dday}</b></span>
+      </div>
+      <div class="row">
+        <span class="k">마일리지</span>
+        <span class="bar"><i style="width:${milesPct.toFixed(1)}%; background:var(--gold);"></i></span>
+        <span class="v"><b>${fmt(mCur)}</b> / ${fmt(mTgt)}</span>
+      </div>
+      <div class="row${ptsShort > 0 ? ' no' : ''}">
+        <span class="k">탑승</span>
+        <span class="bar"><i style="width:${ptsPct.toFixed(1)}%; background:${ptsShort > 0 ? 'var(--red)' : 'var(--lime)'};"></i></span>
+        <span class="v"><b>${pCur}</b> / ${pTgt} pt</span>
+      </div>
+      ${gap > 0 ? `<div class="spend">
+        <div>월 카드 · 일반<b>${fmt(manwon(card.base_won_per_mile || 1000))}만원</b></div>
+        <div class="a">월 카드 · 특별업종<b>${fmt(manwon(card.bonus_won_per_mile || 500))}만원</b></div>
+        <div>월 필요 적립<b>${fmt(perMonth)} mi</b></div>
+      </div>` : ''}
+    </div>`;
+}
+
+fetch('capital_data.json?_=' + Date.now(), { cache: 'no-store' })
+  .then(r => r.ok ? r.json() : Promise.reject(r.status))
+  .then(data => {
+    const parts = [];
+    if (data.morning_calm) parts.push(renderMorningCalm(data.morning_calm));
+    parts.push(`
+      <div class="ghost">
+        <div class="sec"><span class="n">CARD</span><span class="line"></span></div>
+        <div class="card"><div class="p">뱅크샐러드 연동 예정</div></div>
+        <div class="sec"><span class="n">SAVINGS</span><span class="line"></span></div>
+        <div class="card"><div class="p">추후 추가</div></div>
+      </div>`);
+    document.getElementById('content').innerHTML = parts.join('');
+  })
+  .catch(e => {
+    document.getElementById('content').innerHTML =
+      `<div class="err">capital_data.json 로드 실패 (${e})</div>`;
+  });
+</script>
+</body>
+</html>

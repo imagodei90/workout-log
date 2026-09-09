@@ -1,0 +1,20 @@
+{
+  "morning_calm": {
+    "label": "MORNING CALM",
+    "period_start": "2026-06-01",
+    "period_end": "2028-05-31",
+    "miles_current": 5441,
+    "miles_target": 30000,
+    "flight_points_current": 0,
+    "flight_points_target": 30,
+    "card": {
+      "name": "삼성 마일리지 플래티넘 스카이패스",
+      "base_won_per_mile": 1000,
+      "bonus_won_per_mile": 500,
+      "bonus_cap_miles_per_month": 2000,
+      "annual_fee": 47000
+    },
+    "note": "방법 2 기준 (30,000마일 + 탑승 30pt). 방법 1은 탑승 20,000mi, 방법 3은 탑승 40pt로 요구 탑승량이 더 큼."
+  },
+  "updated_at": "2026-09-09"
+}
