@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Economic Capital — Preview</title>
+<style>
+:root{
+  --bg:#0a0a0a;--card:#111114;--card2:#18181b;--border:#1f1f23;
+  --text:#fafafa;--muted:#71717a;--lift:#FF1A8C;--gold:#fbbf24;
+  --lime:#84cc16;--red:#f43f5e;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,sans-serif;padding:20px;max-width:680px;margin:0 auto;line-height:1.5}
+h1{font-size:20px;margin-bottom:22px}
+
+/* section header — visible boundary between future blocks */
+.sec{display:flex;align-items:center;gap:12px;margin:0 0 10px}
+.sec .n{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;color:var(--lift);white-space:nowrap}
+.sec .line{flex:1;height:1px;background:var(--border)}
+.sec .r{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);white-space:nowrap}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:15px 17px;margin-bottom:26px}
+
+.hd{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:13px;flex-wrap:wrap}
+.hd .s{font-size:14px;font-weight:600;color:var(--red)}
+.hd .d{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)}
+.hd .d b{color:var(--gold)}
+
+.row{display:grid;grid-template-columns:76px 1fr 118px;gap:11px;align-items:center;padding:9px 0;font-family:'JetBrains Mono',monospace;font-size:11px}
+.row+.row{border-top:1px solid var(--border)}
+.row .k{color:var(--muted)}
+.row .v{text-align:right}
+.row .v b{color:var(--text);font-size:13px}
+.row.no .v b{color:var(--red)}
+.bar{height:5px;background:var(--card2);border-radius:3px;overflow:hidden}
+.bar>i{display:block;height:100%;border-radius:3px}
+@media(max-width:520px){.row{grid-template-columns:1fr auto}.row .bar{grid-column:1/-1;order:3}}
+
+.spend{display:flex;gap:22px;flex-wrap:wrap;margin-top:13px;padding-top:12px;border-top:1px dashed var(--border);font-family:'JetBrains Mono',monospace}
+.spend div{font-size:10px;color:var(--muted)}
+.spend b{display:block;font-size:15px;color:var(--text);font-weight:600;margin-top:2px}
+.spend .a b{color:var(--lime)}
+
+/* future section placeholders */
+.ghost{opacity:.32}
+.ghost .card{border-style:dashed;padding:13px 17px}
+.ghost .p{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<h1>Economic Capital</h1>
+
+<div class="sec">
+  <span class="n">MORNING CALM</span>
+  <span class="line"></span>
+  <span class="r">2026-06 ~ 2028-05</span>
+</div>
+<div class="card">
+  <div class="hd">
+    <span class="s">탑승 30pt 필요</span>
+    <span class="d">D-<b>630</b></span>
+  </div>
+
+  <div class="row">
+    <span class="k">마일리지</span>
+    <span class="bar"><i style="width:18.1%;background:var(--gold)"></i></span>
+    <span class="v"><b>5,441</b> / 30,000</span>
+  </div>
+  <div class="row no">
+    <span class="k">탑승</span>
+    <span class="bar"><i style="width:0%;background:var(--red)"></i></span>
+    <span class="v"><b>0</b> / 30 pt</span>
+  </div>
+
+  <div class="spend">
+    <div>월 카드 · 일반<b>117만원</b></div>
+    <div class="a">월 카드 · 특별업종<b>58만원</b></div>
+    <div>월 필요 적립<b>1,169 mi</b></div>
+  </div>
+</div>
+
+<div class="ghost">
+  <div class="sec"><span class="n">CARD</span><span class="line"></span></div>
+  <div class="card"><div class="p">뱅크샐러드 연동 예정</div></div>
+
+  <div class="sec"><span class="n">SAVINGS</span><span class="line"></span></div>
+  <div class="card"><div class="p">추후 추가</div></div>
+</div>
+
+</body>
+</html>
