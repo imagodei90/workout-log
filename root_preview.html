@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ROOT — Preview</title>
+<style>
+:root{
+  --bg:#0a0a0a;--card:#111114;--card2:#18181b;--surface-2:#161616;--border:#1f1f23;
+  --text:#fafafa;--muted:#71717a;--accent:#FF1A8C;--gold:#fbbf24;
+  --lime:#84cc16;--red:#f43f5e;--cyan:#06b6d4;--violet:#a78bfa;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,sans-serif;padding:20px;max-width:720px;margin:0 auto;line-height:1.5}
+.mono{font-family:'JetBrains Mono',monospace}
+h1{font-size:20px;margin-bottom:4px}
+.lead{color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:11px;margin-bottom:18px}
+
+.warn{background:rgba(244,63,94,.06);border:1px solid rgba(244,63,94,.3);border-radius:10px;padding:12px 14px;margin-bottom:18px;font-size:12px;line-height:1.7}
+.warn b{color:var(--red)}
+
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px}
+.tab{background:transparent;color:var(--muted);border:1px dashed var(--border);padding:6px 12px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:11px;cursor:pointer}
+.tab.on{background:var(--surface-2);color:var(--accent);border:1px solid var(--accent)}
+.panel{display:none}.panel.on{display:block}
+.pdesc{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:14px;line-height:1.7}
+.pdesc b{color:var(--text)}
+
+.sec{display:flex;align-items:center;gap:12px;margin:0 0 10px}
+.sec .n{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;color:var(--accent);white-space:nowrap}
+.sec .line{flex:1;height:1px;background:var(--border)}
+.sec .r{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:13px 15px;margin-bottom:18px}
+
+.tier{font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.1em;padding:1px 6px;border-radius:5px;white-space:nowrap}
+.t1{background:rgba(255,26,140,.15);color:var(--accent)}
+.t2{background:rgba(6,182,212,.15);color:var(--cyan)}
+.t3{background:rgba(113,113,122,.18);color:var(--muted)}
+
+/* A — upcoming timeline */
+.tl{display:grid;gap:0}
+.tl-row{display:grid;grid-template-columns:54px 1fr auto;gap:12px;align-items:center;padding:9px 0;border-bottom:1px solid var(--border)}
+.tl-row:last-child{border-bottom:none}
+.tl-d{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);text-align:center}
+.tl-d b{display:block;font-size:17px;color:var(--text);font-weight:600;line-height:1.1}
+.tl-n{font-size:13px}
+.tl-n .k{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-top:1px}
+.tl-dd{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gold)}
+.tl-dd.soon{color:var(--accent)}
+
+/* shared overdue row */
+.od-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--border)}
+.od-row:last-child{border-bottom:none}
+.od-n{font-size:13px;display:flex;align-items:center;gap:7px}
+.od-m{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-top:2px}
+.od-v{font-family:'JetBrains Mono',monospace;font-size:11px;text-align:right}
+.od-v b{display:block;font-size:14px}
+.late b{color:var(--red)} .due b{color:var(--gold)} .ok b{color:var(--lime)}
+
+/* B — circles */
+.rings{position:relative;width:100%;max-width:340px;aspect-ratio:1;margin:6px auto 10px}
+.ring{position:absolute;border:1px solid var(--border);border-radius:50%;left:50%;top:50%;transform:translate(-50%,-50%)}
+.ring-l{position:absolute;font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:.1em;left:50%;transform:translateX(-50%)}
+.dot{position:absolute;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;transform:translate(-50%,-50%);border:2px solid}
+.me{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted)}
+.legend{display:flex;gap:14px;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)}
+.legend i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:middle}
+
+/* D — cards */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:9px}
+.pc{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:13px}
+.pc-top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px;flex-shrink:0}
+.pc-name{font-size:14px;font-weight:600}
+.pc-rel{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)}
+.pc-line{display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);padding:3px 0}
+.pc-line b{color:var(--text);font-weight:500}
+.cad{height:4px;background:var(--card2);border-radius:2px;overflow:hidden;margin-top:9px}
+.cad i{display:block;height:100%;border-radius:2px}
+.pc-note{font-size:11px;color:var(--muted);margin-top:9px;padding-top:8px;border-top:1px dashed var(--border);line-height:1.5}
+
+/* E — month calendar */
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cal .h{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);text-align:center;padding:4px 0}
+.cal .c{aspect-ratio:1;background:var(--card2);border-radius:5px;padding:4px;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);position:relative}
+.cal .c.x{background:transparent}
+.cal .c.today{outline:1px solid var(--accent)}
+.cal .c .e{position:absolute;bottom:4px;left:4px;right:4px;height:4px;border-radius:2px}
+.cal-list{margin-top:12px;display:grid;gap:6px}
+.cal-list div{font-family:'JetBrains Mono',monospace;font-size:11px;display:flex;gap:10px;align-items:center}
+.cal-list span:first-child{color:var(--muted);min-width:44px}
+
+.foot{background:rgba(6,182,212,.05);border:1px solid rgba(6,182,212,.2);border-radius:8px;padding:12px 14px;margin-top:22px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);line-height:1.8}
+.foot b{color:var(--cyan)}
+</style>
+</head>
+<body>
+
+<h1>ROOT</h1>
+<div class="lead">ROOT PEOPLE · 소중한 사람들 · 5가지 구성안</div>
+
+<div class="warn">
+  <b>공개 저장소 문제</b> — workout-log는 public repo라 JSON으로 두면 가족·지인의 연락처·생일·주소가 인터넷에 노출됨.<br>
+  → routines.html처럼 <b style="color:var(--text)">Firestore + Google 로그인</b> 뒤에 저장. 페이지는 공개돼도 데이터는 본인만 열람.
+</div>
+
+<div class="tabs">
+  <button class="tab on" onclick="show('a',this)">A · 다가오는 날</button>
+  <button class="tab" onclick="show('b',this)">B · 동심원</button>
+  <button class="tab" onclick="show('c',this)">C · 연락 대기열</button>
+  <button class="tab" onclick="show('d',this)">D · 사람 카드</button>
+  <button class="tab" onclick="show('e',this)">E · 달력</button>
+</div>
+
+<!-- ======================= A ======================= -->
+<div class="panel on" id="p-a">
+  <div class="pdesc"><b>날짜 중심.</b> 앞으로 60일 안의 생일·기념일을 시간순으로, 그 아래 연락 밀린 사람. 챙길 날을 놓치지 않는 게 목적이면 이 구성.</div>
+
+  <div class="sec"><span class="n">UPCOMING</span><span class="line"></span><span class="r">60일</span></div>
+  <div class="card">
+    <div class="tl">
+      <div class="tl-row"><div class="tl-d">9월<b>14</b></div><div class="tl-n">엄마 <span class="tier t1">INNER</span><div class="k">생신 · 선물 아이디어 2개</div></div><div class="tl-dd soon">D-3</div></div>
+      <div class="tl-row"><div class="tl-d">9월<b>29</b></div><div class="tl-n">친구 A <span class="tier t2">CLOSE</span><div class="k">생일</div></div><div class="tl-dd">D-18</div></div>
+      <div class="tl-row"><div class="tl-d">10월<b>08</b></div><div class="tl-n">부모님 <span class="tier t1">INNER</span><div class="k">결혼기념일 · 40주년</div></div><div class="tl-dd">D-27</div></div>
+      <div class="tl-row"><div class="tl-d">11월<b>02</b></div><div class="tl-n">멘토 B <span class="tier t2">CLOSE</span><div class="k">생일</div></div><div class="tl-dd">D-52</div></div>
+    </div>
+  </div>
+
+  <div class="sec"><span class="n">OVERDUE</span><span class="line"></span></div>
+  <div class="card">
+    <div class="od-row late"><div><div class="od-n">친구 C <span class="tier t2">CLOSE</span></div><div class="od-m">월 1회 목표</div></div><div class="od-v"><b>54일</b>마지막 연락</div></div>
+    <div class="od-row due"><div><div class="od-n">형 <span class="tier t1">INNER</span></div><div class="od-m">격주 목표</div></div><div class="od-v"><b>16일</b>마지막 연락</div></div>
+  </div>
+</div>
+
+<!-- ======================= B ======================= -->
+<div class="panel" id="p-b">
+  <div class="pdesc"><b>관계 거리 중심.</b> 가운데 나, 안쪽부터 INNER · CLOSE · EXTENDED. 점 색이 연락 상태. 관계의 전체 모양을 한눈에 보는 게 목적이면 이 구성.</div>
+
+  <div class="sec"><span class="n">CIRCLES</span><span class="line"></span></div>
+  <div class="card">
+    <div class="rings">
+      <div class="ring" style="width:96%;height:96%"></div>
+      <div class="ring" style="width:66%;height:66%"></div>
+      <div class="ring" style="width:36%;height:36%"></div>
+      <span class="ring-l" style="top:3%">EXTENDED</span>
+      <span class="ring-l" style="top:18%">CLOSE</span>
+      <span class="ring-l" style="top:33%">INNER</span>
+      <span class="me">나</span>
+
+      <div class="dot" style="left:50%;top:38%;border-color:var(--lime);color:var(--lime)">엄</div>
+      <div class="dot" style="left:62%;top:55%;border-color:var(--gold);color:var(--gold)">형</div>
+      <div class="dot" style="left:38%;top:57%;border-color:var(--lime);color:var(--lime)">아</div>
+
+      <div class="dot" style="left:77%;top:32%;border-color:var(--red);color:var(--red)">C</div>
+      <div class="dot" style="left:22%;top:38%;border-color:var(--lime);color:var(--lime)">A</div>
+      <div class="dot" style="left:74%;top:72%;border-color:var(--lime);color:var(--lime)">B</div>
+
+      <div class="dot" style="left:88%;top:55%;border-color:var(--muted);color:var(--muted)">D</div>
+      <div class="dot" style="left:14%;top:70%;border-color:var(--muted);color:var(--muted)">E</div>
+    </div>
+    <div class="legend"><span><i style="background:var(--lime)"></i>양호</span><span><i style="background:var(--gold)"></i>곧</span><span><i style="background:var(--red)"></i>밀림</span></div>
+  </div>
+</div>
+
+<!-- ======================= C ======================= -->
+<div class="panel" id="p-c">
+  <div class="pdesc"><b>행동 중심.</b> 목표 연락 주기를 얼마나 넘겼는지 순으로 줄 세움. 오늘 누구한테 연락할지만 알면 되는 경우. 가장 미니멀.</div>
+
+  <div class="sec"><span class="n">CONTACT QUEUE</span><span class="line"></span><span class="r">주기 대비</span></div>
+  <div class="card">
+    <div class="od-row late"><div><div class="od-n">친구 C <span class="tier t2">CLOSE</span></div><div class="od-m">월 1회 · 24일 초과</div></div><div class="od-v"><b>54일</b></div></div>
+    <div class="od-row due"><div><div class="od-n">형 <span class="tier t1">INNER</span></div><div class="od-m">격주 · 2일 초과</div></div><div class="od-v"><b>16일</b></div></div>
+    <div class="od-row due"><div><div class="od-n">멘토 B <span class="tier t2">CLOSE</span></div><div class="od-m">분기 1회 · 3일 남음</div></div><div class="od-v"><b>87일</b></div></div>
+    <div class="od-row ok"><div><div class="od-n">엄마 <span class="tier t1">INNER</span></div><div class="od-m">매주 · Routine에서 자동 반영</div></div><div class="od-v"><b>2일</b></div></div>
+    <div class="od-row ok"><div><div class="od-n">친구 A <span class="tier t2">CLOSE</span></div><div class="od-m">월 1회</div></div><div class="od-v"><b>9일</b></div></div>
+  </div>
+</div>
+
+<!-- ======================= D ======================= -->
+<div class="panel" id="p-d">
+  <div class="pdesc"><b>사람 중심.</b> 한 명당 카드 하나 — 생일, 연락처, 마지막 연락, 메모까지. 만나기 전에 그 사람 정보를 다시 보는 용도면 이 구성. 정보 밀도 가장 높음.</div>
+
+  <div class="sec"><span class="n">PEOPLE</span><span class="line"></span></div>
+  <div class="grid">
+    <div class="pc">
+      <div class="pc-top"><div class="av" style="background:rgba(255,26,140,.15);color:var(--accent)">엄</div><div><div class="pc-name">엄마</div><div class="pc-rel">가족 · INNER</div></div></div>
+      <div class="pc-line"><span>생일</span><b>9월 14일 · D-3</b></div>
+      <div class="pc-line"><span>마지막 연락</span><b>2일 전</b></div>
+      <div class="pc-line"><span>목표</span><b>매주</b></div>
+      <div class="cad"><i style="width:28%;background:var(--lime)"></i></div>
+      <div class="pc-note">무릎 안 좋으심 · 선물 후보: 마사지기, 등산화</div>
+    </div>
+    <div class="pc">
+      <div class="pc-top"><div class="av" style="background:rgba(6,182,212,.15);color:var(--cyan)">C</div><div><div class="pc-name">친구 C</div><div class="pc-rel">대학 동기 · CLOSE</div></div></div>
+      <div class="pc-line"><span>생일</span><b>3월 2일</b></div>
+      <div class="pc-line"><span>마지막 연락</span><b style="color:var(--red)">54일 전</b></div>
+      <div class="pc-line"><span>목표</span><b>월 1회</b></div>
+      <div class="cad"><i style="width:100%;background:var(--red)"></i></div>
+      <div class="pc-note">8월 이직 · 둘째 출산 예정 11월</div>
+    </div>
+  </div>
+</div>
+
+<!-- ======================= E ======================= -->
+<div class="panel" id="p-e">
+  <div class="pdesc"><b>달력 중심.</b> 이번 달 격자에 챙길 날을 표시, 아래 목록. 월 단위로 일정 짜는 습관이면 이 구성.</div>
+
+  <div class="sec"><span class="n">SEPTEMBER 2026</span><span class="line"></span></div>
+  <div class="card">
+    <div class="cal">
+      <div class="h">월</div><div class="h">화</div><div class="h">수</div><div class="h">목</div><div class="h">금</div><div class="h">토</div><div class="h">일</div>
+      <div class="c">1</div><div class="c">2</div><div class="c">3</div><div class="c">4</div><div class="c">5</div><div class="c">6</div><div class="c">7</div>
+      <div class="c">8</div><div class="c">9</div><div class="c">10</div><div class="c today">11</div><div class="c">12</div><div class="c">13</div><div class="c">14<span class="e" style="background:var(--accent)"></span></div>
+      <div class="c">15</div><div class="c">16</div><div class="c">17</div><div class="c">18</div><div class="c">19</div><div class="c">20</div><div class="c">21</div>
+      <div class="c">22</div><div class="c">23</div><div class="c">24</div><div class="c">25</div><div class="c">26</div><div class="c">27</div><div class="c">28</div>
+      <div class="c">29<span class="e" style="background:var(--cyan)"></span></div><div class="c">30</div><div class="c x"></div><div class="c x"></div><div class="c x"></div><div class="c x"></div><div class="c x"></div>
+    </div>
+    <div class="cal-list">
+      <div><span>9/14</span><span>엄마 생신</span><span class="tier t1">INNER</span></div>
+      <div><span>9/29</span><span>친구 A 생일</span><span class="tier t2">CLOSE</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="foot">
+  <b>공통 데이터</b> — 이름 · 관계 · 단계(INNER/CLOSE/EXTENDED) · 생일 · 기념일 · 연락처 · 목표 연락 주기 · 마지막 연락일 · 메모 · 선물 이력<br>
+  <b>핵심 지표</b> — 목표 주기 대비 경과일. 연락처 수 같은 집계는 넣지 않음<br>
+  <b>Routine 연동</b> — 이미 있는 Call Mom 체크가 엄마의 마지막 연락일로 자동 반영
+</div>
+
+<script>
+function show(k, el){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+  document.getElementById('p-'+k).classList.add('on');
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');
+}
+</script>
+</body>
+</html>
