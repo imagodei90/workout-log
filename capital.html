@@ -234,5 +234,31 @@ fetch('capital_data.json?_=' + Date.now(), { cache: 'no-store' })
       `<div class="err">capital_data.json 로드 실패 (${e})</div>`;
   });
 </script>
+<script>
+// Stale-cache guard: browsers keep static pages past max-age. Compare this
+// document's Last-Modified with the server's (HEAD, no-store) and reload once
+// with a cache buster when the server copy is newer.
+(function () {
+  function check() {
+    fetch(location.pathname, { method: "HEAD", cache: "no-store" })
+      .then(function (r) {
+        var server = Date.parse(r.headers.get("Last-Modified") || "");
+        var mine = Date.parse(document.lastModified);
+        if (!server || !mine || server <= mine + 1000) return;
+        var key = "reloadedFor:" + location.pathname;
+        try { if (sessionStorage.getItem(key) === String(server)) return;
+              sessionStorage.setItem(key, String(server)); } catch (e) {}
+        var u = new URL(location.href);
+        u.searchParams.set("v", String(server));
+        location.replace(u.toString());
+      })
+      .catch(function () {});
+  }
+  check();
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "visible") check();
+  });
+})();
+</script>
 </body>
 </html>
