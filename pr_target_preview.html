@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PR Target — Preview</title>
+<style>
+:root{
+  --bg:#0a0a0a;--card:#111114;--card2:#18181b;--surface:#111;--surface-2:#161616;
+  --border:#1f1f23;--text:#fafafa;--muted:#71717a;
+  --lift:#FF1A8C;--gold:#fbbf24;--lime:#84cc16;--red:#f43f5e;--cyan:#06b6d4;
+  --bp-back:#06b6d4;--bp-legs:#8b5cf6;--bp-core:#f97316;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,sans-serif;padding:20px;max-width:720px;margin:0 auto;line-height:1.5}
+h1{font-size:20px;margin-bottom:4px}
+.lead{color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:11px;margin-bottom:20px}
+h2{font-size:13px;margin:26px 0 10px;font-family:'JetBrains Mono',monospace;letter-spacing:.08em;color:var(--muted);text-transform:uppercase}
+
+.plan-card{background:linear-gradient(135deg,rgba(255,26,140,.06),transparent);border:1px solid rgba(255,26,140,.28);border-radius:10px;padding:14px 16px;margin-bottom:16px}
+.plan-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px;flex-wrap:wrap}
+.plan-title{font-size:14px;font-weight:600}
+.badge{display:inline-flex;align-items:baseline;gap:4px;border:1px solid;padding:4px 10px;border-radius:6px;font-family:'JetBrains Mono',monospace;background:rgba(251,191,36,.12);color:var(--gold);border-color:rgba(251,191,36,.3)}
+.badge .v{font-size:15px;font-weight:700}
+.badge .m{font-size:11px;opacity:.7}
+.cnt{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)}
+
+.plist{list-style:none;padding:0;margin:8px 0 0;display:flex;flex-direction:column;gap:6px}
+.prow{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px}
+.prow.near{border-color:rgba(132,204,22,.45)}
+.psum{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.drag{color:var(--muted);font-size:15px;cursor:grab;padding-right:2px}
+.tog{color:var(--muted);font-size:12px;font-family:'JetBrains Mono',monospace;min-width:12px}
+.pname{flex:1;font-size:14px;font-weight:500;min-width:0}
+.bp{padding:2px 8px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;white-space:nowrap}
+.bp-BACK{background:rgba(6,182,212,.2);color:var(--bp-back)}
+.bp-LEGS{background:rgba(139,92,246,.2);color:var(--bp-legs)}
+.bp-CORE{background:rgba(249,115,22,.2);color:var(--bp-core)}
+.rm{background:transparent;color:var(--muted);border:none;cursor:pointer;font-size:14px;padding:4px 6px}
+
+/* the new line */
+.tgt{font-family:'JetBrains Mono',monospace;font-size:10px;margin-top:7px;padding-top:7px;border-top:1px dashed var(--border);display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.tgt .lbl{color:var(--muted)}
+.tgt .num{color:var(--text)}
+.tgt .gap{font-weight:600}
+.tgt .how{color:var(--muted)}
+.near .tgt .gap{color:var(--lime)}
+.mid .tgt .gap{color:var(--gold)}
+.far .tgt .gap{color:var(--muted)}
+.tie .tgt .gap{color:var(--lift)}
+
+.detail{margin-top:10px;padding-top:10px;border-top:1px dashed var(--border)}
+.tiles{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.tile{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:10px 12px}
+.tile.hot{border-color:rgba(132,204,22,.4)}
+.tile .l{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+.tile .v{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--lift);font-weight:600;margin-top:4px}
+.tile .s{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-top:2px}
+.tile.hot .s{color:var(--lime)}
+@media(max-width:560px){.tiles{grid-template-columns:1fr}}
+
+.search{background:var(--card);border:1px solid var(--lift);border-radius:10px;padding:14px 16px;margin-bottom:14px}
+.sh{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.sh .n{font-size:18px;font-weight:600;display:flex;align-items:center;gap:8px}
+.sh .m{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)}
+
+.note{background:rgba(6,182,212,.05);border:1px solid rgba(6,182,212,.2);border-radius:8px;padding:12px 14px;margin-top:18px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);line-height:1.8}
+.note b{color:var(--cyan)}
+.warn{background:rgba(251,191,36,.05);border-color:rgba(251,191,36,.25)}
+.warn b{color:var(--gold)}
+</style>
+</head>
+<body>
+
+<h1>PR Target — Preview</h1>
+<div class="lead">옵션 2 (My Plan 목표 병기) + 옵션 5 (검색 상세 인라인) · 실제 데이터 기준</div>
+
+<h2>옵션 2 — My Plan</h2>
+
+<div class="plan-card">
+  <div class="plan-head">
+    <div class="plan-title">My Plan</div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <span class="badge"><span class="v">6.5</span><span class="m">/10</span></span>
+      <span class="cnt">4 exercises</span>
+    </div>
+  </div>
+
+  <ul class="plist">
+
+    <li class="prow near">
+      <div class="psum">
+        <span class="drag">☰</span><span class="tog">▸</span>
+        <span class="pname">Machine Seated Row</span>
+        <span class="bp bp-BACK">BACK</span>
+        <button class="rm">✕</button>
+      </div>
+      <div class="tgt">
+        <span class="lbl">다음 PR</span>
+        <span class="num">세션볼륨 3,807</span>
+        <span class="gap">+80</span>
+        <span class="how">· 마지막 세트 72.6kg 12→14회</span>
+      </div>
+    </li>
+
+    <li class="prow near">
+      <div class="psum">
+        <span class="drag">☰</span><span class="tog">▸</span>
+        <span class="pname">V-bar Lat Pulldown</span>
+        <span class="bp bp-BACK">BACK</span>
+        <button class="rm">✕</button>
+      </div>
+      <div class="tgt">
+        <span class="lbl">다음 PR</span>
+        <span class="num">단일세트 900</span>
+        <span class="gap">+38</span>
+        <span class="how">· 61kg×15 또는 70.5kg×13</span>
+      </div>
+    </li>
+
+    <li class="prow tie">
+      <div class="psum">
+        <span class="drag">☰</span><span class="tog">▸</span>
+        <span class="pname">Plank</span>
+        <span class="bp bp-CORE">CORE</span>
+        <button class="rm">✕</button>
+      </div>
+      <div class="tgt">
+        <span class="lbl">다음 PR</span>
+        <span class="num">최고 기록 3:55</span>
+        <span class="gap">타이</span>
+        <span class="how">· 3:56부터 경신</span>
+      </div>
+    </li>
+
+    <li class="prow far">
+      <div class="psum">
+        <span class="drag">☰</span><span class="tog">▸</span>
+        <span class="pname">Pull Up</span>
+        <span class="bp bp-BACK">BACK</span>
+        <button class="rm">✕</button>
+      </div>
+      <div class="tgt">
+        <span class="lbl">다음 PR</span>
+        <span class="num">단일세트 26회</span>
+        <span class="gap">+11</span>
+        <span class="how">· 최근 15회 · 당장은 어려움</span>
+      </div>
+    </li>
+
+  </ul>
+</div>
+
+<h2>옵션 5 — 종목 검색 상세</h2>
+
+<div class="search">
+  <div class="sh">
+    <div class="n">Machine Seated Row <span class="bp bp-BACK">BACK</span></div>
+    <span class="m">62 sets · 10 sessions</span>
+  </div>
+
+  <div class="tiles">
+    <div class="tile"><div class="l">Max Weight</div><div class="v">72.6kg × 12</div><div class="s">09-17 (3d ago)</div></div>
+    <div class="tile"><div class="l">Single Set Vol</div><div class="v">54.0kg × 20 = 1,080kg</div><div class="s">2024-11-28</div></div>
+    <div class="tile hot"><div class="l">Session Vol</div><div class="v">5 sets · 3,807kg total</div><div class="s">+80이면 경신</div></div>
+  </div>
+
+  <div class="detail">
+    <div class="tgt" style="border:none;margin:0;padding:0">
+      <span class="lbl">다음 PR</span>
+      <span class="num">세션볼륨 3,807</span>
+      <span class="gap" style="color:var(--lime)">+80</span>
+      <span class="how">· 마지막 세트 72.6kg 12→14회 · PR 662일 전</span>
+    </div>
+  </div>
+</div>
+
+<div class="note">
+<b>선택 규칙</b> — 세 지표(최대중량·단일세트·세션볼륨) 중 <b>최근 3세션 도달률이 가장 높은 것</b> 하나만 표시.<br>
+<b>색</b> — 95% 이상 라임 · 85-95% 앰버 · 그 미만 회색. 회색은 "지금은 아님"을 숨기지 않으려고 남겨둠<br>
+<b>실행 문구</b> — 최근 세션의 실제 중량·횟수로 환산. 임의 수치를 만들지 않음<br>
+<b>타이 상태</b> — Plank처럼 현재 기록이 PR과 같으면 경신 기준선을 표시
+</div>
+
+<div class="note warn">
+<b>확인 필요</b><br>
+1. 억제 종목 제외 — <b>Leg Extension · Leg Press</b>는 근접도 상위인데 exercise_priorities에서 의도적 억제 대상(허벅지 벌크 회피). 목표 문구를 숨길지, 회색으로 표시할지<br>
+2. 세션볼륨은 세트 수만 늘려도 깨짐. <b>최소 세트 수 조건</b>을 걸지, 아니면 단일세트 PR을 우선할지<br>
+3. 멀리 있는 종목(Pull Up +11회)도 줄을 넣을지, 아예 생략할지
+</div>
+
+</body>
+</html>
