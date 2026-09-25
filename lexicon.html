@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
+<meta name="theme-color" content="#0a0a0a">
+<title>Lexicon Audio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0a; --card: #111114; --card2: #18181b; --surface: #111; --surface-2: #161616;
+    --border: #1f1f23; --text: #fafafa; --muted: #71717a;
+    --accent: #FF1A8C; --gold: #fbbf24; --lime: #84cc16; --red: #f43f5e;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'Inter', -apple-system, sans-serif;
+    padding: 20px 20px 132px; max-width: 680px; margin: 0 auto; line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  nav { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+  h1 { font-size: 20px; font-weight: 600; }
+  .nav-links { display: flex; gap: 4px; background: var(--surface-2); border-radius: 8px; padding: 2px; flex-wrap: wrap; }
+  .nav-link {
+    padding: 6px 12px; font-size: 11px; font-family: 'JetBrains Mono', monospace;
+    color: var(--muted); text-decoration: none; border-radius: 6px; letter-spacing: 0.05em;
+  }
+  .nav-link.active { background: var(--surface); color: var(--text); }
+
+  .sec { display: flex; align-items: center; gap: 12px; margin: 0 0 12px; }
+  .sec .n { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.14em; color: var(--accent); white-space: nowrap; }
+  .sec .line { flex: 1; height: 1px; background: var(--border); }
+  .sec .r { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); white-space: nowrap; }
+
+  /* 검색 · 필터 */
+  .tools { display: grid; gap: 9px; margin-bottom: 14px; }
+  .search {
+    width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 9px;
+    color: var(--text); font-family: 'Inter', sans-serif; font-size: 15px; padding: 11px 13px;
+    -webkit-appearance: none;
+  }
+  .search:focus { outline: none; border-color: var(--accent); }
+  .search::placeholder { color: var(--muted); }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.06em;
+    padding: 6px 11px; border-radius: 999px; border: 1px solid var(--border);
+    background: var(--surface-2); color: var(--muted); cursor: pointer; white-space: nowrap;
+  }
+  .chip.active { color: #0a0a0a; background: var(--c, var(--accent)); border-color: transparent; font-weight: 500; }
+  .chip .ct { opacity: 0.6; margin-left: 5px; }
+
+  /* 목록 */
+  .list { background: var(--card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .item {
+    display: grid; grid-template-columns: 26px 1fr auto; gap: 11px; align-items: center;
+    padding: 11px 14px; cursor: pointer; border-top: 1px solid var(--border);
+  }
+  .item:first-child { border-top: none; }
+  .item:active { background: var(--card2); }
+  .item.on { background: var(--card2); }
+  .item.on .term { color: var(--accent); }
+  .item .ix {
+    font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--muted);
+    text-align: right; font-variant-numeric: tabular-nums;
+  }
+  .term { font-size: 14px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .item.done .term { color: var(--muted); }
+  .item.done .ix { color: var(--lime); }
+  .meta { display: flex; align-items: center; gap: 8px; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); }
+  .src { padding: 2px 6px; border-radius: 4px; font-size: 9px; letter-spacing: 0.05em; background: var(--surface-2); }
+  .dur { font-variant-numeric: tabular-nums; }
+  .more {
+    text-align: center; padding: 13px; font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    color: var(--muted); cursor: pointer; border-top: 1px solid var(--border);
+  }
+  .empty { padding: 34px 14px; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); }
+
+  /* 하단 플레이어 */
+  .player {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
+    background: rgba(12,12,14,0.94); backdrop-filter: blur(14px);
+    border-top: 1px solid var(--border);
+    padding: 10px 16px calc(11px + env(safe-area-inset-bottom));
+  }
+  .player .inner { max-width: 680px; margin: 0 auto; }
+  .player.off { display: none; }
+  .pt { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 7px; }
+  .pt .now { font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pt .tm { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .seek { width: 100%; height: 4px; background: var(--card2); border-radius: 2px; cursor: pointer; margin-bottom: 10px; }
+  .seek > i { display: block; height: 100%; width: 0; background: var(--accent); border-radius: 2px; }
+  .ctl { display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .ctl button {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted);
+    background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 12px; cursor: pointer; line-height: 1;
+  }
+  .ctl button.on { color: var(--accent); border-color: var(--accent); }
+  .ctl .play { width: 54px; color: var(--text); background: var(--surface); font-size: 13px; padding: 10px 0; }
+  .ctl .sp { margin-left: auto; }
+  .ctl .rep { margin-right: auto; }
+</style>
+</head>
+<body>
+
+<nav>
+  <h1>Lexicon Audio</h1>
+  <div class="nav-links">
+    <a href="./" class="nav-link">WORKOUT</a>
+    <a href="routines.html" class="nav-link">ROUTINE</a>
+    <a href="input.html" class="nav-link">INPUT</a>
+    <a href="capital.html" class="nav-link">CAPITAL</a>
+    <a href="lexicon.html" class="nav-link active">LEXICON</a>
+  </div>
+</nav>
+
+<div class="sec"><span class="n">LEXICON AUDIO</span><span class="line"></span><span class="r" id="stat">불러오는 중</span></div>
+
+<div class="tools">
+  <input class="search" id="q" type="search" placeholder="표현 검색" autocomplete="off" autocorrect="off" spellcheck="false">
+  <div class="chips" id="chips"></div>
+</div>
+
+<div class="list" id="list"><div class="empty">불러오는 중...</div></div>
+
+<div class="player off" id="player">
+  <div class="inner">
+    <div class="pt"><span class="now" id="now">—</span><span class="tm" id="tm">0:00 / 0:00</span></div>
+    <div class="seek" id="seek"><i id="bar"></i></div>
+    <div class="ctl">
+      <button class="rep" id="bRep" title="한 항목 반복">REPEAT</button>
+      <button id="bPrev">&#9664;&#9664;</button>
+      <button class="play" id="bPlay">&#9654;</button>
+      <button id="bNext">&#9654;&#9654;</button>
+      <button class="sp" id="bSpeed">1.0&times;</button>
+    </div>
+  </div>
+</div>
+
+<audio id="au" preload="none"></audio>
+
+<script>
+// Lexicon Audio — 옵시디언 사전(Colloquial · Idioms · Expressions)의 표제어별 해설 음성.
+// 목록은 미리 만들어 둔 index.json 이고, 이 페이지는 재생과 진행 상태만 들고 있다.
+var AUDIO_BASE = 'lexicon/';   // mp3 와 index.json 이 놓이는 하위 폴더
+var LS = 'lexiconAudio';
+var PAGE = 250;                // 한 번에 그리는 행 수 — 1,589개를 통째로 그리면 폰이 버벅인다
+
+var SRC_COLOR = { Colloquial: '#FF1A8C', Idioms: '#fbbf24', Expressions: '#84cc16' };
+var PLAY = '▶', PAUSE = '❚❚';
+
+var ALL = [], view = [], shown = PAGE, cur = -1;
+var st = { src: 'ALL', q: '', speed: 1, repeat: false, last: null, done: {} };
+try { Object.assign(st, JSON.parse(localStorage.getItem(LS) || '{}')); } catch (e) {}
+function save() { try { localStorage.setItem(LS, JSON.stringify(st)); } catch (e) {} }
+
+function $(id) { return document.getElementById(id); }
+var au = $('au');
+
+function mmss(s) {
+  s = Math.max(0, Math.round(s || 0));
+  return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+}
+function esc(s) {
+  return String(s).replace(/[&<>"]/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+  });
+}
+function speedLabel(v) { return (v === 1 ? '1.0' : String(v)) + '×'; }
+
+// 목록
+function applyFilter() {
+  var q = (st.q || '').trim().toLowerCase();
+  view = ALL.filter(function (e) {
+    return (st.src === 'ALL' || e.source === st.src) &&
+           (!q || e.term.toLowerCase().indexOf(q) >= 0 || (e.slug || '').indexOf(q) >= 0);
+  });
+  shown = PAGE;
+  render();
+}
+
+function render() {
+  var box = $('list');
+  if (!view.length) { box.innerHTML = '<div class="empty">일치하는 표현이 없습니다</div>'; return; }
+  var curSlug = ALL[cur] ? ALL[cur].slug : null;
+  var h = view.slice(0, shown).map(function (e, i) {
+    var c = SRC_COLOR[e.source] || 'var(--muted)';
+    return '<div class="item' + (st.done[e.slug] ? ' done' : '') + (e.slug === curSlug ? ' on' : '') +
+      '" data-slug="' + esc(e.slug) + '">' +
+      '<span class="ix">' + (i + 1) + '</span>' +
+      '<span class="term">' + esc(e.term) + '</span>' +
+      '<span class="meta"><span class="src" style="color:' + c + '">' +
+      esc(e.source.slice(0, 4).toUpperCase()) + '</span>' +
+      '<span class="dur">' + mmss(e.seconds) + '</span></span></div>';
+  }).join('');
+  if (view.length > shown) {
+    h += '<div class="more" id="more">+ ' + (view.length - shown).toLocaleString() + '개 더 보기</div>';
+  }
+  box.innerHTML = h;
+}
+
+$('list').addEventListener('click', function (ev) {
+  if (ev.target.id === 'more') { shown += PAGE; render(); return; }
+  var row = ev.target.closest('.item');
+  if (!row) return;
+  for (var i = 0; i < ALL.length; i++) {
+    if (ALL[i].slug === row.dataset.slug) { play(i); return; }
+  }
+});
+
+// 재생
+function play(i) {
+  var e = ALL[i];
+  if (!e) return;
+  cur = i;
+  st.last = e.slug; save();
+  $('player').classList.remove('off');
+  $('now').textContent = e.term;
+  au.src = AUDIO_BASE + e.file;
+  au.playbackRate = st.speed;
+  au.play().catch(function () { $('bPlay').innerHTML = PLAY; });
+  render();
+}
+
+// 다음/이전은 보이는 목록 기준으로 움직인다 — 필터를 걸면 그 안에서만 이어 듣는다.
+function step(d) {
+  if (!view.length) return;
+  var curSlug = ALL[cur] ? ALL[cur].slug : null;
+  var vi = -1;
+  for (var k = 0; k < view.length; k++) { if (view[k].slug === curSlug) { vi = k; break; } }
+  var ni = vi < 0 ? 0 : (vi + d + view.length) % view.length;
+  var nx = view[ni];
+  if (ni >= shown) { shown = ni + PAGE; }
+  for (var i = 0; i < ALL.length; i++) { if (ALL[i].slug === nx.slug) { play(i); return; } }
+}
+
+$('bPlay').onclick = function () {
+  if (cur < 0) { step(1); return; }
+  if (au.paused) { au.play().catch(function () {}); } else { au.pause(); }
+};
+$('bNext').onclick = function () { step(1); };
+$('bPrev').onclick = function () { if (au.currentTime > 3) { au.currentTime = 0; } else { step(-1); } };
+$('bRep').onclick = function () {
+  st.repeat = !st.repeat; save();
+  $('bRep').classList.toggle('on', st.repeat);
+};
+$('bSpeed').onclick = function () {
+  var steps = [1, 1.25, 1.5, 0.85];
+  var i = steps.indexOf(st.speed);
+  st.speed = steps[(i + 1) % steps.length];
+  au.playbackRate = st.speed; save();
+  $('bSpeed').innerHTML = speedLabel(st.speed);
+};
+
+au.addEventListener('play', function () { $('bPlay').innerHTML = PAUSE; });
+au.addEventListener('pause', function () { $('bPlay').innerHTML = PLAY; });
+au.addEventListener('timeupdate', function () {
+  var d = au.duration || (ALL[cur] ? ALL[cur].seconds : 0) || 0;
+  $('bar').style.width = (d ? (au.currentTime / d) * 100 : 0) + '%';
+  $('tm').textContent = mmss(au.currentTime) + ' / ' + mmss(d);
+});
+au.addEventListener('ended', function () {
+  if (ALL[cur]) { st.done[ALL[cur].slug] = 1; save(); }
+  if (st.repeat) { au.currentTime = 0; au.play().catch(function () {}); return; }
+  step(1);   // 기본이 연속 재생 — 운전·산책 중 손대지 않아도 이어진다
+});
+$('seek').addEventListener('click', function (ev) {
+  var r = ev.currentTarget.getBoundingClientRect();
+  if (au.duration) au.currentTime = ((ev.clientX - r.left) / r.width) * au.duration;
+});
+
+// 잠금화면 · 차량 컨트롤
+if ('mediaSession' in navigator) {
+  try {
+    navigator.mediaSession.setActionHandler('nexttrack', function () { step(1); });
+    navigator.mediaSession.setActionHandler('previoustrack', function () { step(-1); });
+  } catch (e) {}
+  au.addEventListener('play', function () {
+    var e = ALL[cur];
+    if (!e) return;
+    try {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: e.term, artist: e.source, album: 'Lexicon Audio'
+      });
+    } catch (err) {}
+  });
+}
+
+// 시작
+$('q').value = st.q || '';
+$('q').addEventListener('input', function (ev) { st.q = ev.target.value; save(); applyFilter(); });
+$('bRep').classList.toggle('on', st.repeat);
+$('bSpeed').innerHTML = speedLabel(st.speed);
+
+fetch(AUDIO_BASE + 'index.json?_=' + Date.now(), { cache: 'no-store' })
+  .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+  .then(function (d) {
+    ALL = d.entries || [];
+    var counts = { ALL: ALL.length };
+    ALL.forEach(function (e) { counts[e.source] = (counts[e.source] || 0) + 1; });
+    $('chips').innerHTML = ['ALL'].concat(d.sources || []).map(function (s) {
+      return '<span class="chip' + (st.src === s ? ' active' : '') + '" data-s="' + esc(s) + '"' +
+        (SRC_COLOR[s] ? ' style="--c:' + SRC_COLOR[s] + '"' : '') + '>' +
+        esc(s.toUpperCase()) + '<span class="ct">' + (counts[s] || 0).toLocaleString() + '</span></span>';
+    }).join('');
+    $('chips').addEventListener('click', function (ev) {
+      var c = ev.target.closest('.chip');
+      if (!c) return;
+      st.src = c.dataset.s; save();
+      var kids = $('chips').children;
+      for (var i = 0; i < kids.length; i++) kids[i].classList.toggle('active', kids[i] === c);
+      applyFilter();
+    });
+
+    var heard = Object.keys(st.done).length;
+    $('stat').textContent = (d.count || ALL.length).toLocaleString() + '개 · ' +
+      ((d.total_seconds || 0) / 3600).toFixed(1) + '시간' + (heard ? ' · 들음 ' + heard : '');
+
+    applyFilter();
+
+    // 지난번 듣던 항목은 플레이어에만 올려 두고, 재생은 누를 때 시작한다.
+    if (st.last) {
+      for (var i = 0; i < ALL.length; i++) {
+        if (ALL[i].slug !== st.last) continue;
+        cur = i;
+        $('player').classList.remove('off');
+        $('now').textContent = ALL[i].term;
+        $('tm').textContent = '0:00 / ' + mmss(ALL[i].seconds);
+        au.src = AUDIO_BASE + ALL[i].file;
+        au.playbackRate = st.speed;
+        render();
+        break;
+      }
+    }
+  })
+  .catch(function (e) {
+    $('list').innerHTML = '<div class="empty">음성 목록을 불러오지 못했습니다 (' + esc(e.message) + ')</div>';
+    $('stat').textContent = '오류';
+  });
+</script>
+
+<script>
+// 서버 사본이 더 새로우면 캐시 버스터를 붙여 한 번 새로고침한다 (다른 페이지와 동일).
+(function () {
+  function check() {
+    fetch(location.pathname, { method: "HEAD", cache: "no-store" })
+      .then(function (r) {
+        var server = Date.parse(r.headers.get("Last-Modified") || "");
+        var mine = Date.parse(document.lastModified);
+        if (!server || !mine || server <= mine + 1000) return;
+        var key = "reloadedFor:" + location.pathname;
+        try { if (sessionStorage.getItem(key) === String(server)) return;
+              sessionStorage.setItem(key, String(server)); } catch (e) {}
+        var u = new URL(location.href);
+        u.searchParams.set("v", String(server));
+        location.replace(u.toString());
+      })
+      .catch(function () {});
+  }
+  check();
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "visible") check();
+  });
+})();
+</script>
+</body>
+</html>
