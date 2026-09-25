@@ -67,10 +67,13 @@
   .item .ix {
     font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--muted);
     text-align: right; font-variant-numeric: tabular-nums;
+    padding: 6px 2px; margin: -6px -2px;   /* 들음 토글 — 손가락으로 누를 여유 */
   }
   .term { font-size: 14px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .item.done .term { color: var(--muted); }
   .item.done .ix { color: var(--lime); }
+  .item.done .ix::before { content: '\2713'; font-size: 10px; }
+  .item.done .ix span { display: none; }
   .meta { display: flex; align-items: center; gap: 8px; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); }
   .src { padding: 2px 6px; border-radius: 4px; font-size: 9px; letter-spacing: 0.05em; background: var(--surface-2); }
   .dur { font-variant-numeric: tabular-nums; }
@@ -79,6 +82,18 @@
     color: var(--muted); cursor: pointer; border-top: 1px solid var(--border);
   }
   .empty { padding: 34px 14px; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); }
+
+  /* 학습 상태 */
+  .prog { height: 3px; background: var(--card2); border-radius: 2px; overflow: hidden; margin: 14px 0 8px; }
+  .prog > i { display: block; height: 100%; width: 0; background: var(--lime); border-radius: 2px; transition: width .3s; }
+  .foot {
+    display: flex; gap: 14px; flex-wrap: wrap; align-items: center;
+    font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted);
+  }
+  .foot b { color: var(--lime); font-weight: 500; }
+  .foot a { color: var(--muted); text-decoration: none; border-bottom: 1px dotted var(--muted); cursor: pointer; }
+  .foot a:active { color: var(--text); }
+  .foot .sp { flex: 1; }
 
   /* 하단 플레이어 */
   .player {
@@ -124,9 +139,25 @@
 <div class="tools">
   <input class="search" id="q" type="search" placeholder="표현 검색" autocomplete="off" autocorrect="off" spellcheck="false">
   <div class="chips" id="chips"></div>
+  <div class="chips" id="sorts">
+    <span class="chip" data-o="unheard" style="--c:#84cc16">안 들은 것 먼저</span>
+    <span class="chip" data-o="default" style="--c:#71717a">사전 순</span>
+    <span class="chip" data-o="random" style="--c:#fbbf24">랜덤</span>
+    <span class="chip" id="cSkip" style="--c:#FF1A8C">들은 것 건너뛰기</span>
+  </div>
 </div>
 
 <div class="list" id="list"><div class="empty">불러오는 중...</div></div>
+
+<div class="prog"><i id="progBar"></i></div>
+<div class="foot">
+  <span>들음 <b id="dn">0</b> / <span id="tt">0</span></span>
+  <span class="sp"></span>
+  <a id="aExport">백업</a>
+  <a id="aImport">복원</a>
+  <a id="aReset">초기화</a>
+</div>
+<input type="file" id="fImport" accept="application/json,.json" hidden>
 
 <div class="player off" id="player">
   <div class="inner">
@@ -155,9 +186,12 @@ var SRC_COLOR = { Colloquial: '#FF1A8C', Idioms: '#fbbf24', Expressions: '#84cc1
 var PLAY = '▶', PAUSE = '❚❚';
 
 var ALL = [], view = [], shown = PAGE, cur = -1;
-var st = { src: 'ALL', q: '', speed: 1, repeat: false, last: null, done: {} };
+// done[slug] = 들은 날(epoch day). 1 로 저장하던 예전 값도 truthy 라 그대로 읽힌다.
+var st = { src: 'ALL', q: '', speed: 1, repeat: false,
+           skip: true, order: 'unheard', seed: 1, last: null, done: {} };
 try { Object.assign(st, JSON.parse(localStorage.getItem(LS) || '{}')); } catch (e) {}
 function save() { try { localStorage.setItem(LS, JSON.stringify(st)); } catch (e) {} }
+function today() { return Math.floor(Date.now() / 86400000); }
 
 function $(id) { return document.getElementById(id); }
 var au = $('au');
@@ -173,15 +207,58 @@ function esc(s) {
 }
 function speedLabel(v) { return (v === 1 ? '1.0' : String(v)) + '×'; }
 
-// 목록
+// 고정 시드 셔플 — 다시 그려도 같은 순서가 유지된다.
+function shuffled(arr, seed) {
+  var s = seed >>> 0;
+  function rnd() {
+    s = (s + 0x6D2B79F5) | 0;
+    var t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  }
+  for (var i = arr.length - 1; i > 0; i--) {
+    var j = Math.floor(rnd() * (i + 1)), tmp = arr[i];
+    arr[i] = arr[j]; arr[j] = tmp;
+  }
+  return arr;
+}
+
+// 목록. 정렬은 여기서만 바뀐다 — 재생 중 한 항목을 다 들었다고 목록이 튀면 곤란하다.
 function applyFilter() {
   var q = (st.q || '').trim().toLowerCase();
-  view = ALL.filter(function (e) {
+  var base = ALL.filter(function (e) {
     return (st.src === 'ALL' || e.source === st.src) &&
            (!q || e.term.toLowerCase().indexOf(q) >= 0 || (e.slug || '').indexOf(q) >= 0);
   });
+  if (st.order === 'unheard') {
+    var a = [], b = [];
+    base.forEach(function (e) { (st.done[e.slug] ? b : a).push(e); });
+    view = a.concat(b);                       // 들은 것은 아래로 가라앉는다
+  } else if (st.order === 'random') {
+    view = shuffled(base.slice(), st.seed);
+  } else {
+    view = base;
+  }
   shown = PAGE;
   render();
+  updateStat();
+}
+
+function markDone(slug, on) {
+  if (on === undefined) on = true;
+  if (on) { st.done[slug] = today(); } else { delete st.done[slug]; }
+  save();
+  var row = document.querySelector('.item[data-slug="' + slug + '"]');
+  if (row) row.classList.toggle('done', on);
+  updateStat();
+}
+
+function updateStat() {
+  var scope = st.src === 'ALL' ? ALL : ALL.filter(function (e) { return e.source === st.src; });
+  var dn = scope.filter(function (e) { return st.done[e.slug]; }).length;
+  $('dn').textContent = dn.toLocaleString();
+  $('tt').textContent = scope.length.toLocaleString();
+  $('progBar').style.width = (scope.length ? dn / scope.length * 100 : 0) + '%';
 }
 
 function render() {
@@ -192,7 +269,7 @@ function render() {
     var c = SRC_COLOR[e.source] || 'var(--muted)';
     return '<div class="item' + (st.done[e.slug] ? ' done' : '') + (e.slug === curSlug ? ' on' : '') +
       '" data-slug="' + esc(e.slug) + '">' +
-      '<span class="ix">' + (i + 1) + '</span>' +
+      '<span class="ix"><span>' + (i + 1) + '</span></span>' +
       '<span class="term">' + esc(e.term) + '</span>' +
       '<span class="meta"><span class="src" style="color:' + c + '">' +
       esc(e.source.slice(0, 4).toUpperCase()) + '</span>' +
@@ -208,6 +285,11 @@ $('list').addEventListener('click', function (ev) {
   if (ev.target.id === 'more') { shown += PAGE; render(); return; }
   var row = ev.target.closest('.item');
   if (!row) return;
+  // 번호를 누르면 들음 표시만 뒤집는다 (재생 없이 진도 정리)
+  if (ev.target.closest('.ix')) {
+    markDone(row.dataset.slug, !st.done[row.dataset.slug]);
+    return;
+  }
   for (var i = 0; i < ALL.length; i++) {
     if (ALL[i].slug === row.dataset.slug) { play(i); return; }
   }
@@ -228,14 +310,25 @@ function play(i) {
 }
 
 // 다음/이전은 보이는 목록 기준으로 움직인다 — 필터를 걸면 그 안에서만 이어 듣는다.
+// skip 이 켜져 있으면 이미 들은 항목은 건너뛴다. 전부 들었으면 그냥 다음 것을 튼다.
 function step(d) {
   if (!view.length) return;
   var curSlug = ALL[cur] ? ALL[cur].slug : null;
   var vi = -1;
   for (var k = 0; k < view.length; k++) { if (view[k].slug === curSlug) { vi = k; break; } }
-  var ni = vi < 0 ? 0 : (vi + d + view.length) % view.length;
-  var nx = view[ni];
-  if (ni >= shown) { shown = ni + PAGE; }
+  var n = view.length;
+  var start = vi < 0 ? (d > 0 ? -1 : 0) : vi;
+  var first = null, pick = null;
+  for (var s = 1; s <= n; s++) {
+    var ni = (((start + d * s) % n) + n) % n;
+    if (first === null) first = ni;
+    if (st.skip && st.done[view[ni].slug]) continue;
+    pick = ni; break;
+  }
+  if (pick === null) pick = first;   // 전부 들었으면 건너뛰기를 포기하고 바로 다음 것으로
+  if (pick === null) return;
+  var nx = view[pick];
+  if (pick >= shown) { shown = pick + PAGE; }
   for (var i = 0; i < ALL.length; i++) { if (ALL[i].slug === nx.slug) { play(i); return; } }
 }
 
@@ -263,9 +356,13 @@ au.addEventListener('timeupdate', function () {
   var d = au.duration || (ALL[cur] ? ALL[cur].seconds : 0) || 0;
   $('bar').style.width = (d ? (au.currentTime / d) * 100 : 0) + '%';
   $('tm').textContent = mmss(au.currentTime) + ' / ' + mmss(d);
+  // 90% 를 넘기면 들은 것으로 친다 — 끝까지 안 듣고 넘겨도 진도가 남는다.
+  if (d && ALL[cur] && au.currentTime / d >= 0.9 && !st.done[ALL[cur].slug]) {
+    markDone(ALL[cur].slug, true);
+  }
 });
 au.addEventListener('ended', function () {
-  if (ALL[cur]) { st.done[ALL[cur].slug] = 1; save(); }
+  if (ALL[cur] && !st.done[ALL[cur].slug]) markDone(ALL[cur].slug, true);
   if (st.repeat) { au.currentTime = 0; au.play().catch(function () {}); return; }
   step(1);   // 기본이 연속 재생 — 운전·산책 중 손대지 않아도 이어진다
 });
@@ -291,11 +388,61 @@ if ('mediaSession' in navigator) {
   });
 }
 
+// 정렬 · 건너뛰기
+function paintSorts() {
+  var k = $('sorts').querySelectorAll('[data-o]');
+  for (var i = 0; i < k.length; i++) k[i].classList.toggle('active', k[i].dataset.o === st.order);
+  $('cSkip').classList.toggle('active', st.skip);
+}
+$('sorts').addEventListener('click', function (ev) {
+  var c = ev.target.closest('.chip');
+  if (!c) return;
+  if (c.id === 'cSkip') { st.skip = !st.skip; save(); paintSorts(); return; }
+  if (st.order === 'random' && c.dataset.o === 'random') st.seed = (Math.random() * 1e9) | 0;  // 다시 누르면 새로 섞는다
+  st.order = c.dataset.o; save(); paintSorts(); applyFilter();
+});
+
+// 학습 상태 백업 — iOS 는 7일 이상 안 쓴 사이트의 저장소를 비운다. 진도는 그때 같이 날아간다.
+$('aExport').onclick = function () {
+  var blob = new Blob([JSON.stringify({ app: 'lexicon', saved: new Date().toISOString(),
+                                        done: st.done }, null, 1)], { type: 'application/json' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'lexicon-progress-' + new Date().toISOString().slice(0, 10) + '.json';
+  document.body.appendChild(a); a.click();
+  setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+};
+$('aImport').onclick = function () { $('fImport').click(); };
+$('fImport').addEventListener('change', function (ev) {
+  var f = ev.target.files && ev.target.files[0];
+  if (!f) return;
+  var fr = new FileReader();
+  fr.onload = function () {
+    try {
+      var d = JSON.parse(fr.result);
+      var got = d.done || {};
+      var n = 0;
+      for (var k in got) { if (!st.done[k]) { st.done[k] = got[k]; n++; } }   // 덮어쓰지 않고 합친다
+      save(); applyFilter();
+      alert(n.toLocaleString() + '개를 불러왔습니다. (총 ' + Object.keys(st.done).length.toLocaleString() + '개)');
+    } catch (e) { alert('파일을 읽지 못했습니다: ' + e.message); }
+  };
+  fr.readAsText(f);
+  ev.target.value = '';
+});
+$('aReset').onclick = function () {
+  var n = Object.keys(st.done).length;
+  if (!n) { alert('기록이 없습니다.'); return; }
+  if (!confirm('들음 기록 ' + n.toLocaleString() + '개를 지웁니다.\n되돌릴 수 없습니다. 먼저 백업하시겠습니까?')) return;
+  st.done = {}; st.last = null; save(); applyFilter();
+};
+
 // 시작
 $('q').value = st.q || '';
 $('q').addEventListener('input', function (ev) { st.q = ev.target.value; save(); applyFilter(); });
 $('bRep').classList.toggle('on', st.repeat);
 $('bSpeed').innerHTML = speedLabel(st.speed);
+paintSorts();
 
 fetch(AUDIO_BASE + 'index.json?_=' + Date.now(), { cache: 'no-store' })
   .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
@@ -317,25 +464,43 @@ fetch(AUDIO_BASE + 'index.json?_=' + Date.now(), { cache: 'no-store' })
       applyFilter();
     });
 
-    var heard = Object.keys(st.done).length;
     $('stat').textContent = (d.count || ALL.length).toLocaleString() + '개 · ' +
-      ((d.total_seconds || 0) / 3600).toFixed(1) + '시간' + (heard ? ' · 들음 ' + heard : '');
+      ((d.total_seconds || 0) / 3600).toFixed(1) + '시간';
 
     applyFilter();
 
-    // 지난번 듣던 항목은 플레이어에만 올려 두고, 재생은 누를 때 시작한다.
+    // 이어듣기. 마지막에 듣던 것을 이미 다 들었으면 그 다음 안 들은 항목을 물려 둔다.
+    // 재생은 누를 때 시작한다 — 브라우저가 자동재생을 막기도 하고, 의도치 않게 소리가 나면 곤란하다.
+    var resume = null;
     if (st.last) {
-      for (var i = 0; i < ALL.length; i++) {
-        if (ALL[i].slug !== st.last) continue;
-        cur = i;
-        $('player').classList.remove('off');
-        $('now').textContent = ALL[i].term;
-        $('tm').textContent = '0:00 / ' + mmss(ALL[i].seconds);
-        au.src = AUDIO_BASE + ALL[i].file;
-        au.playbackRate = st.speed;
-        render();
+      for (var i = 0; i < ALL.length; i++) { if (ALL[i].slug === st.last) { resume = i; break; } }
+    }
+    if (resume !== null && st.skip && st.done[ALL[resume].slug]) {
+      var after = -1;
+      for (var v = 0; v < view.length; v++) { if (view[v].slug === st.last) { after = v; break; } }
+      for (var s = 1; s <= view.length; s++) {
+        var cand = view[(after + s) % view.length];
+        if (!st.done[cand.slug]) {
+          for (var j = 0; j < ALL.length; j++) { if (ALL[j].slug === cand.slug) { resume = j; break; } }
+          break;
+        }
+      }
+    }
+    if (resume === null && view.length) {
+      for (var v2 = 0; v2 < view.length; v2++) {
+        if (st.done[view[v2].slug]) continue;
+        for (var j2 = 0; j2 < ALL.length; j2++) { if (ALL[j2].slug === view[v2].slug) { resume = j2; break; } }
         break;
       }
+    }
+    if (resume !== null) {
+      cur = resume;
+      $('player').classList.remove('off');
+      $('now').textContent = ALL[cur].term;
+      $('tm').textContent = '0:00 / ' + mmss(ALL[cur].seconds);
+      au.src = AUDIO_BASE + ALL[cur].file;
+      au.playbackRate = st.speed;
+      render();
     }
   })
   .catch(function (e) {
