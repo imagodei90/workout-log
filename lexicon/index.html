@@ -13,6 +13,7 @@
     --bg: #0a0a0a; --card: #111114; --card2: #18181b; --surface: #111; --surface-2: #161616;
     --border: #1f1f23; --text: #fafafa; --muted: #71717a;
     --accent: #FF1A8C; --gold: #fbbf24; --lime: #84cc16; --red: #f43f5e;
+    --sky: #38bdf8;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -53,6 +54,37 @@
   }
   .chip.active { color: #0a0a0a; background: var(--c, var(--accent)); border-color: transparent; font-weight: 500; }
   .chip .ct { opacity: 0.6; margin-left: 5px; }
+
+
+  /* ── ENRICH / RETIRE ──────────────────────────────────────
+     상태는 행 왼쪽 2px 띠로만 말한다. 1,589행이라 배지를 붙이면 목록이 시끄럽다.
+     .item 이 grid 라 ::before 가 셀을 하나 먹을 수 있는데, absolute 면 배치에서 빠진다. */
+  .item { position: relative; }
+  .item::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: transparent;
+  }
+  .item.enrich::before { background: var(--sky); }
+  .item.retire::before { background: var(--lime); }
+  .item.retire .term {
+    color: #3f3f46; text-decoration: line-through; text-decoration-color: #3f3f46;
+  }
+  /* 재생 중인 행 아래로만 펼친다 */
+  .draw { display: none; }
+  .draw.open {
+    display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
+    padding: 0 14px 12px 51px; border-top: none; background: var(--card2);
+  }
+  .draw button {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.06em;
+    padding: 7px 12px; border-radius: 7px; border: 1px solid var(--border);
+    background: var(--surface-2); color: var(--muted); cursor: pointer; white-space: nowrap;
+  }
+  .draw button.on { color: #0a0a0a; font-weight: 600; border-color: transparent; }
+  .draw button.enrich.on { background: var(--sky); }
+  .draw button.retire.on { background: var(--lime); }
+  .draw .hint { font-size: 10px; color: #3f3f46; font-family: 'JetBrains Mono', monospace; }
+  /* 표시한 날 — 플래그가 붙은 행에만 나온다. 폭이 좁으면 term 이 줄어 자리를 내준다. */
+  .fdt { font-size: 9px; font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
 
   /* 목록 */
   .list { background: var(--card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
@@ -119,6 +151,31 @@
   .ctl .play { width: 54px; color: var(--text); background: var(--surface); font-size: 13px; padding: 10px 0; }
   .ctl .sp { margin-left: auto; }
   .ctl .rep { margin-right: auto; }
+
+  /* ── nav — 현재 페이지 이름이 곧 메뉴 버튼 ──────────────────
+     위치 표시와 이동 메뉴가 한 칸을 같이 쓴다. 페이지가 늘어도 펼친 폭은 세 칸 고정. */
+  .nav-links { display: flex; gap: 4px; background: var(--surface-2, #161616);
+    border: 1px solid var(--border); border-radius: 8px; padding: 2px; position: relative; }
+  .nav-link { padding: 6px 12px; font-size: 11px; font-family: 'JetBrains Mono', monospace;
+    color: var(--muted); text-decoration: none; border-radius: 6px; letter-spacing: 0.05em;
+    white-space: nowrap; }
+  .nav-link:hover { color: var(--text); }
+  .nav-link.active { background: var(--surface, #111); color: var(--text); }
+  .nav-menu { position: relative; }
+  .nav-menu > summary { list-style: none; cursor: pointer; display: inline-flex;
+    align-items: center; gap: 5px; padding: 6px 12px; font-size: 11px;
+    font-family: 'JetBrains Mono', monospace; letter-spacing: 0.05em; border-radius: 6px;
+    background: var(--surface, #111); color: var(--text); white-space: nowrap; }
+  .nav-menu > summary::-webkit-details-marker { display: none; }
+  .nav-menu > summary::after { content: '\25BE'; font-size: 9px; opacity: 0.6; }
+  .nav-pop { position: absolute; top: calc(100% + 6px); left: 0; min-width: 152px; z-index: 60;
+    background: var(--surface, #111); border: 1px solid var(--border); border-radius: 8px;
+    padding: 4px; box-shadow: 0 8px 24px rgba(0,0,0,0.55); }
+  .nav-pop a { display: block; padding: 8px 10px; border-radius: 6px; color: var(--muted);
+    text-decoration: none; font-size: 11px; font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.05em; white-space: nowrap; }
+  .nav-pop a:hover { background: var(--surface-2, #161616); color: var(--text); }
+  .nav-pop a.active { color: var(--text); }
 </style>
 </head>
 <body>
@@ -126,12 +183,18 @@
 <nav>
   <h1>Lexicon Audio</h1>
   <div class="nav-links">
-    <a href="../" class="nav-link">WORKOUT</a>
-    <a href="../routines.html" class="nav-link">ROUTINE</a>
-    <a href="../input.html" class="nav-link">INPUT</a>
-    <a href="../capital.html" class="nav-link">CAPITAL</a>
-    <a href="./" class="nav-link active">LEXICON</a>
-  </div>
+      <details class="nav-menu"><summary>LEXICON</summary>
+        <div class="nav-pop">
+        <a href="../">WORKOUT</a>
+        <a href="../routines.html">ROUTINE</a>
+        <a href="../input.html">INPUT</a>
+        <a href="../capital.html">CAPITAL</a>
+        <a href="../lexicon/" class="active">LEXICON</a>
+        </div>
+      </details>
+      <a href="../routines.html" class="nav-link">ROUTINE</a>
+      <a href="../input.html" class="nav-link">INPUT</a>
+    </div>
 </nav>
 
 <div class="sec"><span class="n">LEXICON AUDIO</span><span class="line"></span><span class="r" id="stat">불러오는 중</span></div>
@@ -144,6 +207,10 @@
     <span class="chip" data-o="default" style="--c:#71717a">사전 순</span>
     <span class="chip" data-o="random" style="--c:#fbbf24">랜덤</span>
     <span class="chip" id="cSkip" style="--c:#FF1A8C">들은 것 건너뛰기</span>
+  </div>
+  <div class="chips" id="flags">
+    <span class="chip" id="cEnrich" style="--c:#38bdf8">ENRICH<span class="ct" id="nEnrich">0</span></span>
+    <span class="chip" id="cRetire" style="--c:#84cc16">HIDE RETIRED<span class="ct" id="nRetire">0</span></span>
   </div>
 </div>
 
@@ -189,11 +256,37 @@ var PLAY = '▶', PAUSE = '❚❚';
 
 var ALL = [], view = [], shown = PAGE, cur = -1;
 // done[slug] = 들은 날(epoch day). 1 로 저장하던 예전 값도 truthy 라 그대로 읽힌다.
+// enrich[slug] / retire[slug] = 표시한 날(epoch day). done 과 같은 꼴로 저장한다.
 var st = { src: 'ALL', q: '', speed: 1, repeat: false,
-           skip: true, order: 'unheard', seed: 1, last: null, done: {} };
+           skip: true, order: 'unheard', seed: 1, last: null, done: {},
+           enrich: {}, retire: {}, onlyEnrich: false, hideRetired: true };
 try { Object.assign(st, JSON.parse(localStorage.getItem(LS) || '{}')); } catch (e) {}
+if (!st.enrich) st.enrich = {};
+if (!st.retire) st.retire = {};
 function save() { try { localStorage.setItem(LS, JSON.stringify(st)); } catch (e) {} }
 function today() { return Math.floor(Date.now() / 86400000); }
+
+// epoch day → 표시용. 한국은 UTC+9 라 UTC 자정이 같은 날 오전 9시로 떨어진다 — 날짜가 안 밀린다.
+// 옛 값이 문자열(ISO)로 들어와도 읽히게 둘 다 받는다.
+function dstr(v, full) {
+  if (!v) return '';
+  var d = (typeof v === 'string') ? new Date(v) : new Date(v * 86400000);
+  if (isNaN(d.getTime())) return '';
+  var mm = String(d.getMonth() + 1).padStart(2, '0');
+  var dd = String(d.getDate()).padStart(2, '0');
+  return full ? d.getFullYear() + '-' + mm + '-' + dd : mm + '-' + dd;
+}
+// 백업에 쓸 ISO. 저장은 정수로 두고 내보낼 때만 바꾼다.
+function toIso(v) {
+  if (typeof v === 'string') return v;
+  return new Date(v * 86400000).toISOString().slice(0, 10);
+}
+// 백업에서 읽을 때 정수로 되돌린다.
+function toDay(v) {
+  if (typeof v === 'number') return v;
+  var t = Date.parse(v);
+  return isNaN(t) ? today() : Math.floor(t / 86400000);
+}
 
 function $(id) { return document.getElementById(id); }
 var au = $('au');
@@ -229,6 +322,9 @@ function shuffled(arr, seed) {
 function applyFilter() {
   var q = (st.q || '').trim().toLowerCase();
   var base = ALL.filter(function (e) {
+    if (st.onlyEnrich && !st.enrich[e.slug]) return false;
+    // RETIRE 는 기본으로 숨긴다. 칩을 끄면 취소하려고 다시 보인다.
+    if (st.hideRetired && st.retire[e.slug]) return false;
     return (st.src === 'ALL' || e.source === st.src) &&
            (!q || e.term.toLowerCase().indexOf(q) >= 0 || (e.slug || '').indexOf(q) >= 0);
   });
@@ -255,6 +351,44 @@ function markDone(slug, on) {
   updateStat();
 }
 
+// 목록을 다시 그리지 않는다 — RETIRE 를 누른 순간 행이 사라지면 펼쳐 둔 액션 줄도 같이 사라진다.
+// 화면에서 빠지는 건 다음번에 목록이 새로 그려질 때다.
+function markFlag(slug, which) {
+  var bag = st[which];
+  if (bag[slug]) { delete bag[slug]; } else {
+    bag[slug] = today();
+    // 둘은 배타다. 안 들을 것에 내용을 더 채울 이유가 없다.
+    var other = which === 'enrich' ? 'retire' : 'enrich';
+    delete st[other][slug];
+  }
+  save();
+  // 띠·취소선·날짜가 한꺼번에 바뀌므로 목록을 다시 그린다.
+  // render() 는 view 를 그대로 그린다 — 거르는 건 applyFilter() 라서 행이 사라지지 않는다.
+  render();
+  paintFlags();
+}
+
+function paintFlags() {
+  var scope = st.src === 'ALL' ? ALL : ALL.filter(function (e) { return e.source === st.src; });
+  var en = 0, rt = 0;
+  scope.forEach(function (e) {
+    if (st.enrich[e.slug]) en++;
+    if (st.retire[e.slug]) rt++;
+  });
+  $('nEnrich').textContent = en.toLocaleString();
+  $('nRetire').textContent = rt.toLocaleString();
+  $('cEnrich').classList.toggle('active', st.onlyEnrich);
+  $('cRetire').classList.toggle('active', st.hideRetired);
+}
+
+$('flags').addEventListener('click', function (ev) {
+  var c = ev.target.closest('.chip');
+  if (!c) return;
+  if (c.id === 'cEnrich') { st.onlyEnrich = !st.onlyEnrich; }
+  else { st.hideRetired = !st.hideRetired; }
+  save(); paintFlags(); applyFilter();
+});
+
 function updateStat() {
   var scope = st.src === 'ALL' ? ALL : ALL.filter(function (e) { return e.source === st.src; });
   var dn = scope.filter(function (e) { return st.done[e.slug]; }).length;
@@ -263,19 +397,45 @@ function updateStat() {
   $('progBar').style.width = (scope.length ? dn / scope.length * 100 : 0) + '%';
 }
 
+// 액션 줄 안내문. 표시한 날을 전체 날짜로 보여 준다 — 여기는 한 줄뿐이라 자리가 있다.
+function drawHint(slug) {
+  if (st.enrich[slug]) return 'ENRICH ' + dstr(st.enrich[slug], true);
+  if (st.retire[slug]) return 'RETIRE ' + dstr(st.retire[slug], true) + ' \u00b7 다음 바퀴부터 빠집니다';
+  return '재생 중';
+}
+
+// 플래그가 붙은 행에만 MM-DD. 색은 어느 플래그인지 말해 준다.
+function flagDate(slug) {
+  var v = st.enrich[slug], col = 'var(--sky)';
+  if (!v) { v = st.retire[slug]; col = 'var(--lime)'; }
+  if (!v) return '';
+  return '<span class="fdt" style="color:' + col + '">' + dstr(v) + '</span>';
+}
+
 function render() {
   var box = $('list');
   if (!view.length) { box.innerHTML = '<div class="empty">일치하는 표현이 없습니다</div>'; return; }
   var curSlug = ALL[cur] ? ALL[cur].slug : null;
   var h = view.slice(0, shown).map(function (e, i) {
     var c = SRC_COLOR[e.source] || 'var(--muted)';
-    return '<div class="item' + (st.done[e.slug] ? ' done' : '') + (e.slug === curSlug ? ' on' : '') +
-      '" data-slug="' + esc(e.slug) + '">' +
+    var sl = esc(e.slug);
+    var h = '<div class="item' + (st.done[e.slug] ? ' done' : '') + (e.slug === curSlug ? ' on' : '') +
+      (st.enrich[e.slug] ? ' enrich' : '') + (st.retire[e.slug] ? ' retire' : '') +
+      '" data-slug="' + sl + '">' +
       '<span class="ix"><span>' + (i + 1) + '</span></span>' +
       '<span class="term">' + esc(e.term) + '</span>' +
-      '<span class="meta"><span class="src" style="color:' + c + '">' +
+      '<span class="meta">' + flagDate(e.slug) +
+      '<span class="src" style="color:' + c + '">' +
       esc(e.source.slice(0, 4).toUpperCase()) + '</span>' +
       '<span class="dur">' + mmss(e.seconds) + '</span></span></div>';
+    // 액션 줄은 재생 중인 한 행에만 달린다
+    if (e.slug === curSlug) {
+      h += '<div class="draw open" data-slug="' + sl + '">' +
+        '<button class="enrich' + (st.enrich[e.slug] ? ' on' : '') + '" data-f="enrich">ENRICH</button>' +
+        '<button class="retire' + (st.retire[e.slug] ? ' on' : '') + '" data-f="retire">RETIRE</button>' +
+        '<span class="hint">' + drawHint(e.slug) + '</span></div>';
+    }
+    return h;
   }).join('');
   if (view.length > shown) {
     h += '<div class="more" id="more">+ ' + (view.length - shown).toLocaleString() + '개 더 보기</div>';
@@ -285,6 +445,11 @@ function render() {
 
 $('list').addEventListener('click', function (ev) {
   if (ev.target.id === 'more') { shown += PAGE; render(); return; }
+  var fb = ev.target.closest('[data-f]');
+  if (fb) {
+    markFlag(fb.closest('.draw').dataset.slug, fb.dataset.f);
+    return;
+  }
   var row = ev.target.closest('.item');
   if (!row) return;
   // 번호를 누르면 들음 표시만 뒤집는다 (재생 없이 진도 정리)
@@ -324,6 +489,7 @@ function step(d) {
   for (var s = 1; s <= n; s++) {
     var ni = (((start + d * s) % n) + n) % n;
     if (first === null) first = ni;
+    if (st.retire[view[ni].slug]) continue;        // 그만 듣기로 한 것
     if (st.skip && st.done[view[ni].slug]) continue;
     pick = ni; break;
   }
@@ -404,10 +570,18 @@ $('sorts').addEventListener('click', function (ev) {
   st.order = c.dataset.o; save(); paintSorts(); applyFilter();
 });
 
+// 백업 파일은 사람이 열어볼 수 있어야 한다. 저장은 정수, 파일은 ISO.
+function isoBag(bag) {
+  var o = {};
+  for (var k in bag) o[k] = toIso(bag[k]);
+  return o;
+}
+
 // 학습 상태 백업 — iOS 는 7일 이상 안 쓴 사이트의 저장소를 비운다. 진도는 그때 같이 날아간다.
 $('aExport').onclick = function () {
   var blob = new Blob([JSON.stringify({ app: 'lexicon', saved: new Date().toISOString(),
-                                        done: st.done }, null, 1)], { type: 'application/json' });
+                                        done: st.done, enrich: isoBag(st.enrich),
+                                        retire: isoBag(st.retire) }, null, 1)], { type: 'application/json' });
   var a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = 'lexicon-progress-' + new Date().toISOString().slice(0, 10) + '.json';
@@ -425,7 +599,11 @@ $('fImport').addEventListener('change', function (ev) {
       var got = d.done || {};
       var n = 0;
       for (var k in got) { if (!st.done[k]) { st.done[k] = got[k]; n++; } }   // 덮어쓰지 않고 합친다
-      save(); applyFilter();
+      ['enrich', 'retire'].forEach(function (f) {
+        var g = d[f] || {};
+        for (var k2 in g) { if (!st[f][k2]) { st[f][k2] = toDay(g[k2]); n++; } }
+      });
+      save(); paintFlags(); applyFilter();
       alert(n.toLocaleString() + '개를 불러왔습니다. (총 ' + Object.keys(st.done).length.toLocaleString() + '개)');
     } catch (e) { alert('파일을 읽지 못했습니다: ' + e.message); }
   };
@@ -445,6 +623,7 @@ $('q').addEventListener('input', function (ev) { st.q = ev.target.value; save();
 $('bRep').classList.toggle('on', st.repeat);
 $('bSpeed').innerHTML = speedLabel(st.speed);
 paintSorts();
+paintFlags();
 
 fetch(AUDIO_BASE + 'index.json?_=' + Date.now(), { cache: 'no-store' })
   .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
@@ -535,5 +714,6 @@ fetch(AUDIO_BASE + 'index.json?_=' + Date.now(), { cache: 'no-store' })
   });
 })();
 </script>
+<script>document.addEventListener('click',function(e){var d=document.querySelector('.nav-menu[open]');if(d&&!d.contains(e.target))d.removeAttribute('open');});</script>
 </body>
 </html>
