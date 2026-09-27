@@ -468,7 +468,7 @@ const SCHEMA = {
     // Night
     {id: "daily_journaling", label: "Daily Journaling", section: "Night", startDate: "2026-06-24"},
     {id: "gratitude_pm", label: "Gratitude", section: "Night", startDate: "2026-09-03"},
-    {id: "call_mom", label: "Call Mom", section: "Night", startDate: "2026-08-31", optionalProgress: true},
+    {id: "call_mom", label: "Call Mom", section: "Night", startDate: "2026-08-31", endDate: "2026-09-27", optionalProgress: true},
   ],
   sections: [
     {key: "Morning", label: "Morning"},
@@ -558,6 +558,7 @@ function renderSections() {
   const itemsBySection = {};
   for (const it of SCHEMA.items) {
     if (it.startDate && currentDate < it.startDate) continue;  // not yet active for this date
+    if (it.endDate && currentDate > it.endDate) continue;      // retired after this date
     (itemsBySection[it.section] = itemsBySection[it.section] || []).push(it);
   }
   let html = "";
@@ -654,6 +655,7 @@ function computeEffectiveProgress(checks, dateIso) {
     if (BONUS_WORKOUT_IDS.includes(it.id)) continue;
     if (optional.has(it.id)) continue;  // day-specific optional: not in progress
     if (it.startDate && dateIso && dateIso < it.startDate) continue;  // item not yet active for this date
+    if (it.endDate && dateIso && dateIso > it.endDate) continue;      // retired — past days keep counting it
     if (it.optionalProgress || it.numberInput) continue;  // measurement fields (weight etc.) don't affect done/total
     if (CORE_WORKOUT_IDS.includes(it.id)) {
       if (checks[it.id] === true) coreWorkoutAny = true;
