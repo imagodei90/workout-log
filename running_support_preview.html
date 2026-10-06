@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Running Support — Preview</title>
+<style>
+:root{
+  --bg:#0a0a0a;--card:#111114;--card2:#18181b;--surface:#111;--surface-2:#161616;
+  --border:#1f1f23;--text:#fafafa;--muted:#71717a;
+  --lift:#FF1A8C;--run:#fafafa;--gold:#fbbf24;--lime:#84cc16;--red:#f43f5e;--cyan:#06b6d4;
+  --legs:#8b5cf6;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,sans-serif;padding:20px;max-width:720px;margin:0 auto;line-height:1.5}
+h1{font-size:20px;margin-bottom:4px}
+.lead{color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:11px;margin-bottom:18px}
+h2{font-size:13px;margin:26px 0 10px;font-family:'JetBrains Mono',monospace;letter-spacing:.08em;color:var(--muted);text-transform:uppercase}
+.mono{font-family:'JetBrains Mono',monospace}
+
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.tab{background:transparent;color:var(--muted);border:1px dashed var(--border);padding:6px 12px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:11px;cursor:pointer}
+.tab.on{background:var(--surface-2);color:var(--lift);border:1px solid var(--lift)}
+.panel{display:none}.panel.on{display:block}
+.pdesc{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:12px;line-height:1.7}
+.pdesc b{color:var(--text)}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:14px}
+.lbl{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
+.hd{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+
+/* rows */
+.row{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--border)}
+.row:last-child{border-bottom:none}
+.nm{font-size:13px}
+.sub{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-top:2px}
+.pill{font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.1em;padding:2px 7px;border-radius:5px;white-space:nowrap}
+.have{background:rgba(132,204,22,.15);color:var(--lime)}
+.swap{background:rgba(251,191,36,.15);color:var(--gold)}
+.none{background:rgba(244,63,94,.15);color:var(--red)}
+.days{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);min-width:52px;text-align:right}
+
+.addbtn{background:var(--lift);color:#fff;border:none;border-radius:8px;padding:9px 14px;font-size:12px;font-weight:500;cursor:pointer;font-family:-apple-system,sans-serif}
+.ghostbtn{background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:8px;padding:9px 14px;font-size:12px;cursor:pointer;font-family:'JetBrains Mono',monospace}
+
+/* weekly checklist */
+.wk{display:flex;gap:6px;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px}
+.slot{width:26px;height:26px;border-radius:6px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--muted)}
+.slot.done{background:rgba(132,204,22,.18);border-color:rgba(132,204,22,.5);color:var(--lime)}
+.bar{height:5px;background:var(--card2);border-radius:3px;overflow:hidden;margin-top:8px}
+.bar>i{display:block;height:100%;border-radius:3px}
+
+/* volume link */
+.vol{display:flex;gap:20px;flex-wrap:wrap;font-family:'JetBrains Mono',monospace;margin-top:10px;padding-top:11px;border-top:1px dashed var(--border)}
+.vol div{font-size:10px;color:var(--muted)}
+.vol b{display:block;font-size:15px;color:var(--text);font-weight:600;margin-top:2px}
+
+.note{background:rgba(6,182,212,.05);border:1px solid rgba(6,182,212,.2);border-radius:8px;padding:12px 14px;margin-top:16px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);line-height:1.8}
+.note b{color:var(--cyan)}
+.note.warn{background:rgba(251,191,36,.05);border-color:rgba(251,191,36,.25)}
+.note.warn b{color:var(--gold)}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;padding:7px 8px;border-bottom:1px solid var(--border);font-weight:400}
+td{padding:8px;border-bottom:1px solid var(--border);vertical-align:top}
+tr:last-child td{border-bottom:none}
+td.c{text-align:center}
+</style>
+</head>
+<body>
+
+<h1>Running Support</h1>
+<div class="lead">Plan 탭 신규 칸 · 실제 기록 기준 (최근 90일 러닝 65회 · 309km · 주 24km)</div>
+
+<h2>추천 종목 — 러닝 기준 재정리</h2>
+<div class="card">
+<table>
+  <thead><tr><th>종목</th><th>목적</th><th class="c">보유</th><th>현재</th></tr></thead>
+  <tbody>
+    <tr><td><b>Single-leg Calf Raise</b></td><td>종아리·아킬레스 — 러닝에서 가장 크게 반복 부하를 받는 조직</td><td class="c"><span class="pill none">없음</span></td><td class="mono" style="color:var(--muted)">기록 0</td></tr>
+    <tr><td><b>Tibialis Raise</b></td><td>정강이 전면 — 종아리와 짝. 착지 감속</td><td class="c"><span class="pill none">없음</span></td><td class="mono" style="color:var(--muted)">기록 0</td></tr>
+    <tr><td><b>Step-down</b></td><td>무릎 신전근 편심 제어 — 내리막·착지</td><td class="c"><span class="pill none">없음</span></td><td class="mono" style="color:var(--muted)">기록 0</td></tr>
+    <tr><td><b>Single-leg Pogo</b></td><td>건 탄성 — 접지 시간 단축, 러닝 이코노미</td><td class="c"><span class="pill none">없음</span></td><td class="mono" style="color:var(--muted)">기록 0</td></tr>
+    <tr><td><b>Copenhagen Raise</b></td><td>내전근 — 머신 어덕터와 자극 방식이 다름(등척·편심)</td><td class="c"><span class="pill swap">유사</span></td><td class="mono">Machine Thigh Adductor 61세트 · 5일 전</td></tr>
+    <tr><td><b>Single-leg Hamstring Curl</b></td><td>햄스트링 — 러닝 중 가장 흔한 육상 손상 부위</td><td class="c"><span class="pill swap">양발</span></td><td class="mono">Lying Leg Curl 218세트 · 7일 전</td></tr>
+    <tr><td><b>Single-leg RDL</b></td><td>후면사슬 + 단측 균형</td><td class="c"><span class="pill swap">양발</span></td><td class="mono">Barbell RDL 43세트 · 57일 전</td></tr>
+    <tr><td><b>Hip Abduction</b></td><td>둔근 중앙 — 골반 안정, 무릎 내반 억제</td><td class="c"><span class="pill swap">양발</span></td><td class="mono">Machine Hip Abductor 132세트 · 7일 전</td></tr>
+    <tr><td><b>Bulgarian Split Squat</b></td><td>단측 근력 — 이미 단측</td><td class="c"><span class="pill have">보유</span></td><td class="mono">80세트 · 7일 전</td></tr>
+    <tr><td><b>Hip Thrust</b></td><td>둔근 추진력</td><td class="c"><span class="pill have">보유</span></td><td class="mono">85세트 · 36일 전</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note warn">
+<b>핵심 관찰</b> — 보유 7종 중 <b>5종이 양발 머신 버전</b>. 러닝은 매 순간 한 발로 체중의 2-3배를 받는 동작이라, 양발 머신은 좌우 비대칭을 가려서 전이가 제한됨.<br>
+가장 비어 있는 축은 <b>발목·발 복합체</b> — 종아리·정강이·탄성 셋 다 기록 0. 주 24km를 뛰는데 이 구간 보강이 없음.<br>
+<b>Heavy quad work 금지</b> 원칙과는 충돌 없음 — 전부 저부하·고반복·단측 성격.
+</div>
+
+<h2>설계 옵션</h2>
+<div class="tabs">
+  <button class="tab on" onclick="show('a',this)">A · 상태 목록</button>
+  <button class="tab" onclick="show('b',this)">B · 주간 체크</button>
+  <button class="tab" onclick="show('c',this)">C · 러닝 볼륨 연동</button>
+  <button class="tab" onclick="show('d',this)">D · My Plan 프리셋</button>
+</div>
+
+<!-- A -->
+<div class="panel on" id="p-a">
+<div class="pdesc"><b>기존 Plan 탭 종목 목록과 같은 형식.</b> 러닝 보조만 따로 모아 마지막 수행일을 표시. 구현 가장 단순 — exercise_priorities에 <code>group: "running"</code> 필드만 추가하면 됨.</div>
+<div class="card">
+  <div class="hd"><span class="lbl">Running Support</span><span class="mono" style="font-size:10px;color:var(--muted)">주 24km 기준 · 주 2회 권장</span></div>
+  <div class="row"><div><div class="nm">Single-leg Calf Raise</div><div class="sub">종아리·아킬레스 · 3×15 각 발</div></div><span class="pill none">미시작</span><span class="days">—</span></div>
+  <div class="row"><div><div class="nm">Tibialis Raise</div><div class="sub">정강이 전면 · 3×20</div></div><span class="pill none">미시작</span><span class="days">—</span></div>
+  <div class="row"><div><div class="nm">Step-down</div><div class="sub">편심 무릎 제어 · 3×10 각 발</div></div><span class="pill none">미시작</span><span class="days">—</span></div>
+  <div class="row"><div><div class="nm">Single-leg Pogo</div><div class="sub">건 탄성 · 3×20</div></div><span class="pill none">미시작</span><span class="days">—</span></div>
+  <div class="row"><div><div class="nm">Bulgarian Split Squat</div><div class="sub">단측 근력</div></div><span class="pill have">보유</span><span class="days" style="color:var(--lime)">7d</span></div>
+  <div class="row"><div><div class="nm">Lying Leg Curl</div><div class="sub">단측 전환 권장</div></div><span class="pill swap">양발</span><span class="days" style="color:var(--lime)">7d</span></div>
+  <div class="row"><div><div class="nm">Hip Thrust</div><div class="sub">둔근 추진</div></div><span class="pill have">보유</span><span class="days" style="color:var(--gold)">36d</span></div>
+</div>
+</div>
+
+<!-- B -->
+<div class="panel" id="p-b">
+<div class="pdesc"><b>주 2회 수행 여부만 추적.</b> 종목별 상세 대신 "이번 주 했나"에 집중. Routine 탭 체크와 성격이 비슷해 가장 가벼움.</div>
+<div class="card">
+  <div class="hd"><span class="lbl">Running Support</span><span class="mono" style="font-size:10px;color:var(--lime)">이번 주 1 / 2</span></div>
+  <div class="wk"><span style="color:var(--muted);min-width:46px">이번 주</span><span class="slot done">✓</span><span class="slot">2</span></div>
+  <div class="bar"><i style="width:50%;background:var(--lime)"></i></div>
+  <div class="vol">
+    <div>최근 수행<b>3일 전</b></div>
+    <div>4주 평균<b>주 1.3회</b></div>
+    <div>누락 주<b>최근 8주 중 3주</b></div>
+  </div>
+</div>
+</div>
+
+<!-- C -->
+<div class="panel" id="p-c">
+<div class="pdesc"><b>러닝 주행거리에 보조 운동 권장량을 연동.</b> 거리가 늘면 권장 횟수도 올라감. 러닝과 보조가 한 화면에서 비교됨.</div>
+<div class="card">
+  <div class="hd"><span class="lbl">Running Support</span><span class="mono" style="font-size:10px;color:var(--muted)">volume-linked</span></div>
+  <div class="vol" style="border:none;margin:0;padding:0">
+    <div>이번 주 러닝<b style="color:var(--run)">26.4 km</b></div>
+    <div>권장 보조<b style="color:var(--gold)">주 2회</b></div>
+    <div>실제<b style="color:var(--red)">1회</b></div>
+  </div>
+  <div class="bar" style="margin-top:12px"><i style="width:50%;background:var(--red)"></i></div>
+  <div class="mono" style="font-size:10px;color:var(--muted);margin-top:9px">주 20km 미만 1회 · 20-40km 2회 · 40km 이상 3회</div>
+</div>
+</div>
+
+<!-- D -->
+<div class="panel" id="p-d">
+<div class="pdesc"><b>My Plan에 한 번에 담는 버튼.</b> 별도 추적 없이, 러닝 보조 세트를 오늘 계획으로 밀어넣는 역할만. 기존 My Plan 점수·드래그 기능을 그대로 씀.</div>
+<div class="card">
+  <div class="hd"><span class="lbl">Running Support</span><span class="mono" style="font-size:10px;color:var(--muted)">4종 · 약 12분</span></div>
+  <div class="mono" style="font-size:11px;color:var(--muted);line-height:1.9">
+    Single-leg Calf Raise 3×15<br>
+    Tibialis Raise 3×20<br>
+    Step-down 3×10<br>
+    Single-leg Pogo 3×20
+  </div>
+  <div style="display:flex;gap:8px;margin-top:13px;flex-wrap:wrap">
+    <button class="addbtn">My Plan에 추가</button>
+    <button class="ghostbtn">종목 편집</button>
+  </div>
+</div>
+</div>
+
+<div class="note">
+<b>공통</b> — 4종 신규(종아리·정강이·스텝다운·포고)는 맨몸 또는 경량이라 러닝 직후 10-12분이면 끝남<br>
+<b>데이터</b> — exercise_priorities.json에 <code>group: "running"</code> 필드를 추가하는 방식. 기존 미적 목표 우선순위 계산에는 끼어들지 않도록 분리<br>
+<b>기록</b> — 종목명만 Fleek에 그대로 적으면 기존 파이프라인이 자동 집계. 신규 종목도 추가 작업 불필요
+</div>
+
+<script>
+function show(k,el){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+  document.getElementById('p-'+k).classList.add('on');
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');
+}
+</script>
+</body>
+</html>
