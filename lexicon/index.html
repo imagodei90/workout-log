@@ -217,6 +217,7 @@
 <div class="foot">
   <span>들음 <b id="dn">0</b> / <span id="tt">0</span></span>
   <span class="sp"></span>
+  <a id="aSync" title="기기 간 동기화">동기화 꺼짐</a>
   <a id="aExport">백업</a>
   <a id="aImport">복원</a>
   <a id="aReset">초기화</a>
@@ -260,7 +261,9 @@ var st = { src: 'ALL', q: '', speed: 1, repeat: false,
 try { Object.assign(st, JSON.parse(localStorage.getItem(LS) || '{}')); } catch (e) {}
 if (!st.enrich) st.enrich = {};
 if (!st.retire) st.retire = {};
-function save() { try { localStorage.setItem(LS, JSON.stringify(st)); } catch (e) {} }
+function save() { try { localStorage.setItem(LS, JSON.stringify(st)); } catch (e) {}
+  // localStorage 는 기기마다 따로다. 폰에서 들은 것이 PC 에 안 보이던 이유 — 클라우드로도 밀어준다.
+  if (window._lexPush) window._lexPush(); }
 function today() { return Math.floor(Date.now() / 86400000); }
 
 // epoch day → 표시용. 한국은 UTC+9 라 UTC 자정이 같은 날 오전 9시로 떨어진다 — 날짜가 안 밀린다.
@@ -710,6 +713,139 @@ fetch(AUDIO_BASE + 'index.json?_=' + Date.now(), { cache: 'no-store' })
     if (document.visibilityState === "visible") check();
   });
 })();
+</script>
+<script type="module">
+// 진도 동기화 — 대시보드와 같은 Firebase 계정의 users/{uid}/lexicon/progress 한 문서.
+// done/enrich/retire 는 slug → epoch day 맵이라 합집합이 곧 병합이다. 날짜가 겹치면
+// 이른 날을 남긴다(처음 들은 날이 사실이다). st.last 같은 재생 위치는 기기 사정이라 안 보낸다.
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, setPersistence,
+         browserLocalPersistence, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import { getFirestore, doc, onSnapshot, setDoc,
+         serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey: "AIzaSyCmo9gyAFNfRaSR0GdyJ2BmamhpzfYuQGE",
+  authDomain: "routine-log-7d91b.firebaseapp.com",
+  projectId: "routine-log-7d91b",
+  storageBucket: "routine-log-7d91b.firebasestorage.app",
+  messagingSenderId: "271884499594",
+  appId: "1:271884499594:web:12217347b04ab2448d8b73"
+});
+const auth = getAuth(app);
+setPersistence(auth, browserLocalPersistence).catch(() => {});
+const db = getFirestore(app);
+const provider = new GoogleAuthProvider();
+
+const BAGS = ['done', 'enrich', 'retire'];
+const $s = document.getElementById('aSync');
+let uid = null, unsub = null, timer = null, applying = false, pending = false;
+
+function status(txt) { if ($s) $s.textContent = txt; }
+
+function docRef() { return doc(db, 'users', uid, 'lexicon', 'progress'); }
+
+// epoch day 로 통일. 옛 기록은 1 이나 ISO 문자열로 들어있을 수 있다.
+function day(v) {
+  if (v == null || v === '') return null;
+  if (typeof v === 'number') return v > 100000 ? Math.floor(v / 86400000) : v;
+  const t = Date.parse(v);
+  return isNaN(t) ? 1 : Math.floor(t / 86400000);
+}
+
+// 원격을 로컬에 녹인다. 새로 들어온 게 있으면 true.
+function mergeDown(remote) {
+  let changed = false;
+  for (const b of BAGS) {
+    const r = (remote && remote[b]) || {};
+    if (!window.st[b]) window.st[b] = {};
+    const mine = window.st[b];
+    for (const k in r) {
+      const rv = day(r[k]);
+      if (rv == null) continue;
+      const mv = day(mine[k]);
+      if (mv == null || rv < mv) { mine[k] = rv; changed = true; }
+    }
+  }
+  return changed;
+}
+
+// 로컬에 원격이 모르는 게 있으면 true — 그때만 올린다.
+function aheadOfRemote(remote) {
+  for (const b of BAGS) {
+    const r = (remote && remote[b]) || {};
+    const mine = window.st[b] || {};
+    for (const k in mine) {
+      const mv = day(mine[k]);
+      if (mv == null) continue;
+      const rv = day(r[k]);
+      if (rv == null || mv < rv) return true;
+    }
+  }
+  return false;
+}
+
+async function push() {
+  if (!uid) return;
+  try {
+    const body = { updated_at: serverTimestamp() };
+    for (const b of BAGS) body[b] = window.st[b] || {};
+    await setDoc(docRef(), body, { merge: true });
+    status('동기화 ' + new Date().toTimeString().slice(0, 5));
+  } catch (e) {
+    status('동기화 실패');
+    console.warn('lexicon sync push failed', e);
+  }
+}
+
+// save() 가 타이핑마다 불린다 — 몰아서 한 번만 쓴다.
+window._lexPush = function () {
+  if (!uid || applying) { if (applying) pending = true; return; }
+  clearTimeout(timer);
+  timer = setTimeout(push, 1500);
+};
+
+function subscribe() {
+  if (unsub) unsub();
+  status('동기화 중...');
+  unsub = onSnapshot(docRef(), (snap) => {
+    const remote = snap.exists() ? snap.data() : {};
+    applying = true;
+    const got = mergeDown(remote);
+    applying = false;
+    if (got) {
+      window.save();
+      // applyFilter 는 정렬과 페이지를 되감는다. 반대쪽 기기의 기록이 들어왔다고
+      // 보던 목록이 튀면 곤란하니, 표시만 제자리에서 고친다.
+      if (typeof window.render === 'function') window.render();
+      if (typeof window.updateStat === 'function') window.updateStat();
+      if (typeof window.paintFlags === 'function') window.paintFlags();
+    }
+    // 이 기기에만 있던 기록은 올려서 반대쪽에도 보이게 한다.
+    if (pending || aheadOfRemote(remote)) { pending = false; push(); }
+    else status('동기화 ' + new Date().toTimeString().slice(0, 5));
+  }, (e) => {
+    status('동기화 끊김');
+    console.warn('lexicon sync listen failed', e);
+  });
+}
+
+onAuthStateChanged(auth, (user) => {
+  uid = user ? user.uid : null;
+  if (uid) subscribe();
+  else { if (unsub) { unsub(); unsub = null; } status('동기화 꺼짐'); }
+});
+
+if ($s) $s.onclick = async function () {
+  if (uid) {
+    // 이미 붙어 있으면 지금 바로 한 번 밀어 올린다.
+    clearTimeout(timer);
+    await push();
+    return;
+  }
+  try { await signInWithPopup(auth, provider); }
+  catch (e) { alert('로그인이 필요합니다: ' + e.message); }
+};
 </script>
 <script>document.addEventListener('click',function(e){var d=document.querySelector('.nav-menu[open]');if(d&&!d.contains(e.target))d.removeAttribute('open');});</script>
 </body>
