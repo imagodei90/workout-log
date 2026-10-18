@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Routine Date Picker</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --surface: #111;
+    --surface-2: #161616;
+    --border: #1f1f23;
+    --text: #fafafa;
+    --muted: #71717a;
+    --accent: #FF1A8C;
+    --lime: #84cc16;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 20px 16px 60px;
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1100px; margin: 0 auto; }
+  h1 { font-size: 16px; font-weight: 500; margin: 0 0 4px; }
+  .sub { color: var(--muted); font-size: 12px; margin-bottom: 24px; line-height: 1.6; }
+  .label-mono {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted);
+    letter-spacing: 0.1em; text-transform: uppercase;
+  }
+
+  .opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+  .opt { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+  .opt-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; }
+  .opt-name { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text); }
+  .opt-tag {
+    font-family: 'JetBrains Mono', monospace; font-size: 9px; padding: 2px 6px; border-radius: 4px;
+    background: rgba(255,26,140,0.15); color: var(--accent); letter-spacing: 0.06em;
+  }
+  .opt-desc { color: var(--muted); font-size: 11px; line-height: 1.55; margin-bottom: 14px; }
+
+  /* ── 날짜 줄 (실제 Routine 탭과 동일) ───────────────────────── */
+  .date-nav { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .date-btn {
+    background: var(--surface-2); color: var(--text); border: 1px solid var(--border);
+    width: 32px; height: 32px; border-radius: 8px; font-size: 12px; cursor: pointer; flex: none;
+  }
+  .date-display {
+    flex: 1; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 12px;
+    color: var(--text); cursor: pointer; padding: 8px 0; border-radius: 8px;
+  }
+  .date-display .dt { border-bottom: 1px dashed var(--border); padding-bottom: 2px; }
+  .date-display .dow { color: var(--muted); margin-left: 4px; }
+  .today-btn {
+    background: var(--accent); color: #fff; border: none; padding: 7px 11px; border-radius: 8px;
+    font-family: 'JetBrains Mono', monospace; font-size: 10px; cursor: pointer; flex: none;
+  }
+
+  /* ── 캘린더 공통 ───────────────────────────────────────────── */
+  .cal { background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; padding: 12px; }
+  .cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .cal-title { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+  .cal-nav { display: flex; gap: 4px; }
+  .cal-nav button {
+    background: transparent; color: var(--muted); border: 1px solid var(--border);
+    width: 24px; height: 24px; border-radius: 6px; cursor: pointer; font-size: 10px; line-height: 1;
+  }
+  .cal-nav button:hover { color: var(--text); border-color: var(--muted); }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+  .cal-wd {
+    font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--muted);
+    text-align: center; padding-bottom: 4px;
+  }
+  .cal-cell {
+    aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; border-radius: 6px;
+    cursor: pointer; position: relative; color: var(--muted); border: 1px solid transparent;
+  }
+  .cal-cell.pad { visibility: hidden; }
+  .cal-cell.future { opacity: 0.25; cursor: default; }
+  .cal-cell.sel { outline: 2px solid var(--accent); outline-offset: -2px; color: #fff; }
+  .cal-cell.today::after {
+    content: ''; position: absolute; left: 50%; transform: translateX(-50%);
+    bottom: 3px; width: 3px; height: 3px; border-radius: 50%; background: var(--accent);
+  }
+
+  /* ── A: 점 ─────────────────────────────────────────────────── */
+  .a .cal-cell.logged { color: var(--text); }
+  .a .cal-cell .dot {
+    position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%);
+    width: 14px; height: 2px; border-radius: 1px; background: var(--lime);
+  }
+  .a .cal-cell.today .dot { bottom: 7px; }
+
+  /* ── B: 셀 채우기 ──────────────────────────────────────────── */
+  .b .cal-cell { background: rgba(255,255,255,0.03); }
+  .b .cal-cell.logged { color: #0a0a0a; font-weight: 700; }
+  .b .cal-cell.zero { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.10); }
+  .b .cal-cell.nodata { background: transparent; }
+  .b .cal-cell.today::after { background: #0a0a0a; }
+  .b .cal-cell.nodata.today::after, .b .cal-cell.zero.today::after { background: var(--accent); }
+
+  /* ── C: 링 게이지 ──────────────────────────────────────────── */
+  .c .cal-cell svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .c .cal-cell span { position: relative; z-index: 1; }
+  .c .cal-cell.logged span { color: var(--text); }
+
+  .cal-legend {
+    display: flex; align-items: center; gap: 10px; margin-top: 10px; padding-top: 10px;
+    border-top: 1px solid var(--border);
+    font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--muted);
+    flex-wrap: wrap;
+  }
+  .cal-legend .sw { width: 11px; height: 11px; border-radius: 3px; display: inline-block; vertical-align: -2px; margin-right: 4px; }
+  .cal-legend i { font-style: normal; white-space: nowrap; }
+
+  .note {
+    margin-top: 28px; padding: 14px; border-radius: 10px;
+    background: rgba(255,26,140,0.04); border: 1px solid rgba(255,26,140,0.25);
+    font-size: 12px; color: var(--muted); line-height: 1.7;
+  }
+  .note b { color: var(--text); font-weight: 500; }
+  .note code {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    background: var(--surface-2); padding: 1px 5px; border-radius: 4px; color: var(--text);
+  }
+  .note ul { margin: 8px 0 0; padding-left: 18px; }
+  .note li { margin-bottom: 5px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Routine 날짜 선택 — 기록 있는 날 표시</h1>
+  <div class="sub">
+    셋 다 같은 데이터를 쓰고 표시 방법만 다릅니다. 달을 넘겨 보시고, 날짜를 눌러 선택도 해보십시오.<br>
+    아래 수치는 <b>디자인 확인용 가상 데이터</b>입니다 — 실제 기록이 아닙니다.
+  </div>
+
+  <div class="opts">
+    <div class="opt a" data-style="a">
+      <div class="opt-head">
+        <span class="opt-name">A · 밑줄 표시</span>
+        <span class="opt-tag">MINIMAL</span>
+      </div>
+      <div class="opt-desc">
+        숫자는 그대로 두고 기록이 있는 날 아래에만 라임색 선을 깝니다.
+        달성률은 선의 진하기로 구분합니다. 가장 조용하지만 한눈에 세기는 어렵습니다.
+      </div>
+      <div class="date-nav">
+        <button class="date-btn">◀</button>
+        <div class="date-display"><span class="dt" data-dt>2026-10-19</span><span class="dow" data-dow>(Sun)</span></div>
+        <button class="date-btn">▶</button>
+        <button class="today-btn">TODAY</button>
+      </div>
+      <div class="cal" data-cal></div>
+    </div>
+
+    <div class="opt b" data-style="b">
+      <div class="opt-head">
+        <span class="opt-name">B · 셀 채우기</span>
+        <span class="opt-tag">히트맵과 동일</span>
+      </div>
+      <div class="opt-desc">
+        아래 Adherence Heatmap과 같은 언어입니다 — 칸 자체를 달성률만큼 라임색으로 채웁니다.
+        기록 없는 날은 빈칸, 문서는 있는데 0%인 날은 테두리만 남습니다.
+      </div>
+      <div class="date-nav">
+        <button class="date-btn">◀</button>
+        <div class="date-display"><span class="dt" data-dt>2026-10-19</span><span class="dow" data-dow>(Sun)</span></div>
+        <button class="date-btn">▶</button>
+        <button class="today-btn">TODAY</button>
+      </div>
+      <div class="cal" data-cal></div>
+    </div>
+
+    <div class="opt c" data-style="c">
+      <div class="opt-head">
+        <span class="opt-name">C · 링 게이지</span>
+        <span class="opt-tag">정밀</span>
+      </div>
+      <div class="opt-desc">
+        숫자를 감싼 얇은 링이 달성률을 각도로 보여 줍니다.
+        80%와 100%가 색 농도보다 또렷하게 갈리지만, 칸이 작아 폰에서 가늘어 보입니다.
+      </div>
+      <div class="date-nav">
+        <button class="date-btn">◀</button>
+        <div class="date-display"><span class="dt" data-dt>2026-10-19</span><span class="dow" data-dow>(Sun)</span></div>
+        <button class="date-btn">▶</button>
+        <button class="today-btn">TODAY</button>
+      </div>
+      <div class="cal" data-cal></div>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>세 안 모두 공통</b>
+    <ul>
+      <li>주 시작은 월요일 — 히트맵 행 순서와 같습니다</li>
+      <li><b>오늘</b>은 분홍 점, <b>선택한 날</b>은 분홍 테두리</li>
+      <li>미래 날짜는 흐리게 처리하고 선택을 막습니다 (기존 <code>▶</code> 버튼 규칙과 동일)</li>
+      <li>기록은 <code>2026-05-20</code>부터 — 그 이전 달은 전부 빈칸으로 보입니다</li>
+      <li>달을 넘기면 <code>heatmapCache</code>에 없는 날은 Firestore에서 그때 받아옵니다 (90일 밖으로 나가도 색이 보입니다)</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+// ── 가상 데이터 ────────────────────────────────────────────────
+// 실제 기록이 아니다. 패턴만 그럴듯하게 만든다:
+// 5/20 이전은 데이터 없음, 이후는 대체로 기록되어 있고 드문드문 구멍이 있다.
+const TODAY = '2026-10-19';
+const FIRST = '2026-05-20';
+let selected = TODAY;
+
+function seeded(n) { const x = Math.sin(n * 12.9898) * 43758.5453; return x - Math.floor(x); }
+
+const MOCK = {};
+(function build() {
+  const start = new Date(2026, 4, 20), end = new Date(2026, 9, 19);
+  let i = 0;
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1), i++) {
+    const iso = d.toISOString().slice(0, 10);
+    const r = seeded(i);
+    if (r < 0.11) continue;              // 아예 안 쓴 날 — 키를 두지 않는다
+    if (r < 0.15) { MOCK[iso] = 0; continue; }   // 열었지만 아무것도 체크 안 한 날
+    MOCK[iso] = Math.min(1, 0.45 + seeded(i + 500) * 0.6);
+  }
+})();
+
+const WD = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const DOW = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+function iso(y, m, d) {
+  return `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+}
+function dowOf(isoStr) {
+  const d = new Date(isoStr + 'T00:00:00');
+  return DOW[d.getDay() === 0 ? 6 : d.getDay() - 1];
+}
+
+// 각 옵션이 자기 달을 따로 들고 있다 — 하나를 넘겨도 나머지는 그대로다.
+const view = { a: {y: 2026, m: 9}, b: {y: 2026, m: 9}, c: {y: 2026, m: 9} };
+
+function ringSvg(pct) {
+  const r = 15, c = 2 * Math.PI * r;
+  return `<svg viewBox="0 0 36 36">
+    <circle cx="18" cy="18" r="${r}" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="2.5"/>
+    <circle cx="18" cy="18" r="${r}" fill="none" stroke="#84cc16" stroke-width="2.5"
+      stroke-linecap="round" stroke-dasharray="${(c * pct).toFixed(2)} ${c.toFixed(2)}"
+      transform="rotate(-90 18 18)"/>
+  </svg>`;
+}
+
+function renderCal(style) {
+  const opt = document.querySelector(`.opt[data-style="${style}"]`);
+  const box = opt.querySelector('[data-cal]');
+  const { y, m } = view[style];
+
+  let html = `<div class="cal-head">
+    <div class="cal-title">${MONTHS[m]} ${y}</div>
+    <div class="cal-nav">
+      <button data-mv="-1">◀</button>
+      <button data-mv="1">▶</button>
+    </div>
+  </div><div class="cal-grid">`;
+  html += WD.map(w => `<div class="cal-wd">${w}</div>`).join('');
+
+  const first = new Date(y, m, 1);
+  const lead = (first.getDay() === 0 ? 6 : first.getDay() - 1);   // 월요일 시작
+  for (let i = 0; i < lead; i++) html += `<div class="cal-cell pad"></div>`;
+
+  const days = new Date(y, m + 1, 0).getDate();
+  for (let d = 1; d <= days; d++) {
+    const key = iso(y, m, d);
+    const pct = MOCK[key];
+    const cls = ['cal-cell'];
+    let inner = String(d), bg = '', titleBits = [key];
+
+    if (key > TODAY) cls.push('future');
+    if (key === TODAY) cls.push('today');
+    if (key === selected) cls.push('sel');
+
+    if (pct === undefined) {
+      cls.push('nodata');
+      titleBits.push('기록 없음');
+    } else if (pct === 0) {
+      cls.push('zero');
+      titleBits.push('0%');
+    } else {
+      cls.push('logged');
+      titleBits.push(Math.round(pct * 100) + '%');
+    }
+
+    if (style === 'a') {
+      inner = String(d) + (pct > 0
+        ? `<i class="dot" style="opacity:${(0.35 + 0.65 * pct).toFixed(2)}"></i>` : '');
+    } else if (style === 'b') {
+      if (pct > 0) bg = `background:#84cc16; opacity:${(0.3 + 0.7 * pct).toFixed(2)};`;
+    } else if (style === 'c') {
+      inner = (pct > 0 ? ringSvg(pct) : '') + `<span>${d}</span>`;
+    }
+
+    html += `<div class="${cls.join(' ')}" style="${bg}" data-pick="${key}"
+                  title="${titleBits.join(' · ')}">${inner}</div>`;
+  }
+  html += `</div>`;
+
+  if (style === 'b') {
+    html += `<div class="cal-legend">
+      <i><span class="sw" style="background:transparent;border:1px solid var(--border)"></span>기록 없음</i>
+      <i><span class="sw" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.10)"></span>0%</i>
+      <i><span class="sw" style="background:#84cc16;opacity:0.4"></span>낮음</i>
+      <i><span class="sw" style="background:#84cc16"></span>100%</i>
+    </div>`;
+  } else {
+    html += `<div class="cal-legend">
+      <i>라임 = 기록 있음 · 진하기 = 달성률</i>
+      <i><span class="sw" style="background:var(--accent)"></span>오늘</i>
+    </div>`;
+  }
+
+  box.innerHTML = html;
+
+  box.querySelectorAll('[data-mv]').forEach(b => b.onclick = () => {
+    const nm = view[style].m + Number(b.dataset.mv);
+    view[style] = { y: view[style].y + Math.floor(nm / 12), m: ((nm % 12) + 12) % 12 };
+    renderCal(style);
+  });
+  box.querySelectorAll('[data-pick]').forEach(c => c.onclick = () => {
+    const k = c.dataset.pick;
+    if (k > TODAY) return;
+    selected = k;
+    ['a', 'b', 'c'].forEach(s => {
+      const o = document.querySelector(`.opt[data-style="${s}"]`);
+      o.querySelector('[data-dt]').textContent = selected;
+      o.querySelector('[data-dow]').textContent = `(${dowOf(selected)})`;
+      renderCal(s);
+    });
+  });
+}
+
+['a', 'b', 'c'].forEach(renderCal);
+</script>
+</body>
+</html>
