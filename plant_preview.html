@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
+<meta name="theme-color" content="#0a0a0a">
+<title>Plant Care — Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --surface-2: #161616;
+    --border: #1f1f23;
+    --text: #fafafa;
+    --muted: #71717a;
+    --dim: #3f3f46;
+    --mark-w: #52525b;   /* 급수 */
+    --mark-c: #2d2d33;   /* 주간 관리 */
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: "Inter", -apple-system, "SF Pro Display", "Pretendard", sans-serif;
+    font-size: 12px;
+    padding: 14px; max-width: 560px; margin: 0 auto; padding-bottom: 48px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .mono { font-family: "JetBrains Mono", monospace; }
+
+  /* 헤더 */
+  .nav { display: flex; justify-content: space-between; align-items: baseline;
+    padding-bottom: 10px; margin-bottom: 13px; border-bottom: 1px solid var(--border); }
+  .nav h1 { font-size: 14px; font-weight: 500; letter-spacing: -0.005em; }
+  .nav h1 span { font-family: "JetBrains Mono", monospace; font-size: 11px;
+    color: var(--dim); font-weight: 400; margin-left: 5px; }
+  .nav .tabs { font-family: "JetBrains Mono", monospace; font-size: 9.5px;
+    color: var(--dim); letter-spacing: 0.1em; }
+  .nav .tabs b { color: var(--text); font-weight: 400; }
+
+  /* 상태 바 */
+  .bar { display: flex; align-items: baseline; gap: 7px; padding: 0 0 11px; }
+  .bar .n { font-family: "JetBrains Mono", monospace; font-size: 22px; line-height: 1; }
+  .bar .u { font-family: "JetBrains Mono", monospace; font-size: 10px; color: var(--muted); }
+  .bar .say { margin-left: auto; font-family: "JetBrains Mono", monospace;
+    font-size: 9.5px; color: var(--dim); text-align: right; line-height: 1.55; }
+
+  .acts { display: flex; gap: 5px; padding-bottom: 13px; border-bottom: 1px solid var(--border); }
+  .acts button { flex: 1; background: transparent; border: 1px solid var(--border);
+    color: var(--muted); font-family: "JetBrains Mono", monospace; font-size: 9.5px;
+    letter-spacing: 0.06em; padding: 8px 0; border-radius: 5px; cursor: pointer; }
+  .acts button.p { color: var(--text); border-color: #2e2e34; }
+  .acts button:active { background: var(--surface-2); }
+
+  /* 섹션 */
+  .sec { font-family: "JetBrains Mono", monospace; font-size: 9px; color: var(--dim);
+    letter-spacing: 0.14em; margin: 16px 0 3px; }
+
+  /* 2열 체크리스트 */
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
+  @media (max-width: 400px) { .grid { grid-template-columns: 1fr; } }
+  .row { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 11.5px;
+    cursor: pointer; }
+  .row .mk { font-family: "JetBrains Mono", monospace; font-size: 10.5px;
+    color: var(--dim); width: 10px; flex: 0 0 10px; text-align: center; }
+  .row.done .mk { color: var(--text); }
+  .row.done .lb { color: var(--muted); }
+  .row .rt { margin-left: auto; font-family: "JetBrains Mono", monospace;
+    font-size: 9px; color: var(--dim); }
+  .row.off { opacity: 0.35; cursor: default; }
+
+  /* 로그 */
+  .strip { display: flex; gap: 2px; }
+  .strip i { flex: 1; height: 12px; border-radius: 2px; background: var(--surface-2); }
+  .strip i.w { background: var(--mark-w); }
+  .strip i.c { background: var(--mark-c); }
+  .lg { font-family: "JetBrains Mono", monospace; font-size: 9px; color: var(--dim);
+    margin-top: 6px; }
+
+  /* 증상표 */
+  details.diag { margin-top: 18px; border-top: 1px solid var(--border); padding-top: 11px; }
+  details.diag > summary { list-style: none; cursor: pointer;
+    font-family: "JetBrains Mono", monospace; font-size: 9px; color: var(--dim);
+    letter-spacing: 0.14em; }
+  details.diag > summary::-webkit-details-marker { display: none; }
+  details.diag .dr { display: flex; gap: 12px; padding: 6px 0; font-size: 10.5px;
+    line-height: 1.45; border-bottom: 1px solid var(--border); }
+  details.diag .dr:last-child { border-bottom: none; }
+  details.diag .dr .s { flex: 0 0 45%; }
+  details.diag .dr .f { color: var(--muted); }
+  details.diag .dl { margin-top: 7px; }
+</style>
+</head>
+<body>
+
+<div class="nav">
+  <h1>뱅갈고무나무<span>D+8</span></h1>
+  <div class="tabs"><b>PLANT</b> · ROUTINE · WORKOUT</div>
+</div>
+
+<div class="bar">
+  <span class="n">8</span><span class="u">일 경과</span>
+  <span class="say">마지막 급수 10-16<br>직전 주기 9일</span>
+</div>
+<div class="acts">
+  <button class="p">WATERED</button>
+  <button>STILL MOIST</button>
+</div>
+
+<div class="sec">WEEKLY · FRI</div>
+<div class="grid">
+  <div class="row done"><span class="mk">✓</span><span class="lb">잎 닦기</span></div>
+  <div class="row done"><span class="mk">✓</span><span class="lb">화분 90도 회전</span></div>
+  <div class="row done"><span class="mk">✓</span><span class="lb">잎 뒷면 점검</span></div>
+  <div class="row"><span class="mk">·</span><span class="lb">받침 물 비우기</span></div>
+</div>
+
+<div class="sec">MONTHLY</div>
+<div class="grid">
+  <div class="row off"><span class="mk">·</span><span class="lb">액체비료</span><span class="rt">APR–SEP</span></div>
+  <div class="row"><span class="mk">·</span><span class="lb">가지치기</span></div>
+</div>
+
+<div class="sec">LOG · 14D</div>
+<div class="strip">
+  <i class="w"></i><i></i><i></i><i class="c"></i><i></i><i></i><i></i>
+  <i class="c"></i><i class="w"></i><i></i><i></i><i class="c"></i><i></i><i></i>
+</div>
+<div class="lg">10-11 → 10-24 · 진한 칸 급수, 옅은 칸 주간 관리</div>
+
+<details class="diag">
+  <summary>SYMPTOMS</summary>
+  <div class="dl">
+    <div class="dr"><div class="s">아래 잎이 노래지고 물컹함</div><div class="f">과습 — 완전히 마를 때까지 중단</div></div>
+    <div class="dr"><div class="s">잎 가장자리가 갈색으로 바삭</div><div class="f">건조 또는 비료 과다</div></div>
+    <div class="dr"><div class="s">처지는데 흙은 젖어 있음</div><div class="f">뿌리 썩음 — 썩은 뿌리 제거 후 새 흙</div></div>
+    <div class="dr"><div class="s">새 잎이 무늬 없이 초록</div><div class="f">광량 부족 — 더 밝은 자리로</div></div>
+    <div class="dr"><div class="s">잎 뒷면에 미세한 거미줄</div><div class="f">응애 — 물로 씻고 주 1회씩 3번</div></div>
+    <div class="dr"><div class="s">잎·줄기에 끈적한 분비물</div><div class="f">깍지벌레 — 알코올 면봉</div></div>
+    <div class="dr"><div class="s">갑자기 여러 잎이 떨어짐</div><div class="f">자리 이동·냉기 — 고정 후 2주 대기</div></div>
+  </div>
+</details>
+
+</body>
+</html>
