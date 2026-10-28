@@ -457,6 +457,8 @@ const SCHEMA = {
   items: [
     // Morning
     {id: "wake_up", label: "Wake Up", section: "Morning", note: "default 5:30", timeInput: true, defaultTime: "05:30"},
+    {id: "clock_in", label: "Clock In", section: "Morning", note: "출근", timeInput: true, recordOnly: true, startDate: "2026-10-28"},
+    {id: "clock_out", label: "Clock Out", section: "Morning", note: "퇴근", timeInput: true, recordOnly: true, startDate: "2026-10-28"},
     {id: "weight_am", label: "Weight (morning)", section: "Morning", note: "공복 · 화장실 후 · optional", numberInput: true, unit: "kg", min: 65, max: 90, step: 0.1, optionalProgress: true},
     {id: "meditation", label: "Meditation", section: "Morning"},
     {id: "gratitude_am", label: "Gratitude", section: "Morning", startDate: "2026-09-03"},
@@ -597,17 +599,19 @@ function renderSections() {
       let dropdownHtml = "";
       if (it.timeInput) {
         // Native time picker — supports minute precision (e.g. 6:05). iOS shows wheel picker.
-        // Normalize "5:30" → "05:30" for input[type=time] (browser requires HH:MM)
-        let rawTime = currentMeta.wake_up_time || it.defaultTime || "05:30";
+        // Meta key is `<id>_time`, which for wake_up is the wake_up_time already in
+        // every stored doc — so existing records keep reading without migration.
+        // No defaultTime means start empty: prefilling 09:00 would invent a record.
+        let rawTime = currentMeta[it.id + "_time"] || it.defaultTime || "";
         const normMatch = rawTime.match(/^(\d{1,2}):(\d{1,2})$/);
         const selectedTime = normMatch
           ? `${normMatch[1].padStart(2, '0')}:${normMatch[2].padStart(2, '0')}`
           : rawTime;
-        dropdownHtml = `<input type="time" class="item-timeinput" value="${selectedTime}" step="300" onclick="event.stopPropagation()" onchange="window.setWakeUpTime(event)">`;
+        dropdownHtml = `<input type="time" class="item-timeinput" data-id="${it.id}" value="${selectedTime}" step="300" onclick="event.stopPropagation()" onchange="window.setTimeField(event)">`;
       } else if (it.timeOptions) {
-        const selectedTime = currentMeta.wake_up_time || it.defaultTime || it.timeOptions[0];
+        const selectedTime = currentMeta[it.id + "_time"] || it.defaultTime || it.timeOptions[0];
         const opts = it.timeOptions.map(t => `<option value="${t}"${t === selectedTime ? ' selected' : ''}>${t}</option>`).join("");
-        dropdownHtml = `<select class="item-dropdown" onclick="event.stopPropagation()" onchange="window.setWakeUpTime(event)">${opts}</select>`;
+        dropdownHtml = `<select class="item-dropdown" data-id="${it.id}" onclick="event.stopPropagation()" onchange="window.setTimeField(event)">${opts}</select>`;
       }
       if (it.typeOptions) {
         const selectedType = currentMeta.other_workout_type || "";
@@ -624,9 +628,11 @@ function renderSections() {
         dropdownHtml = `<input type="number" inputmode="decimal" class="item-numinput" data-id="${it.id}" value="${val}" placeholder="${it.placeholder || ''}"${minA}${maxA}${stepA} onclick="event.stopPropagation()" onchange="window.setNumberField(event)" onblur="window.setNumberField(event)"><span class="unit-label">${it.unit || ''}</span>`;
       }
 
-      // Non-clickable if numberInput (checkmark irrelevant); optionalProgress hides check ring
-      const clickHandler = it.numberInput ? '' : `onclick="window.toggleItem('${it.id}')"`;
-      const checkHtml = it.numberInput ? '' : `<div class="item-check"></div>`;
+      // Non-clickable if numberInput or recordOnly (checkmark irrelevant — the value
+      // itself is the record); optionalProgress hides check ring
+      const noCheck = it.numberInput || it.recordOnly;
+      const clickHandler = noCheck ? '' : `onclick="window.toggleItem('${it.id}')"`;
+      const checkHtml = noCheck ? '' : `<div class="item-check"></div>`;
       html += `<div class="${itemClass}" data-id="${it.id}" ${clickHandler}>
         <div class="item-dot ${dotClass}"></div>
         <div class="item-label">${it.label}${bonusBadge}${noteHtml}</div>
@@ -670,7 +676,9 @@ function computeEffectiveProgress(checks, dateIso) {
     if (optional.has(it.id)) continue;  // day-specific optional: not in progress
     if (it.startDate && dateIso && dateIso < it.startDate) continue;  // item not yet active for this date
     if (it.endDate && dateIso && dateIso > it.endDate) continue;      // retired — past days keep counting it
-    if (it.optionalProgress || it.numberInput) continue;  // measurement fields (weight etc.) don't affect done/total
+    // Measurement and record fields (weight, clock in/out) have no checkbox, so
+    // counting them would permanently lower adherence.
+    if (it.optionalProgress || it.numberInput || it.recordOnly) continue;
     if (CORE_WORKOUT_IDS.includes(it.id)) {
       if (checks[it.id] === true) coreWorkoutAny = true;
     } else {
@@ -711,10 +719,13 @@ window.toggleItem = async (itemId) => {
   saveTimer = setTimeout(saveChecks, 400);
 };
 
-window.setWakeUpTime = (e) => {
+window.setTimeField = (e) => {
+  const key = (e.target.dataset.id || "wake_up") + "_time";
   const t = e.target.value;
-  // Save selected time. If user picks the default (5:30), clear the override
-  currentMeta.wake_up_time = t;
+  // Clearing the field removes the key rather than storing "" — an empty string
+  // would read as a recorded value downstream.
+  if (!t) delete currentMeta[key];
+  else currentMeta[key] = t;
   if (saveTimer) clearTimeout(saveTimer);
   saveTimer = setTimeout(saveChecks, 400);
 };
