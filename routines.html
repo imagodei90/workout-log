@@ -434,7 +434,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence }
   from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, getDocs, collection, addDoc, query, orderBy, limit, where, serverTimestamp }
+import { getFirestore, doc, setDoc, getDoc, getDocs, collection, addDoc, query, orderBy, limit, where, serverTimestamp, deleteField }
   from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -513,6 +513,10 @@ let currentUser = null;
 let currentDate = isoToday();
 let currentChecks = {};
 let currentMeta = {};  // e.g. { wake_up_time: "07:30", other_workout_type: "Hiking" }
+// merge:true merges maps key by key — a key dropped from currentMeta stays in
+// Firestore and reappears on reload. Cleared keys are tracked here so the next
+// save can send deleteField() for them.
+let metaDeletions = new Set();
 let currentPlannedLifts = [];  // exercise names added from PR search on dashboard
 let saveTimer = null;
 let heatmapCache = {}; // {iso: pct}
@@ -724,8 +728,8 @@ window.setTimeField = (e) => {
   const t = e.target.value;
   // Clearing the field removes the key rather than storing "" — an empty string
   // would read as a recorded value downstream.
-  if (!t) delete currentMeta[key];
-  else currentMeta[key] = t;
+  if (!t) { delete currentMeta[key]; metaDeletions.add(key); }
+  else { currentMeta[key] = t; metaDeletions.delete(key); }
   if (saveTimer) clearTimeout(saveTimer);
   saveTimer = setTimeout(saveChecks, 400);
 };
@@ -738,7 +742,8 @@ window.setNumberField = async (e) => {
   const id = inp.dataset.id;
   const raw = (inp.value || '').trim();
   if (raw === '') {
-    if (id in currentMeta) delete currentMeta[id];
+    delete currentMeta[id];
+    metaDeletions.add(id);
   } else {
     const v = parseFloat(raw);
     if (isNaN(v)) return;
@@ -749,6 +754,7 @@ window.setNumberField = async (e) => {
       return;
     }
     currentMeta[id] = v;
+    metaDeletions.delete(id);
     // Submit to workout_inbox for body_data.json integration (weight_am only for now)
     if (id === "weight_am") {
       const key = `${currentDate}:${v}`;
@@ -799,6 +805,7 @@ async function loadDate(date) {
   updateDateDisplay();
   currentChecks = {};
   currentMeta = {};
+  metaDeletions = new Set();
   currentPlannedLifts = [];
   if (!currentUser) return;
   try {
@@ -835,11 +842,14 @@ async function saveChecks() {
   if (!currentUser) return;
   try {
     const ref = doc(db, "users", currentUser.uid, "routines", currentDate);
+    const metaOut = Object.assign({}, currentMeta);
+    for (const k of metaDeletions) metaOut[k] = deleteField();
     await setDoc(ref, {
       items: currentChecks,
-      meta: currentMeta,
+      meta: metaOut,
       updatedAt: serverTimestamp(),
     }, { merge: true });
+    metaDeletions.clear();
     // Update local heatmap cache (using effective progress: Workout group = 1)
     const { done, total } = computeEffectiveProgress(currentChecks, currentDate);
     heatmapCache[currentDate] = total > 0 ? done / total : 0;
