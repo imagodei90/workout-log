@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>최근 달성 PR — v2 (영문/dedup/CORE 수정)</title>
+<style>
+:root {
+  --bg: #0a0a0a;
+  --surface: #18181b;
+  --surface-2: #27272a;
+  --text: #fafafa;
+  --muted: #71717a;
+  --border: #27272a;
+  --lift: #FF1A8C;
+  --gold: #fbbf24;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  padding: 32px 20px; line-height: 1.5;
+}
+.container { max-width: 1100px; margin: 0 auto; }
+h1 { font-size: 22px; margin-bottom: 6px; }
+.intro { color: var(--muted); margin-bottom: 24px; font-size: 13px; }
+h2 { font-size: 16px; margin: 24px 0 12px; color: var(--lift); }
+
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 4px 0; margin-bottom: 16px; }
+.list-row {
+  display: flex; align-items: center; gap: 14px;
+  padding: 10px 12px; border-bottom: 1px solid var(--border);
+}
+.list-row:last-child { border-bottom: none; }
+.list-date {
+  font-family: "JetBrains Mono", monospace; font-size: 10px;
+  color: var(--muted); min-width: 80px;
+}
+.list-date b { color: var(--text); font-weight: 500; }
+.list-name { flex: 1; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-width: 0; }
+.list-pr {
+  font-family: "JetBrains Mono", monospace;
+  color: var(--lift); font-weight: 600; font-size: 14px;
+  min-width: 110px; text-align: right;
+}
+.list-delta { min-width: 75px; text-align: right; }
+.delta-up { color: #84cc16; font-family: "JetBrains Mono", monospace; font-size: 10px; }
+
+.bp { padding: 2px 8px; border-radius: 6px; font-family: "JetBrains Mono", monospace; font-size: 9px; letter-spacing: 0.1em; white-space: nowrap; }
+.bp.legs { background: rgba(132,204,22,0.15); color: #84cc16; }
+.bp.chest { background: rgba(255,77,0,0.15); color: #FF4D00; }
+.bp.back { background: rgba(56,189,248,0.15); color: #38bdf8; }
+.bp.shoulders { background: rgba(251,191,36,0.15); color: #fbbf24; }
+.bp.arms { background: rgba(168,85,247,0.15); color: #a855f7; }
+.bp.core { background: rgba(236,72,153,0.15); color: #ec4899; }
+
+.compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+@media (max-width: 800px) { .compare-grid { grid-template-columns: 1fr; } }
+.col h3 { font-size: 13px; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.1em; font-family: "JetBrains Mono", monospace; }
+.col.before h3 { color: #f43f5e; }
+.col.after h3 { color: #84cc16; }
+.changes { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; margin-bottom: 24px; }
+.changes li { color: var(--muted); font-size: 13px; margin-bottom: 4px; }
+.changes li b { color: var(--text); }
+.changes-highlight { color: #84cc16; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>🔥 Recent PRs — v2 Preview</h1>
+<p class="intro">반영 사항 3가지 적용한 미리보기</p>
+
+<div class="changes">
+  <ul style="list-style: none; padding: 0;">
+    <li>① <b>English default</b> — "어제" → <span class="changes-highlight">"Yesterday"</span>, "N일 전" → <span class="changes-highlight">"Nd ago"</span>, "신규" → <span class="changes-highlight">"new"</span></li>
+    <li>② <b>Dedup per exercise</b> — 같은 운동은 1행만, all-time max weight 기준 (가장 높은 PR)</li>
+    <li>③ <b>Seated Knee Up → CORE</b> — bodyPart regex에 <code>knee up</code> 추가 (기존: OTHER)</li>
+  </ul>
+</div>
+
+<h2>📋 RECENT PRS (top 10)</h2>
+
+<div class="card">
+  <div class="list-row">
+    <div class="list-date"><b>Yesterday</b><br>06-09</div>
+    <div class="list-name"><span>One Arm Machine Iso Lateral Row</span><span class="bp back">BACK</span></div>
+    <div class="list-pr">82.7 kg × 8</div>
+    <div class="list-delta"><span class="delta-up">↑ +2.7kg</span></div>
+  </div>
+
+  <div class="list-row">
+    <div class="list-date"><b>2d ago</b><br>06-08</div>
+    <div class="list-name"><span>Machine Chest Press</span><span class="bp chest">CHEST</span></div>
+    <div class="list-pr">61.0 kg × 6</div>
+    <div class="list-delta"><span class="delta-up">↑ +4.5kg</span></div>
+  </div>
+
+  <div class="list-row">
+    <div class="list-date"><b>4d ago</b><br>06-06</div>
+    <div class="list-name"><span>Single-Leg Machine Leg Press</span><span class="bp legs">LEGS</span></div>
+    <div class="list-pr">75.0 kg × 10</div>
+    <div class="list-delta"><span class="delta-up">↑ +10kg</span></div>
+  </div>
+
+  <div class="list-row">
+    <div class="list-date"><b>4d ago</b><br>06-06</div>
+    <div class="list-name"><span>Alternate Heel Touchers</span><span class="bp core">CORE</span></div>
+    <div class="list-pr">BW × 50</div>
+    <div class="list-delta"><span class="delta-up">↑ +20 reps</span></div>
+  </div>
+
+  <div class="list-row">
+    <div class="list-date"><b>4d ago</b><br>06-06</div>
+    <div class="list-name"><span>Dumbbell Tricep Kickback</span><span class="bp arms">ARMS</span></div>
+    <div class="list-pr">15.9 kg × 10</div>
+    <div class="list-delta"><span class="delta-up">↑ +0.9kg</span></div>
+  </div>
+
+  <div class="list-row" style="background: rgba(236,72,153,0.05);">
+    <div class="list-date"><b>4d ago</b><br>06-06</div>
+    <div class="list-name"><span>Seated Knee Up</span><span class="bp core">CORE</span> <span style="color:#ec4899; font-size:10px; font-family:'JetBrains Mono', monospace;">← fixed</span></div>
+    <div class="list-pr">BW × 70</div>
+    <div class="list-delta"><span class="delta-up">↑ +20 reps</span></div>
+  </div>
+
+  <div class="list-row">
+    <div class="list-date"><b>6d ago</b><br>06-04</div>
+    <div class="list-name"><span>Seated Dumbbell Shoulder Press</span><span class="bp shoulders">SHOULDERS</span></div>
+    <div class="list-pr">29.5 kg × 1</div>
+    <div class="list-delta"><span class="delta-up">↑ +2.3kg</span></div>
+  </div>
+
+  <div class="list-row">
+    <div class="list-date"><b>6d ago</b><br>06-04</div>
+    <div class="list-name"><span>Knee Touch Crunch</span><span class="bp core">CORE</span></div>
+    <div class="list-pr">BW × 50</div>
+    <div class="list-delta"><span class="delta-up">↑ +20 reps</span></div>
+  </div>
+
+  <div class="list-row">
+    <div class="list-date"><b>6d ago</b><br>06-04</div>
+    <div class="list-name"><span>Lying Leg Hip Raise</span><span class="bp core">CORE</span></div>
+    <div class="list-pr">BW × 50</div>
+    <div class="list-delta"><span class="delta-up">↑ +35 reps</span></div>
+  </div>
+
+  <div class="list-row">
+    <div class="list-date"><b>9d ago</b><br>06-01</div>
+    <div class="list-name"><span>Cable Dips</span><span class="bp chest">CHEST</span></div>
+    <div class="list-pr">22.5 kg × 10</div>
+    <div class="list-delta"><span class="delta-up">↑ +2.5kg</span></div>
+  </div>
+</div>
+
+<h2 style="margin-top:36px;">🔍 변경 효과 비교</h2>
+
+<div class="compare-grid">
+  <div class="col before">
+    <h3>BEFORE — 현재 (스샷)</h3>
+    <div class="card" style="background:rgba(244,63,94,0.04); border-color:rgba(244,63,94,0.2);">
+      <div class="list-row" style="padding:8px 12px;">
+        <div class="list-date"><b>2일 전</b><br>06-08</div>
+        <div class="list-name" style="font-size:13px;"><span>Machine Chest Press</span><span class="bp chest">CHEST</span></div>
+        <div class="list-pr" style="font-size:13px;">56.5 kg × 10</div>
+        <div class="list-delta"><span class="delta-up">↑ +2.5kg</span></div>
+      </div>
+      <div class="list-row" style="padding:8px 12px;">
+        <div class="list-date"><b>2일 전</b><br>06-08</div>
+        <div class="list-name" style="font-size:13px;"><span>Machine Chest Press</span><span class="bp chest">CHEST</span></div>
+        <div class="list-pr" style="font-size:13px;">61.0 kg × 6</div>
+        <div class="list-delta"><span class="delta-up">↑ +4.5kg</span></div>
+      </div>
+      <div class="list-row" style="padding:8px 12px;">
+        <div class="list-date"><b>4일 전</b><br>06-06</div>
+        <div class="list-name" style="font-size:13px;"><span>Seated Knee Up</span><span class="bp" style="background:rgba(113,113,122,0.2); color:#999;">OTHER</span></div>
+        <div class="list-pr" style="font-size:13px;">BW × 70</div>
+        <div class="list-delta"><span class="delta-up">↑ +20 reps</span></div>
+      </div>
+    </div>
+    <p style="color: var(--muted); font-size: 11px; margin-top: 6px; font-family: 'JetBrains Mono', monospace;">
+      · Machine Chest Press 중복 (2 events)<br>
+      · Seated Knee Up = OTHER (잘못)<br>
+      · 한글 라벨
+    </p>
+  </div>
+
+  <div class="col after">
+    <h3>AFTER — 적용 후</h3>
+    <div class="card" style="background:rgba(132,204,22,0.04); border-color:rgba(132,204,22,0.2);">
+      <div class="list-row" style="padding:8px 12px;">
+        <div class="list-date"><b>2d ago</b><br>06-08</div>
+        <div class="list-name" style="font-size:13px;"><span>Machine Chest Press</span><span class="bp chest">CHEST</span></div>
+        <div class="list-pr" style="font-size:13px;">61.0 kg × 6</div>
+        <div class="list-delta"><span class="delta-up">↑ +4.5kg</span></div>
+      </div>
+      <div class="list-row" style="padding:8px 12px;">
+        <div class="list-date"><b>4d ago</b><br>06-06</div>
+        <div class="list-name" style="font-size:13px;"><span>Seated Knee Up</span><span class="bp core">CORE</span></div>
+        <div class="list-pr" style="font-size:13px;">BW × 70</div>
+        <div class="list-delta"><span class="delta-up">↑ +20 reps</span></div>
+      </div>
+    </div>
+    <p style="color: var(--muted); font-size: 11px; margin-top: 6px; font-family: 'JetBrains Mono', monospace;">
+      · Machine Chest Press 1행 (61.0×6 = 최고 PR)<br>
+      · Seated Knee Up = CORE<br>
+      · 영문 라벨
+    </p>
+  </div>
+</div>
+
+<div style="background: rgba(132,204,22,0.05); border: 1px solid rgba(132,204,22,0.2); border-radius: 8px; padding: 14px 18px; margin-top: 24px;">
+  <div style="font-family: 'JetBrains Mono', monospace; color: #84cc16; font-size: 11px; letter-spacing: 0.1em; margin-bottom: 6px;">DEDUP LOGIC</div>
+  <p style="color: var(--text); font-size: 13px; margin: 0;">
+    운동별로 <strong>all-time max weight</strong> (BW는 max reps) 가 처음 달성된 날짜를 PR 시점으로 잡음. 같은 무게 여러 번 들어도 첫 달성 1회만 카운트.<br>
+    예시: Machine Chest Press 56.5 / 61.0 둘 다 PR이지만 61.0이 더 높음 → <strong>61.0×6 만 표시</strong>.
+  </p>
+</div>
+
+<p style="color: var(--muted); margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--border); font-size: 12px;">
+  📁 C:\tmp\workout\mockups\recent_prs_preview_v2.html
+</p>
+
+</div>
+</body>
+</html>
