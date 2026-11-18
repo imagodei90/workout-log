@@ -461,7 +461,7 @@ const provider = new GoogleAuthProvider();
 const SCHEMA = {
   items: [
     // Morning
-    {id: "wake_up", label: "Wake Up", section: "Morning", note: "default 5:30", timeInput: true, defaultTime: "05:30"},
+    {id: "wake_up", label: "Wake Up", section: "Morning", note: "기상", timeInput: true},
     {id: "clock_in", label: "Clock In", section: "Morning", note: "출근", timeInput: true, recordOnly: true, startDate: "2026-10-28"},
     {id: "clock_out", label: "Clock Out", section: "Morning", note: "퇴근", timeInput: true, recordOnly: true, startDate: "2026-10-28"},
     {id: "lock_up", label: "Lock Up", section: "Morning", note: "사물함 · 노트북 시건", startDate: "2026-10-29", optionalProgress: true},
@@ -614,8 +614,9 @@ function renderSections() {
         // Native time picker — supports minute precision (e.g. 6:05). iOS shows wheel picker.
         // Meta key is `<id>_time`, which for wake_up is the wake_up_time already in
         // every stored doc — so existing records keep reading without migration.
-        // No defaultTime means start empty: prefilling 09:00 would invent a record.
-        let rawTime = currentMeta[it.id + "_time"] || it.defaultTime || "";
+        // 비워 두는 게 기본이다. 값을 미리 박아 두면 기록하지 않은 날이 기록한
+        // 날처럼 보이고, iOS 피커도 그 값에서 열려 현재 시각을 고르기 번거로워진다.
+        let rawTime = currentMeta[it.id + "_time"] || "";
         const normMatch = rawTime.match(/^(\d{1,2}):(\d{1,2})$/);
         const selectedTime = normMatch
           ? `${normMatch[1].padStart(2, '0')}:${normMatch[2].padStart(2, '0')}`
